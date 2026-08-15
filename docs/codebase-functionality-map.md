@@ -16,17 +16,19 @@
 
 | Library / component | Namespace | Functionality label | Status |
 |---|---|---|---|
+| **ModelGraphLibrary project** | — | Portable graph library (Skia stack + data model + factory contract) | Experimental / unwired |
+| `ModelGraphLibrary/Model/Data` | `Model.Data` | Relational metadata model (POCOs, JSON round-trip) — moved out of the app (backlog 006) | Active |
+| `ModelGraphLibrary/Skia/GLibrary` | `ModelConsole.Skia.GLibrary` | Portable 2D vector graphics engine (Skia stack) — moved out of the app | Experimental / unwired |
+| `ModelGraphLibrary/Skia/Primitives` | `ModelConsole.Skia.Primitives` | Portable domain primitives | Experimental / unwired |
+| `ModelGraphLibrary/Services` | `ModelConsole.Services` | `ISkiaTableFactory` / `SkiaTableFactory` — the library's public factory contract | Active |
 | `Model/Diagnostics` | `ModelConsole.Model.Diagnostics` | Diagnostics & logging infrastructure | Active |
-| `Model/Data` | `ModelConsole.Model.Data` | Relational metadata model (POCOs, JSON round-trip) | Active |
 | `Model/ModelData` | `ModelConsole.Model.Test` | Sample data fixtures | Active |
 | `Model/DataObjects` | `ModelConsole.Model.DataObjects` | Domain value objects | Active |
 | `Model/Helpers` | `ModelConsole.Model.Helpers` | MVVM base infrastructure | Active |
-| `Graphics/GLibrary` | `ModelConsole.Graphics.GLibrary` | 2D vector graphics engine (XAML stack) | Active |
+| `Graphics/GLibrary` | `ModelConsole.Graphics.GLibrary` | 2D vector graphics engine (XAML stack, stays in the app) | Active |
 | `Graphics/GLibrary/GlOrtho` | `ModelConsole.Graphics.GLibrary.GlOrtho` | Orthogonal connector routing | Active |
 | `Graphics/Primitives` | `ModelConsole.Graphics.Primitives` | Domain-specific primitives (Table, rows) | Active (partly deferred) |
-| `Skia/GLibrary` | `ModelConsole.Skia.GLibrary` | Portable 2D vector graphics engine (Skia stack) | Experimental / unwired |
-| `Skia/Primitives` | `ModelConsole.Skia.Primitives` | Portable domain primitives | Experimental / unwired |
-| `Services` | `ModelConsole.Services` | DI service contracts + implementations | Active |
+| `Services` | `ModelConsole.Services` | DI service contracts + implementations (XAML-stack factories, log, data provider) | Active |
 | `Controls` | `ModelConsole.Controls` | Presentation layer (UserControls) | Active |
 | `ViewModels` | `ModelConsole.ViewModels` | Presentation logic (MVVM) | Active |
 | `App` / `MainWindow` | `ModelWinUI` | Application shell + DI composition root | Active |
@@ -47,9 +49,9 @@ Logging subsystem ported from the author's earlier framework.
 
 Entry point: `ILogService` (DI, in `Services/`) wraps `ResultLog.DefaultLog`.
 
-### Relational metadata model — `Model/Data` (Active)
+### Relational metadata model — `ModelGraphLibrary/Model/Data` (namespace `Model.Data`, Active)
 
-POCOs describing a relational schema; `TableInfo` supports JSON round-tripping.
+POCOs describing a relational schema; `TableInfo` supports JSON round-tripping. Moved from the app into ModelGraphLibrary in backlog 006 because the Skia `Table` primitive inherits `TableInfo`.
 
 | Type | Role |
 |---|---|
@@ -100,9 +102,9 @@ WinUI XAML `Shape`-based rendering onto a `Canvas`. The active rendering path.
 | `TableRowPanel` | Single-column row rendering |
 | `Connector` | **Deferred** — mixes the two stacks and is unreferenced |
 
-### Portable 2D vector graphics engine (Skia stack) — `Skia/GLibrary` (Experimental, unwired)
+### Portable 2D vector graphics engine (Skia stack) — `ModelGraphLibrary/Skia/GLibrary` (Experimental, unwired)
 
-SkiaSharp rendering onto an `SKSurface`. The stack intended for the Uno/WebAssembly sibling — keep it free of WinUI-specific dependencies.
+SkiaSharp rendering onto an `SKSurface`. Lives in the ModelGraphLibrary project (plain `net10.0`). The stack intended for the Uno/WebAssembly sibling — keep it free of WinUI-specific dependencies.
 
 | Type | Role |
 |---|---|
@@ -112,22 +114,22 @@ SkiaSharp rendering onto an `SKSurface`. The stack intended for the Uno/WebAssem
 | `GlText` | Text drawing (SkiaSharp 4.x: `SKFont` + `DefaultTextPaint`) |
 | `GlBoxInfo`, `GlMatrix`, `GlObjectGeometryInfo`, `GlObjectInfo`, `GlPalette` | Geometry/state support types |
 
-### Portable domain primitives — `Skia/Primitives` (Experimental, unwired)
+### Portable domain primitives — `ModelGraphLibrary/Skia/Primitives` (Experimental, unwired)
 
-`Table` (Skia counterpart of the XAML `Table`), `RectangleHalf`.
+`Table` (Skia counterpart of the XAML `Table`), `RectangleHalf` — both WinUI-free.
 
-### DI service contracts + implementations — `Services` (Active)
+### DI service contracts + implementations — `Services` (Active, split across two projects)
 
-Introduced by backlog item `002`. All registered in `App.ConfigureServices`.
+Introduced by backlog item `002`. All registered in `App.ConfigureServices`. The Skia factory contract now lives **inside ModelGraphLibrary** (backlog 006) as the library's public interface; the XAML-stack factories stay in the app's `Services/`.
 
-| Service | Implements |
-|---|---|
-| `ILogService` / `LogService` | Logging via `ResultLog.DefaultLog`; instance `LogMessageHandler` event bridges the static one |
-| `IModelDataProvider` / `ModelDataProvider` | Sample fixtures (`GetPersonTable`, `GetPersonNameTable`) |
-| `ITableFactory` / `TableFactory` | XAML `Table` creation over a `GlContext` |
-| `ISkiaTableFactory` / `SkiaTableFactory` | Skia `Table` creation over a `GlFrame` |
-| `IConnectorFactory` / `ConnectorFactory` | `GlOrthoPath` connector creation |
-| `IRectangleFactory` / `RectangleFactory` | `GlRectangle` create/draw/banner |
+| Service | Project | Implements |
+|---|---|---|
+| `ILogService` / `LogService` | app | Logging via `ResultLog.DefaultLog`; instance `LogMessageHandler` event bridges the static one |
+| `IModelDataProvider` / `ModelDataProvider` | app | Sample fixtures (`GetPersonTable`, `GetPersonNameTable`) |
+| `ITableFactory` / `TableFactory` | app | XAML `Table` creation over a `GlContext` |
+| `ISkiaTableFactory` / `SkiaTableFactory` | **ModelGraphLibrary** | Skia `Table` creation over a `GlFrame` |
+| `IConnectorFactory` / `ConnectorFactory` | app | `GlOrthoPath` connector creation |
+| `IRectangleFactory` / `RectangleFactory` | app | `GlRectangle` create/draw/banner |
 
 ### Presentation layer — `Controls` (Active)
 

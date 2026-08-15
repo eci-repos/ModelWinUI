@@ -2,7 +2,7 @@
 
 > This is the **single current sprint**. There is only ever one `CURRENT.md`.
 > No sprint is in execution right now. The last promoted sprint is
-> `docs/sprints/archive/sprint-2026-08-15-dependency-injection.md`.
+> `docs/sprints/archive/sprint-2026-08-15-modelgraphlibrary.md`.
 
 ## Next candidate
 

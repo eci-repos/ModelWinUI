@@ -1,12 +1,4 @@
-﻿using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using SkiaSharp;
+﻿using SkiaSharp;
 using ModelConsole.Skia.GLibrary;
 
 namespace ModelConsole.Skia.Primitives

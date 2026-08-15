@@ -18,6 +18,9 @@ dotnet build src/Model.WinUI.Console/ModelWinUI.csproj -c Debug -p:Platform=x64
 
 # Build the whole solution
 dotnet build ModelWinUI.sln -p:Platform=x64
+
+# Build the portable graphics library alone (no WinUI dependencies)
+dotnet build src/ModelGraphLibrary/ModelGraphLibrary.csproj -c Debug
 ```
 
 Run from Visual Studio using the launch profiles in `Properties/launchSettings.json`:
@@ -62,10 +65,11 @@ The codebase contains two independent graphics libraries. Do not confuse them �
    - `GlFrame` wraps the `SKCanvas`, sets up default paints, and manages the coordinate system.
    - `Skia/Primitives/Table.cs` is the Skia counterpart of the XAML `Table`.
    - This is the stack intended for the Uno/WebAssembly sibling; keep it free of WinUI-specific dependencies.
+   - **Lives in its own project `src/ModelGraphLibrary/`** (plain `net10.0`, `SkiaSharp` core) together with the `Model.Data` metadata model and the `ISkiaTableFactory` contract. The app references it via `ProjectReference`. The XAML `Graphics` stack stays in the app (WinUI-bound).
 
-### Data model (`Model/Data`)
+### Data model (`Model.Data`)
 
-Relational metadata classes: `CatalogInfo`, `TableInfo`, `ColumnInfo`, `ColumnList`, `ConstraintInfo`. `TableInfo` supports JSON round-tripping (`ToJson`, `ToJsonFile`, `FromJsonFile`). Sample data lives in `Model/ModelData/Data_Table_Entity.cs` (namespace `Model.Test`) — `GetPersonTable()` / `GetPersonNameTable()` are the fixtures used by the sample drawings.
+Relational metadata classes: `CatalogInfo`, `TableInfo`, `ColumnInfo`, `ColumnList`, `ConstraintInfo`. `TableInfo` supports JSON round-tripping (`ToJson`, `ToJsonFile`, `FromJsonFile`). **These POCOs live in `ModelGraphLibrary`** (namespace `Model.Data`). Sample data stays in the app at `Model/ModelData/Data_Table_Entity.cs` (namespace `Model.Test`) — `GetPersonTable()` / `GetPersonNameTable()` are the fixtures used by the sample drawings.
 
 ### Diagnostics (`Model/Diagnostics`)
 

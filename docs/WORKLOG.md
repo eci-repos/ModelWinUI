@@ -12,6 +12,15 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-15 — Sprint executed: ModelGraphLibrary split (backlog item 006)
+
+- New project `src/ModelGraphLibrary/ModelGraphLibrary.csproj` — plain `net10.0` class library, `RootNamespace=ModelConsole`, `SkiaSharp` 4.151.1 (core). Added to `ModelWinUI.sln`.
+- `git mv`'d 18 files from the app into it: `Model/Data` (5, namespace `Model.Data`), `Skia/GLibrary` (9), `Skia/Primitives` (2), and the `ISkiaTableFactory` / `SkiaTableFactory` contract (`ModelConsole.Services`) — the library's public interface.
+- Removed the dead WinUI usings from `RectangleHalf.cs` — the only WinUI reference in the Skia stack — so the library is WinUI-free and portable to the Uno/WASM sibling.
+- App wires it via `ProjectReference`; `SkiaPanelControl` + DI registration unchanged. XAML `Graphics` stack stays in the app (WinUI-bound).
+- **Verified:** library builds 0/0; full solution `-c Debug -p:Platform=x64` → **0 errors, 0 warnings**; app launches unpackaged, window "EDAM Studio" responding, sample drawing runs. (Screenshot declined.)
+- Sprint record: `docs/sprints/archive/sprint-2026-08-15-modelgraphlibrary.md`. Backlog item archived: `docs/backlog/archive/006-model-graph-library.md`.
+
 ### 2026-08-15 — Sprint executed: Dependency injection & coding-standards cleanup (backlog item 002)
 
 - Added `Microsoft.Extensions.DependencyInjection` **10.0.10**; composition root in `App.xaml.cs` (`ConfigureServices()` + `Ioc.Default.ConfigureServices(Services)` bridge for XAML-instantiated controls).
@@ -74,8 +83,10 @@ Running record of work done and next pending tasks. **Read this first** when sta
 ### Known gaps / issues (candidates for backlog items)
 
 - Deferred from backlog 002 scope: `Graphics/Primitives/Connector.cs` (unreferenced, mixes the two stacks); public API typos `IDiagnosticWritter` / `RoundCorderRadious`; no shared drawing-surface abstraction over the two graphics stacks.
+- Only the **Skia stack** is extracted into ModelGraphLibrary; the XAML `Graphics` stack still lives inside the app project (WinUI-bound). Splitting it out is possible but buys no portability.
+- ModelGraphLibrary keeps the app's namespaces (`ModelConsole.*`, `Model.Data`) — namespace reorganization to the library's own identity is a candidate follow-up.
 - `SkiaPanelControl` (Skia stack) is DI-converted but not wired into `MainWindow`; the Skia stack is the one intended for the Uno/WebAssembly sibling.
-- No test projects exist.
+- No test projects exist — ModelGraphLibrary is now a clean target for the first unit tests (pure .NET, no WinUI).
 - csproj references `PublishProfile=win10-$(Platform).pubxml` but no `.pubxml` files exist (`NETSDK1198` warning).
 - `Log.Write` is inert (`EVENT_LOG_SUPPORT` not defined); diagnostics flow through `ResultLog.DefaultLog` instead.
 
@@ -91,3 +102,4 @@ Running record of work done and next pending tasks. **Read this first** when sta
 - **Lifetime rules:** `DiagnosticsLogViewModel` and `LogService` **must be singletons** (transients double-wire the static log event and leak subscriptions); `IGlModel` must be **transient** (a singleton accumulates items across draws). `SkiaPanelControl` stays compiled-but-unwired.
 - **XAML instantiation order matters:** `ModelEditorControl.xaml` declares `DiagnosticsLogControl` before `ModelPanelControl` so the log VM subscribes before "GL Context Ready." is written — keep that order.
 - **Container package:** `Microsoft.Extensions.DependencyInjection` 10.0.10 (restored and building). Functionality map lives at `docs/codebase-functionality-map.md`.
+- **ModelGraphLibrary (backlog 006):** the portable Skia stack + `Model.Data` now live in `src/ModelGraphLibrary` (plain `net10.0`, `SkiaSharp` core, `RootNamespace=ModelConsole`, namespaces unchanged). Build it alone with `dotnet build src/ModelGraphLibrary/ModelGraphLibrary.csproj`; the app references it. `SkiaPanelControl` and the `ISkiaTableFactory` DI registration still use `ModelConsole.Services` — unchanged.
