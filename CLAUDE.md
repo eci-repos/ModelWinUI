@@ -1,0 +1,95 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+**EDAM Studio** — a data-model (ERD) visualization tool. This repo is the WinUI 3 desktop app (`ModelWinUI`), which serves as a fast-prototyping sibling of a planned Uno Platform WebAssembly app. The graphics code is written to be portable: SkiaSharp runs on both WinUI and WebAssembly, so the Skia-based stack is the one intended to move to the WebAssembly sibling unchanged.
+
+The project is early-stage: the graphics primitives (tables, orthogonal connectors, grips/handles) are the focus. Sample tables are drawn programmatically in `ModelPanelControl`; there is no file I/O or model-editing UI yet.
+
+## Build & Run
+
+The project targets `net10.0-windows10.0.19041.0` (WinUI 3 / Windows App SDK 2.4.0). It runs **unpackaged** (`<WindowsPackageType>None</WindowsPackageType>` in the csproj — required for direct exe launch; without it the WinAppSDK auto-initializer throws `COMException 0x80040154`). A platform must be specified — AnyCPU builds fail with "cannot be ProcessorArchitecture neutral".
+
+```powershell
+# Build (x64; also x86 / ARM64)
+dotnet build src/Model.WinUI.Console/ModelWinUI.csproj -c Debug -p:Platform=x64
+
+# Build the whole solution
+dotnet build ModelWinUI.sln -p:Platform=x64
+```
+
+Run from Visual Studio using the launch profiles in `Properties/launchSettings.json`:
+- **ModelWinUI (Unpackaged)** — `commandName: Project` (fastest for dev)
+- **ModelWinUI (Package)** — `commandName: MsixPackage`
+
+There are **no test projects** in the repo.
+
+Known build warnings (not errors):
+- `NETSDK1198` — the csproj sets `PublishProfile=win10-$(Platform).pubxml` but no `.pubxml` files exist in the repo. Harmless for `dotnet build`.
+
+Key package versions: `Microsoft.WindowsAppSDK` 2.4.0, `SkiaSharp.Views.WinUI` 4.151.1, `CommunityToolkit.Mvvm` 8.4.2, `Microsoft.Windows.SDK.BuildTools` 10.0.28000.2526. Runtime identifiers are `win-x86;win-x64;win-arm64` (the `win10-*` RID prefix was removed in .NET 8+).
+
+## Architecture
+
+### UI control hierarchy
+
+```
+App (App.xaml.cs)
+└── MainWindow (title "EDAM Studio")
+    └── ModelEditorControl            (Controls/ModelEditorControl.xaml)
+        ├── ModelPanelControl         (left) — hosts the drawing Canvas
+        └── DiagnosticsLogControl     (right) — log list view
+```
+
+- `ModelPanelControl` creates a `GlContext` over its XAML `Canvas` and draws the sample model: two `Table` primitives plus `GlOrthoPath` connectors. This is the entry point for exercising the graphics library.
+- `SkiaPanelControl` is an **alternative, currently unwired** rendering path using the Skia stack (see below). It is not referenced by `MainWindow`.
+
+### Two parallel graphics stacks
+
+The codebase contains two independent graphics libraries. Do not confuse them — they share class names (`GlObject`, `GlModel`, `Table`) under different namespaces.
+
+1. **`ModelConsole.Graphics.GLibrary`** (active) — WinUI XAML `Shape`-based rendering onto a `Canvas`.
+   - `GlContext` wraps the `Canvas` and owns all pointer handling (press/move/release/capture), selection, and the current grabber. It implements `IDiagnosticWritter` and logs through `ILogService` (resolved via the DI container).
+   - `GlObject` (abstract) is the base for all drawable objects: `DeltaMove`, `Move`, `PointerEvent`, `Reshape`, `Selected`. Each object wraps a native XAML `Shape` (e.g. `GlRectangle` wraps a `Rectangle`, `GlOrthoPath` wraps a `Path`).
+   - Interaction model: `GlGrip` (resize nodes) and `GlHandle` (move) both implement `IGlGrabber`; `GlContext.SetPointerHandle` decides which one is active based on hit-testing `IGlGrip` nodes.
+   - `GlOrtho/GlOrthoPath` draws orthogonal rounded-edge connector lines between shapes, with three grip nodes (start, end, middle) for reshaping.
+   - `Graphics/Primitives/Table.cs` renders a `TableInfo` as a rounded rectangle with a banner (`schema::table`) and one `TableRowPanel` per column (constraint text, name, data type).
+   - `GlModel` implements `IGlModel` (`Items` list; `Add` adds and returns the instance). Resolved **transiently** from the DI container (a singleton would accumulate items across draws).
+
+2. **`ModelConsole.Skia.GLibrary`** (experimental, portable) — SkiaSharp rendering onto an `SKSurface`.
+   - `GlFrame` wraps the `SKCanvas`, sets up default paints, and manages the coordinate system.
+   - `Skia/Primitives/Table.cs` is the Skia counterpart of the XAML `Table`.
+   - This is the stack intended for the Uno/WebAssembly sibling; keep it free of WinUI-specific dependencies.
+
+### Data model (`Model/Data`)
+
+Relational metadata classes: `CatalogInfo`, `TableInfo`, `ColumnInfo`, `ColumnList`, `ConstraintInfo`. `TableInfo` supports JSON round-tripping (`ToJson`, `ToJsonFile`, `FromJsonFile`). Sample data lives in `Model/ModelData/Data_Table_Entity.cs` (namespace `Model.Test`) — `GetPersonTable()` / `GetPersonNameTable()` are the fixtures used by the sample drawings.
+
+### Diagnostics (`Model/Diagnostics`)
+
+A logging subsystem ported from the author's earlier framework. The key wiring:
+- `ResultLog.DefaultLog` is the process-wide log; `ResultLog.LogMessageHandler` is a static event.
+- `DiagnosticsLogViewModel` subscribes through `ILogService.LogMessageHandler` (the DI wrapper that bridges the static event) and appends `IMessageLogEntry` items to an `ObservableCollection` bound by `DiagnosticsLogControl`.
+- `GlContext.WriteMessage` is the path graphics code uses to log. `Log` (file/event-log writer) is largely inert here (`EVENT_LOG_SUPPORT` is not defined, so `Log.Write` returns false).
+
+### MVVM
+
+`CommunityToolkit.Mvvm` is referenced; `Model/Helpers/ObservableObject` is a hand-rolled base. `DiagnosticsLogViewModel` is the only view model so far.
+
+### Dependency injection
+
+**Dependency injection is the main mechanism for exposing functionality (services) and components (controls + graphics primitives).** The composition root is `App.ConfigureServices()` (`Microsoft.Extensions.DependencyInjection` 10.0.10). It runs **before** `MainWindow` is created and bridges to CommunityToolkit.Mvvm via `Ioc.Default.ConfigureServices(Services)`.
+
+- **Resolution rules:** `Ioc.Default.GetRequiredService<T>()` is the **only sanctioned service-locator point**, and only for **XAML-instantiated controls** (they have no parameterized ctor). Code-created objects use **constructor injection**.
+- **Service layer:** `Services/` (namespace `ModelConsole.Services`) holds interfaces + implementations — `ILogService` (wraps `ResultLog.DefaultLog`, bridges the static event), `IModelDataProvider` (sample fixtures), `ITableFactory` / `ISkiaTableFactory` (the two `Table` types), `IConnectorFactory`, `IRectangleFactory`.
+- **Lifetimes:** stateless services + factories are **singletons**; `IGlModel` is **transient**; `DiagnosticsLogViewModel` and `LogService` must be singletons (transients double-wire the static log event and leak subscriptions).
+- **Intended behavior change:** `GlContext.WriteMessage` now logs through `ILogService` — "GL Context Ready." actually reaches the log panel.
+
+## Conventions
+
+- Namespaces are `ModelConsole.*` (root namespace is `ModelWinUI` only for `App`/`MainWindow`).
+- Graphics classes use the `Gl` prefix (`GlContext`, `GlRectangle`, `GlOrthoPath`).
+- Code style is the author's: 3-space indentation in the graphics/data code, XML doc comments on most members, `m_` prefix on private fields.
+- The `Skia` stack and the `Graphics` stack are meant to stay in sync conceptually; when adding a primitive, consider whether it needs a counterpart in both.
