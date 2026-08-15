@@ -8,15 +8,10 @@ using Windows.Foundation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml;
 
-using Model.Data;
 using Microsoft.UI.Xaml.Shapes;
 using Microsoft.UI.Xaml.Media;
-using Windows.Devices.Bluetooth.Advertisement;
 using Microsoft.UI;
 using Microsoft.UI.Input;
-using System.Reflection;
-using SkiaSharp;
-using System.Runtime.CompilerServices;
 
 namespace ModelConsole.Graphics.GLibrary.GlOrtho
 {

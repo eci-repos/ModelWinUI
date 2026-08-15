@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Windows.UI.Core;
 
-using mvvm = CommunityToolkit.Mvvm;
+using Mvvm = CommunityToolkit.Mvvm;
 using Microsoft.UI.Xaml;
 
 // -----------------------------------------------------------------------------
@@ -20,7 +20,7 @@ namespace ModelConsole.Model.Helpers
    /// <summary>
    /// Observable object with INotifyPropertyChanged implemented
    /// </summary>
-   public class ObservableObject : mvvm.ComponentModel.ObservableObject
+   public class ObservableObject : Mvvm.ComponentModel.ObservableObject
    {
       public const string STATUS_MESSAGE_TEXT = "StatusMessageText";
 

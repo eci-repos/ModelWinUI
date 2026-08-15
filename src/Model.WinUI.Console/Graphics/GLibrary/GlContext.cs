@@ -11,11 +11,9 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Windows.Foundation;
-using System.Runtime.CompilerServices;
 
-using ModelConsole.Controls;
 using ModelConsole.Model.Diagnostics;
-using SkiaSharp;
+using ModelConsole.Services;
 
 namespace ModelConsole.Graphics.GLibrary
 {
@@ -55,11 +53,12 @@ namespace ModelConsole.Graphics.GLibrary
 
       private DiagnosticsInfo _diagnosticsInfo = new DiagnosticsInfo();
 
-      public IDiagnosticWritter Writer = null;
+      private readonly ILogService m_Log;
 
-      public GlContext(Canvas canvas)
+      public GlContext(Canvas canvas, ILogService log)
       {
          _canvas = canvas;
+         m_Log = log;
          _canvas.PointerPressed += Canvas_PointerPressed;
          _canvas.PointerReleased += Canvas_PointerRelease;
          _canvas.PointerMoved += Canvas_PointerMoved;
@@ -77,9 +76,7 @@ namespace ModelConsole.Graphics.GLibrary
       /// <param name="message">message to write</param>
       public void WriteMessage(string message)
       {
-         MessageLogEntry entry = new MessageLogEntry();
-         entry.Message = message;
-         ResultLog.DefaultLog.Write(entry);
+         m_Log.WriteMessage(message);
       }
 
       /// <summary>

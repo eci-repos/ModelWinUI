@@ -17,10 +17,12 @@
          <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
 
-      <local:ModelPanelControl Grid.Column="0" />
-
+      <!-- DiagnosticsLogControl is declared first so its view model subscribes
+           to the log before ModelPanelControl writes its startup message. -->
       <local:DiagnosticsLogControl x:Name="DiagnosticsPanel" Margin="0"
          Grid.Column="1" Grid.Row="0" MinWidth="250"
          VerticalAlignment="Stretch"/>
+
+      <local:ModelPanelControl Grid.Column="0" />
    </Grid>
 </UserControl>

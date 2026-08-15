@@ -16,17 +16,18 @@ using Windows.Foundation.Collections;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 using ModelConsole.ViewModels;
-using ModelConsole.Model.Diagnostics;
+using CommunityToolkit.Mvvm.DependencyInjection;
 
 namespace ModelConsole.Controls
 {
    public sealed partial class DiagnosticsLogControl : UserControl
    {
-      DiagnosticsLogViewModel m_ViewModel = new DiagnosticsLogViewModel();
+      DiagnosticsLogViewModel m_ViewModel;
 
       public DiagnosticsLogControl()
       {
          this.InitializeComponent();
+         m_ViewModel = Ioc.Default.GetRequiredService<DiagnosticsLogViewModel>();
          DataContext = m_ViewModel;
       }
 

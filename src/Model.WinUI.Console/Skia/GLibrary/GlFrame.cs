@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
-using Windows.Devices.Bluetooth.Advertisement;
 
 namespace ModelConsole.Skia.GLibrary
 {
@@ -21,7 +20,8 @@ namespace ModelConsole.Skia.GLibrary
         public SKPaint DefaultStroke { get; set; }
         public SKPaint DefaultLightStroke { get; set; }
         public SKPaint DefaultLightFill { get; set; }
-        public SKPaint DefaultFont { get; set; }
+        public SKFont DefaultFont { get; set; }
+        public SKPaint DefaultTextPaint { get; set; }
 
         public float DefaultRoundCorderRadious = 10.0f;
         public float DefaultTextPanelPadding = 4.0f;
@@ -82,13 +82,14 @@ namespace ModelConsole.Skia.GLibrary
                 StrokeWidth = 0.75f
             };
 
-            DefaultFont = new SKPaint
+            DefaultTextPaint = new SKPaint
             {
                 IsAntialias = true,
-                TextSize = 14,
-                Color = SKColors.Black,
-                Typeface = SKTypeface.FromFamilyName("Arial")
+                Color = SKColors.Black
             };
+
+            DefaultFont = new SKFont(
+               SKTypeface.FromFamilyName("Arial"), 14);
 
         }
 

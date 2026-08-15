@@ -1,16 +1,11 @@
-﻿using Microsoft.UI.Xaml.Controls;
-using SkiaSharp;
+﻿using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using Windows.Devices.Bluetooth.Background;
 
 using Model.Data;
-using System.Security.Cryptography;
-using Windows.UI.Input.Inking;
 using ModelConsole.Skia.GLibrary;
 
 namespace ModelConsole.Skia.Primitives
@@ -40,7 +35,7 @@ namespace ModelConsole.Skia.Primitives
     public class Table : TableInfo, IDisposable
     {
         private GlFrame _frame;
-        private SKPaint _font = null;
+        private SKFont _font = null;
         private float _leftPadding = 66;
         private float _rightPadding = 24;
 
@@ -92,7 +87,7 @@ namespace ModelConsole.Skia.Primitives
         /// Set Panel font.
         /// </summary>
         /// <param name="font">font to set</param>
-        public void SetFont(SKPaint font)
+        public void SetFont(SKFont font)
         {
             if (_font != null)
             {
@@ -100,13 +95,7 @@ namespace ModelConsole.Skia.Primitives
                 _font = null;
             }
 
-            _font = new SKPaint
-            {
-                IsAntialias = font.IsAntialias,
-                TextSize = font.TextSize,
-                Color = font.Color,
-                Typeface = font.Typeface
-            };
+            _font = new SKFont(font.Typeface, font.Size);
         }
 
         /// <summary>
@@ -120,23 +109,22 @@ namespace ModelConsole.Skia.Primitives
                 SetFont(_frame.DefaultFont);
             }
 
-            float heigth = _font.TextSize + _frame.DefaultTextPanelPadding;
+            float heigth = _font.Size + _frame.DefaultTextPanelPadding;
             float maxLength = 0;
             float maxTypeLength = 0;
-            SKRect rect = new SKRect();
 
             foreach (var i in columns)
             {
-                _font.MeasureText(i.ColumnName, ref rect);
-                if (rect.Width > maxLength)
+                float w = _font.MeasureText(i.ColumnName);
+                if (w > maxLength)
                 {
-                    maxLength = rect.Width;
+                    maxLength = w;
                 }
 
-                _font.MeasureText(TablePanel.GetDataType(i), ref rect);
-                if (rect.Width > maxTypeLength)
+                w = _font.MeasureText(TablePanel.GetDataType(i));
+                if (w > maxTypeLength)
                 {
-                    maxTypeLength = rect.Width;
+                    maxTypeLength = w;
                 }
             }
 
@@ -306,21 +294,22 @@ namespace ModelConsole.Skia.Primitives
                     p.X = i.x + _frame.DefaultTextPanelPadding + 10;
                     p.Y = i.y + _frame.DefaultTextPanelPadding + _cornerRadious +
                        _frame.DefaultTextPanelPadding;
-                    _frame.Canvas.DrawText(header, p,
-                       _frame.DefaultFont);
+                    _frame.Canvas.DrawText(header, p.X, p.Y, SKTextAlign.Left,
+                       _frame.DefaultFont, _frame.DefaultTextPaint);
                 }
 
                 // draw column name text
                 p.X = i.x + _frame.DefaultTextPanelPadding + _leftPadding;
                 p.Y = i.y + _frame.DefaultTextPanelPadding + _cornerRadious +
                    _frame.DefaultTextPanelPadding;
-                _frame.Canvas.DrawText(i.Column.ColumnName, p,
-                   _frame.DefaultFont);
+                _frame.Canvas.DrawText(i.Column.ColumnName, p.X, p.Y,
+                   SKTextAlign.Left, _frame.DefaultFont, _frame.DefaultTextPaint);
 
                 // draw table name text
                 p.X += i.width + _frame.DefaultTextPanelPadding + 10;
-                _frame.Canvas.DrawText(TablePanel.GetDataType(i.Column), p,
-                   _frame.DefaultFont);
+                _frame.Canvas.DrawText(TablePanel.GetDataType(i.Column),
+                   p.X, p.Y, SKTextAlign.Left, _frame.DefaultFont,
+                   _frame.DefaultTextPaint);
             }
         }
 

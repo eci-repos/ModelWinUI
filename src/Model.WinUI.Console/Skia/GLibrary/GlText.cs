@@ -1,5 +1,4 @@
-﻿using Microsoft.UI.Xaml.Controls;
-using SkiaSharp;
+﻿using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +13,8 @@ namespace ModelConsole.Skia.GLibrary
 
         public static void DrawText(GlFrame frame, string text, float x, float y)
         {
-            frame.Canvas.DrawText(text, x + 10, y + 10, frame.DefaultFont);
+            frame.Canvas.DrawText(text, x + 10, y + 10, SKTextAlign.Left,
+               frame.DefaultFont, frame.DefaultTextPaint);
         }
 
     }

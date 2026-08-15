@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using Windows.Devices.PointOfService;
 using Windows.Foundation;
 
 using Microsoft.UI.Xaml.Shapes;
@@ -13,8 +12,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml.Controls;
-using SkiaSharp;
-using System.IO;
 
 namespace ModelConsole.Graphics.GLibrary
 {

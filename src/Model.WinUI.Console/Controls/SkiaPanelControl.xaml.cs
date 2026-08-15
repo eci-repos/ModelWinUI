@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
@@ -16,19 +16,24 @@ using Windows.Foundation.Collections;
 // The User Control item template is documented at https://go.microsoft.com/fwlink/?LinkId=234236
 using SkiaSharp.Views;
 using SkiaSharp;
-using Model.Data;
-using Model.Test;
 using ModelConsole.Skia.GLibrary;
-using ModelConsole.Skia.Primitives;
+using ModelConsole.Services;
+using CommunityToolkit.Mvvm.DependencyInjection;
 
 namespace ModelConsole.Controls
 {
 
-    public sealed partial class SkiaPanelControl : UserControl
+   public sealed partial class SkiaPanelControl : UserControl
    {
+      private readonly IModelDataProvider _dataProvider;
+      private readonly ISkiaTableFactory _tableFactory;
+
       public SkiaPanelControl()
       {
          this.InitializeComponent();
+
+         _dataProvider = Ioc.Default.GetRequiredService<IModelDataProvider>();
+         _tableFactory = Ioc.Default.GetRequiredService<ISkiaTableFactory>();
       }
 
       private void SkiaCanvas_PaintSurface(
@@ -37,12 +42,12 @@ namespace ModelConsole.Controls
          GlFrame frame = new GlFrame(e.Surface);
          GlModel model = new GlModel();
 
-         var e1 = Data_Table_Entity.GetPersonTable();
-         var t1 = Table.DrawTable(frame, 10, 80, 30, e1);
+         var e1 = _dataProvider.GetPersonTable();
+         var t1 = _tableFactory.Create(frame, 10, 80, 30, e1);
          model.Add(t1);
 
-         var e2 = Data_Table_Entity.GetPersonNameTable();
-         var t2 = Table.DrawTable(frame, 500, 80, 30, e2);
+         var e2 = _dataProvider.GetPersonNameTable();
+         var t2 = _tableFactory.Create(frame, 500, 80, 30, e2);
          model.Add(t2);
       }
 

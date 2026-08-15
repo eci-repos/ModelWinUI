@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 
 using ModelConsole.Model.Helpers;
 using ModelConsole.Model.Diagnostics;
+using ModelConsole.Services;
 
 namespace ModelConsole.ViewModels
 {
 
    public class DiagnosticsLogViewModel : ObservableObject
    {
-      private ResultLog m_ResultLog = new ResultLog();
+      private readonly ILogService m_Log;
       private readonly LogMessageEvent m_MessageEvent;
       private readonly ObservableCollection<IMessageLogEntry> m_Items;
 
@@ -22,18 +23,17 @@ namespace ModelConsole.ViewModels
          get { return m_Items; }
       }
 
-      public DiagnosticsLogViewModel()
+      public DiagnosticsLogViewModel(ILogService log)
       {
          m_Items = new ObservableCollection<IMessageLogEntry>();
+         m_Log = log;
          m_MessageEvent = new LogMessageEvent(HandleNotification);
 
-         ResultLog.LogMessageHandler -= m_MessageEvent;
-         ResultLog.LogMessageHandler += m_MessageEvent;
+         m_Log.LogMessageHandler -= m_MessageEvent;
+         m_Log.LogMessageHandler += m_MessageEvent;
 
-         MessageLogEntry entry = new MessageLogEntry();
-         entry.Message = "Diagnostics Log Started";
-         entry.Severity = SeverityLevel.Info;
-         m_ResultLog.Write(entry);
+         m_Log.Write(
+            MessageLogEntry.GetEntry("Diagnostics Log Started", SeverityLevel.Info));
       }
 
       public void ClearView()
