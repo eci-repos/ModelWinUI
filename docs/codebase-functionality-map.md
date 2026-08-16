@@ -103,11 +103,12 @@ WinUI XAML `Shape`-based rendering onto a `Canvas`. The active rendering path.
 
 | Type | Role |
 |---|---|
-| `GlContext` | Wraps the `Canvas`; owns pointer handling, selection, grabber dispatch, logging (via `ILogService`); raises `ShapeReleased`/`ShapeClicked` (drag vs click via a 2 px movement threshold) and `Reset()` clears interaction state before a full re-render |
+| `GlContext` | Wraps the `Canvas`; owns pointer handling, selection, grabber dispatch, logging (via `ILogService`); raises `ShapeReleased`/`ShapeClicked` (drag vs click via a 2 px movement threshold) and `PanRequested(dx, dy)` (pan gesture — left-drag on empty space, middle-drag, or space+drag; mouse only, delta in content units from the pan start); `Reset()` clears interaction state before a full re-render |
 | `GlObject` (abstract) | Base drawable: `Move`, `DeltaMove`, `PointerEvent`, `Reshape`, `Selected`; carries a `Data` payload (e.g. a connector's `FkRelation`) |
 | `GlModel`, `IGlModel` | Drawable collection — `Add` now functional (was a null-returning stub) |
 | `GlRectangle` | Rectangle primitive (+ banner via `AddBanner`) |
 | `GlEllipse` | Small ellipse primitive — `Draw(context, centerX, centerY, diameter, fill)` positions it centered on a point (used for connector endpoint markers) |
+| `GlCanvas` | `Canvas` subclass exposing the protected `UIElement.ProtectedCursor` as a public `Cursor` property — the official pattern for swapping the cursor (hand over empty space, move cursor while panning) |
 | `GlBoundingBox`, `GlBoxInfo`, `GlObjectInfo`, `GlPointerEvent`, `GlColor`, `GlDirection`, `GlSide` | Geometry/state support types |
 | `GlGrip`, `GlHandle`, `GlGrabberBase`, `IGlGrip`, `IGlGrabber` | Resize/move interaction model |
 | `GlTextBox` | Text primitive |
@@ -161,7 +162,7 @@ Introduced by backlog item `002`. All registered in `App.ConfigureServices`. The
 | Control | Role |
 |---|---|
 | `ModelEditorControl` | Layout shell: `ModelPanelControl` (left) + right column with `DiagnosticsLogControl` (top) and `EntityInspectorControl` (bottom); wires canvas clicks → inspector and inspector edit/delete → re-render |
-| `ModelPanelControl` | Hosts the drawing `Canvas` (in a zoomable ScrollViewer) + a zoom toolbar (fit button + slider + % box); constructs `GlContext`; state-driven `Render()` pipeline — `_tables` (model) + `_layout` (positions) are the source of truth, the drawing is always derived from them. Draws the 50-table public-safety schema and routes every FK around the tables — anchors via `ConnectorAnchors.Resolve` + `FanOut`, sequential routing via `SequentialRouter.RouteAll`, 8 px `GlEllipse` endpoint markers. Drag a table → re-route on release; click an entity → `EntitySelected`; `DeleteConnector` removes the FK constraint and re-renders. Zoom via ScrollViewer native zoom (`ChangeView`), Ctrl+0/1/Plus/Minus accelerators |
+| `ModelPanelControl` | Hosts the drawing `GlCanvas` (in a zoomable ScrollViewer) + a zoom toolbar (fit button + slider + % box); constructs `GlContext`; state-driven `Render()` pipeline — `_tables` (model) + `_layout` (positions) are the source of truth, the drawing is always derived from them. Draws the 50-table public-safety schema and routes every FK around the tables — anchors via `ConnectorAnchors.Resolve` + `FanOut`, sequential routing via `SequentialRouter.RouteAll`, 8 px `GlEllipse` endpoint markers. Drag a table → re-route on release; click an entity → `EntitySelected`; `DeleteConnector` removes the FK constraint and re-renders. Zoom via ScrollViewer native zoom (`ChangeView`), Ctrl+0/1/Plus/Minus accelerators. Pan via `GlContext.PanRequested` → `ChangeView(offset - delta, ZoomFactor)` (left-drag on empty space, middle-drag, space+drag) |
 | `EntityInspectorControl` | Entity inspector: clicking a table lists its columns with editable data types (commit → `ModelEdited`); clicking a connector shows the FK relationship with a Delete button (`DeleteRequested`) |
 | `DiagnosticsLogControl` | Log list view bound to `DiagnosticsLogViewModel.Items` |
 | `SkiaPanelControl` | **Unwired** alternative rendering path using the Skia stack (not referenced by `MainWindow`) |

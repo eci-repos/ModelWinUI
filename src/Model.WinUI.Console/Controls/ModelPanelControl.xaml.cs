@@ -83,6 +83,7 @@ namespace ModelConsole.Controls
 
          _context.ShapeReleased += OnShapeReleased;
          _context.ShapeClicked += OnShapeClicked;
+         _context.PanRequested += OnPanRequested;
 
          _tables = _dataProvider.GetPublicSafetyTables();
          InitializeLayout();
@@ -279,6 +280,24 @@ namespace ModelConsole.Controls
          {
             SyncZoomUI();
          }
+      }
+
+      /// <summary>
+      /// A pan gesture moved the drawing. Feed the delta (content units) to
+      /// the ScrollViewer, preserving the current zoom so panning never resets
+      /// it (backlog 011). The delta is measured from the pan start point in
+      /// Canvas-local (content) space, so it is already zoom-independent.
+      /// </summary>
+      private void OnPanRequested(double dx, double dy)
+      {
+         if (ModelScrollViewer == null)
+         {
+            return;
+         }
+         ModelScrollViewer.ChangeView(
+            ModelScrollViewer.HorizontalOffset - dx,
+            ModelScrollViewer.VerticalOffset - dy,
+            (float)ModelScrollViewer.ZoomFactor, true);
       }
 
       /// <summary>

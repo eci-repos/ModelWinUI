@@ -11,6 +11,8 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Windows.Foundation;
+using Windows.System;
+using Windows.UI.Core;
 
 using ModelConsole.Model.Diagnostics;
 using ModelConsole.Services;
@@ -52,6 +54,32 @@ namespace ModelConsole.Graphics.GLibrary
       private bool _dragMoved;
 
       /// <summary>
+      /// True while a pan gesture is active (drag on empty space, middle-drag,
+      /// or space+drag).
+      /// </summary>
+      private bool _panning;
+
+      /// <summary>
+      /// Content-space pointer position at the start of the current pan.
+      /// </summary>
+      private Point _panStartPoint;
+
+      /// <summary>
+      /// Hand cursor shown over empty canvas space (hover); move cursor shown
+      /// while panning.
+      /// </summary>
+      private InputCursor _handCursor;
+      private InputCursor _moveCursor;
+
+      /// <summary>
+      /// Fired while a pan gesture is active, with the pointer delta (in
+      /// content units) from the pan start point. The subscriber
+      /// (ModelPanelControl) feeds it to the ScrollViewer's ChangeView so the
+      /// drawing follows the pointer at the current zoom.
+      /// </summary>
+      public event Action<double, double> PanRequested;
+
+      /// <summary>
       /// Fired when a shape is released after being dragged (moved). The
       /// payload is the shape's <see cref="GlObject"/>.
       /// </summary>
@@ -86,6 +114,9 @@ namespace ModelConsole.Graphics.GLibrary
          //_canvas.PointerEntered += Canvas_PointerEntered;
 
          _diagnosticsInfo.Verbosity = Verbosity.Trace;
+
+         _handCursor = InputSystemCursor.Create(InputSystemCursorShape.Hand);
+         _moveCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeAll);
       }
 
       /// <summary>
@@ -120,6 +151,8 @@ namespace ModelConsole.Graphics.GLibrary
          _handle = new GlHandle();
          _grabber = null;
          _dragMoved = false;
+         _panning = false;
+         SetCursor(null);
       }
 
       /// <summary>
@@ -208,6 +241,55 @@ namespace ModelConsole.Graphics.GLibrary
       }
 
       /// <summary>
+      /// True while the space key is held (space+drag pans). Queried from the
+      /// current thread's keyboard state so it works regardless of which
+      /// element has focus.
+      /// </summary>
+      private static bool IsSpaceHeld()
+      {
+         return (InputKeyboardSource.GetKeyStateForCurrentThread(
+            VirtualKey.Space) & CoreVirtualKeyStates.Down) ==
+            CoreVirtualKeyStates.Down;
+      }
+
+      /// <summary>
+      /// Swap the canvas cursor. <see cref="UIElement.ProtectedCursor"/> is
+      /// protected, so it is reached through the <see cref="GlCanvas"/>
+      /// subclass; a plain Canvas (no cursor support) is left untouched.
+      /// </summary>
+      private void SetCursor(InputCursor cursor)
+      {
+         if (_canvas is GlCanvas glCanvas)
+         {
+            glCanvas.Cursor = cursor;
+         }
+      }
+
+      /// <summary>
+      /// Start a pan gesture: capture the pointer and show the grabbing
+      /// cursor. The delta from the press point is reported via
+      /// <see cref="PanRequested"/> on each move.
+      /// </summary>
+      private void StartPan(PointerRoutedEventArgs e, PointerPoint pt)
+      {
+         _panning = true;
+         _panStartPoint = pt.Position;
+         _canvas.CapturePointer(e.Pointer);
+         SetCursor(_moveCursor);
+      }
+
+      /// <summary>
+      /// End a pan gesture: release the pointer and restore the hover cursor
+      /// (hand over empty space, default over a shape).
+      /// </summary>
+      private void EndPan(PointerRoutedEventArgs e)
+      {
+         _panning = false;
+         _canvas.ReleasePointerCapture(e.Pointer);
+         SetCursor((e.OriginalSource as Shape) == null ? _handCursor : null);
+      }
+
+      /// <summary>
       /// When user press the pointer over a graphic instance this function gets
       /// called and e.OriginalSource will identify the object.
       /// </summary>
@@ -234,6 +316,23 @@ namespace ModelConsole.Graphics.GLibrary
          // would return window-relative coordinates, which at non-100% zoom
          // make the drag delta move the shape zoom* too far (backlog 013).
          var pt = e.GetCurrentPoint(_canvas);
+         var props = pt.Properties;
+
+         // Pan triggers (backlog 011): middle-drag always pans; left-drag on
+         // empty canvas space pans; left-drag while space is held pans even
+         // over a shape (space+drag convention). Mouse only - touch/pen pan
+         // natively via the ScrollViewer, so a pan gesture must not capture
+         // the pointer away from it.
+         bool mouse = e.Pointer.PointerDeviceType == PointerDeviceType.Mouse;
+         bool middlePan = mouse && props.IsMiddleButtonPressed;
+         bool spacePan = mouse && IsSpaceHeld() && props.IsLeftButtonPressed;
+         bool emptyPan = mouse && props.IsLeftButtonPressed && s == null;
+
+         if (middlePan || spacePan || emptyPan)
+         {
+            StartPan(e, pt);
+            return;
+         }
 
          if (s != null)
          {
@@ -288,6 +387,17 @@ namespace ModelConsole.Graphics.GLibrary
       {
          PointerPoint pt = e.GetCurrentPoint(_canvas);
          e.Handled = true;
+
+         if (_panning)
+         {
+            double dx = pt.Position.X - _panStartPoint.X;
+            double dy = pt.Position.Y - _panStartPoint.Y;
+            PanRequested?.Invoke(dx, dy);
+            return;
+         }
+
+         // Hover cursor: hand over empty space, default over shapes.
+         SetCursor((e.OriginalSource as Shape) == null ? _handCursor : null);
 
          if (_currentShape != null)
          {
@@ -387,6 +497,12 @@ namespace ModelConsole.Graphics.GLibrary
       {
          e.Handled = true;
 
+         if (_panning)
+         {
+            EndPan(e);
+            return;
+         }
+
          var s = e.OriginalSource as Shape;
          if (s == null)
          {
@@ -427,7 +543,7 @@ namespace ModelConsole.Graphics.GLibrary
       private void Canvas_PointerExited(
          object sender, PointerRoutedEventArgs e)
       {
-         if (_currentShape != null)
+         if (_currentShape != null || _panning)
          {
             return;
          }
@@ -460,6 +576,12 @@ namespace ModelConsole.Graphics.GLibrary
       {
          e.Handled = true;
 
+         if (_panning)
+         {
+            EndPan(e);
+            return;
+         }
+
          var s = e.OriginalSource as Shape;
          if (s == null)
          {
@@ -486,6 +608,12 @@ namespace ModelConsole.Graphics.GLibrary
          object sender, PointerRoutedEventArgs e)
       {
          e.Handled = true;
+
+         if (_panning)
+         {
+            EndPan(e);
+            return;
+         }
 
          var s = e.OriginalSource as Shape;
          if (s == null)

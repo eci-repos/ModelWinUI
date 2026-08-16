@@ -1,6 +1,6 @@
 # Sprint 2026-08-16 — Connector routing order & readability
 
-> Executed copy of the sprint. Backlog items: `docs/backlog/008-connector-routing-order.md`, `docs/backlog/009-zoom-and-fit.md`, `docs/backlog/010-editable-canvas.md`, `docs/backlog/012-connectors-never-cross-tables.md`.
+> Executed copy of the sprint. Backlog items: `docs/backlog/008-connector-routing-order.md`, `docs/backlog/009-zoom-and-fit.md`, `docs/backlog/010-editable-canvas.md`, `docs/backlog/011-drawing-panning.md`, `docs/backlog/012-connectors-never-cross-tables.md`.
 
 ## Dates
 
@@ -14,6 +14,7 @@ Backlog items in this sprint (reference by number):
 - [x] `008` — Connector routing: logical order, port-based anchors, endpoint markers
 - [x] `009` — Zoom & fit: scale slider, % entry, fit-to-window
 - [x] `010` — Editable canvas: drag tables, connectors follow, entity inspector, delete-and-regenerate
+- [x] `011` — Drawing panning: left-drag on empty space, middle-drag, space+drag; preserves zoom; cursor feedback
 - [x] `012` — Connectors never cross tables: no connector segment crosses a table interior (hard invariant)
 
 ## Execution Log
@@ -35,14 +36,16 @@ Backlog items in this sprint (reference by number):
 - 2026-08-16 — `DeleteConnector` removes the FK `ConstraintInfo` from the model and re-renders; the remaining connectors regenerate as simple non-crossing routes automatically. Endpoint circles are tagged with their connector so clicking a circle also inspects the relationship.
 - 2026-08-16 — Verified: full solution `-c Debug -p:Platform=x64` → **0 errors, 0 warnings**; app launches unpackaged and stays running; 42/42 tests still pass.
 - 2026-08-16 — Item `012` (connectors never cross tables) executed. Root cause: 143 of 74 routed edges crossed a table, all from the Z-path fallback — A* returned null (grid unreachable) for ~50 edges because the **thin obstacles** (already-routed connectors) form barriers. Fix: `OrthogonalRouter.Route` retries A* without thin obstacles when they form a barrier (crossing a connector is acceptable when the alternative is crossing a table); `SnapStub` finds clear cells; the Z fallback tries HV/VH variants that avoid tables. New `NoCrossingInvariantTests` (4): 50-table schema → 0 crossings, tight layout → 0, thin-barrier case → no table crossing, direct HV path → no interior crossing. **49/49 tests pass** (was 45).
+- 2026-08-16 — Item `011` (drawing panning) executed. `GlContext` gained a pan gesture: a press that hits no shape starts a pan; middle-drag pans regardless of what's under the pointer; left-drag while **space** is held pans even over a shape. Space state via `InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Space)`; **mouse only** so touch/pen keep panning natively via the ScrollViewer. `GlContext` captures the pointer, tracks the delta from the pan start (content space), and raises `PanRequested(dx, dy)`; `ModelPanelControl` feeds `ChangeView(offset - delta, ZoomFactor)` — 1:1 with the pointer at any zoom, zoom never reset. Cursor feedback via a new `GlCanvas : Canvas` subclass exposing the protected `ProtectedCursor` (hand over empty space, `SizeAll` move cursor while panning — `Grabbing` doesn't exist in this SDK). Table-drag (010) intact. **0 errors, 0 warnings; 49/49 tests pass**; app launches and stays running.
 
 ## Results
 
-- **Completed:** `008`, `009`, `010`, `012`
+- **Completed:** `008`, `009`, `010`, `011`, `012`
 - **Notes:**
   - App router options now `GridSize=16, ObstacleMargin=14, StubLength=20`.
   - Sequential edges are added as **thin** obstacles (4 px margin, not inflated) so port fan-out still fits through tight gaps.
   - `Rect2.SegmentCrossesInterior` fix changes behavior for axis-aligned segments — existing tests were self-consistent with the old bug; all still pass.
   - Zoom is built on the ScrollViewer's native zoom — no hand-rolled `ScaleTransform`. Slider/textbox/fit all reduce to `ChangeView`; the % box doubles as the zoom readout.
   - The drawing is always *derived* from the model state (`_tables` + `_layout`), never a frozen artifact — drag, delete, and POCO edits all just re-run `Render()`.
+  - Panning (011) is mouse-only by design: touch/pen already pan natively via the ScrollViewer, and a pan gesture must not capture the pointer away from it. The pan delta is in content units (Canvas-local), so `offset - delta` is 1:1 with the pointer at any zoom — no `1/ZoomFactor` scaling.
   - Backlog items archived: `docs/backlog/archive/008-connector-routing-order.md`, `docs/backlog/archive/009-zoom-and-fit.md`, `docs/backlog/archive/010-editable-canvas.md`.

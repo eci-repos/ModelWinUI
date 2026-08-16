@@ -12,6 +12,15 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-16 — Drawing panning (backlog item 011)
+
+- **Pan gesture in `GlContext`:** a press that hits no shape starts a pan (left-drag on empty canvas space); middle-mouse drag pans regardless of what's under the pointer; left-drag while **space** is held pans even over a shape (space+drag convention). Space state is queried via `InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Space)` — no focus tracking needed. **Mouse only** (`PointerDeviceType.Mouse`) so touch/pen keep panning natively via the ScrollViewer.
+- **Pan plumbing:** `GlContext` captures the pointer, tracks the delta from the pan start point (Canvas-local / content space, so it is already zoom-independent), and raises a new `PanRequested(dx, dy)` event. `ModelPanelControl` subscribes and feeds `ModelScrollViewer.ChangeView(HorizontalOffset - dx, VerticalOffset - dy, ZoomFactor, true)` — the offset delta is in content units, so panning is 1:1 with the pointer at any zoom and never resets the zoom.
+- **Cursor feedback:** new `GlCanvas : Canvas` subclass exposes the protected `UIElement.ProtectedCursor` as a public `Cursor` property (the official pattern — `ProtectedCursor` is inaccessible from outside a UIElement). `GlContext` swaps to a hand cursor over empty space and a `SizeAll` move cursor while panning (`InputSystemCursorShape.Grabbing` does not exist in this SDK version); the drawing canvas in `ModelPanelControl.xaml` is now a `GlCanvas`.
+- **Table-drag (010) intact:** a press that hits a shape (table, connector, endpoint circle) keeps the existing drag/select behavior; only a press on empty space (or middle/space+drag) starts a pan.
+- **Verified:** full solution `-c Debug -p:Platform=x64` → **0 errors, 0 warnings**; **49/49 tests still pass**; app launches unpackaged and stays running. Interactive panning (left/middle/space+drag, zoom preserved, table-drag intact) needs a manual pass.
+- Backlog item: `docs/backlog/011-drawing-panning.md`.
+
 ### 2026-08-16 — Connectors never cross tables (backlog item 012)
 
 - **Root cause (investigated):** 143 of 74 routed edges crossed a table, all from the **Z-path fallback**. A* returned null (grid unreachable) for ~50 edges because the **thin obstacles** (already-routed connectors) form barriers: e.g. the PersonAlias→RefId connector (vertical at x=581, horizontal at y=619) combined with the tables makes the grid genuinely unreachable for PersonName→Person. The Z fallback then drew a straight 4-point Z through tables. (A BFS reachability probe reached the goal only because it used an **empty** thin list — the barrier is real.)
@@ -137,8 +146,8 @@ Running record of work done and next pending tasks. **Read this first** when sta
    - Develop the controls needed to view a model (beyond the current sample drawing).
 4. **Backlog item 005 — Non-trivial sample models** (roadmap)
    - Ship sample models showing the tool's capabilities.
-5. **Backlog item 011 — Drawing panning** (planned 2026-08-16)
-   - Mouse-driven panning of the drawing: left-drag on empty canvas, middle-mouse drag, space+drag; preserves zoom; table-drag (010) stays intact. Natural follow-up to zoom (009). File: `docs/backlog/011-drawing-panning.md`.
+5. **Backlog item 011 — Drawing panning** ✅ **Done 2026-08-16**
+   - Mouse-driven panning of the drawing: left-drag on empty canvas, middle-mouse drag, space+drag; preserves zoom; table-drag (010) stays intact. `GlContext` raises `PanRequested(dx, dy)` (content-space delta from the pan start); `ModelPanelControl` feeds `ChangeView(offset - delta, ZoomFactor)`. Cursor feedback via a new `GlCanvas` subclass (hand over empty space, move cursor while panning). File: `docs/backlog/011-drawing-panning.md`.
 6. **Backlog item 012 — Connectors never cross tables** ✅ **Done 2026-08-16**
    - "No connector segment crosses a table interior" is now a hard invariant. `OrthogonalRouter.Route` retries A* without thin obstacles when they form a barrier, `SnapStub` finds clear cells, and the Z fallback tries HV/VH variants that avoid tables. 0 crossings across the 50-table schema (was 143). File: `docs/backlog/012-connectors-never-cross-tables.md`.
 7. **Backlog item 013 — Dragging a table hangs the app** (bug report, **fixed 2026-08-16**)
