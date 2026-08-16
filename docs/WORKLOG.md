@@ -152,6 +152,8 @@ Running record of work done and next pending tasks. **Read this first** when sta
    - "No connector segment crosses a table interior" is now a hard invariant. `OrthogonalRouter.Route` retries A* without thin obstacles when they form a barrier, `SnapStub` finds clear cells, and the Z fallback tries HV/VH variants that avoid tables. 0 crossings across the 50-table schema (was 143). File: `docs/backlog/012-connectors-never-cross-tables.md`.
 7. **Backlog item 013 — Dragging a table hangs the app** (bug report, **fixed 2026-08-16**)
    - **Root cause:** (1) `GetCurrentPoint(null)` is window-relative → drag delta wrong at non-100% zoom → table flung `zoom×` too far. (2) A* re-route cost grows quadratically with canvas size → minutes. **Fix:** `GetCurrentPoint(_canvas)`; partial re-route (only the moved table's edges); `RouterOptions.MaxExpansions` node budget. Measured: 4.2 s → 2.2 s drag release; 20000 px case capped. 45/45 tests pass. Remaining: per-edge timing diagnostics (deferred). File: `docs/backlog/013-drag-table-hangs-app.md`.
+8. **Backlog item 014 — Right panel (log + inspector) can't be closed** (planned 2026-08-16)
+   - The right column of `ModelEditorControl` (diagnostics log on top, entity inspector below) is always visible with no way to collapse it. Add a collapse/expand toggle so the drawing canvas reflows into the freed space; zoom/pan preserved. File: `docs/backlog/014-closeable-right-panel.md`.
 
 ### Known gaps / issues (candidates for backlog items)
 
