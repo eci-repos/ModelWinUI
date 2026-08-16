@@ -15,6 +15,18 @@ namespace Model.Data
       public string Description { get; set; }
       public string Type { get; set; } = null;
 
+      /// <summary>
+      /// Parent (referenced) table for a foreign key. Set on FK constraints
+      /// only; null for every other constraint type.
+      /// </summary>
+      public string ReferencedTableName { get; set; }
+
+      /// <summary>
+      /// Parent (referenced) column for a foreign key. When null the parent's
+      /// primary key is used as the resolution default.
+      /// </summary>
+      public string ReferencedColumnName { get; set; }
+
       public bool IsKey
       {
          get { return Type == DataInfo.PRIMARY_KEY; }

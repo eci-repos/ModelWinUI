@@ -13,6 +13,9 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 
+using Model.Data;
+using ModelConsole.Graph;
+
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -23,6 +26,23 @@ namespace ModelConsole.Controls
       public ModelEditorControl()
       {
          this.InitializeComponent();
+
+         // Route clicks on the canvas to the inspector, and inspector
+         // actions (edit / delete) back to the model panel for a re-render.
+         ModelPanel.EntitySelected += (s, entity) =>
+         {
+            if (entity is TableInfo table)
+            {
+               InspectorPanel.ShowTable(table);
+            }
+            else if (entity is FkRelation edge)
+            {
+               InspectorPanel.ShowConnector(edge);
+            }
+         };
+
+         InspectorPanel.ModelEdited += (s, e) => ModelPanel.Refresh();
+         InspectorPanel.DeleteRequested += (s, edge) => ModelPanel.DeleteConnector(edge);
       }
    }
 }

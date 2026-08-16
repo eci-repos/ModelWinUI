@@ -22,6 +22,13 @@ namespace ModelConsole.Graphics.GLibrary
 
       public GlContext Context { get; set; } = null;
 
+      /// <summary>
+      /// Arbitrary payload attached to a drawable (e.g. the <c>FkRelation</c>
+      /// edge a connector renders) so a click can resolve the underlying
+      /// model entity.
+      /// </summary>
+      public object Data { get; set; } = null;
+
       public GlObject(object instance) : base()
       {
          m_Instance = instance;

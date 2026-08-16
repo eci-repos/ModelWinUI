@@ -45,6 +45,24 @@ namespace ModelConsole.Graphics.GLibrary
       /// </summary>
       private IGlGrabber _grabber = null;
 
+      /// <summary>
+      /// True once the current press has moved the shape beyond a small
+      /// threshold, distinguishing a drag from a click.
+      /// </summary>
+      private bool _dragMoved;
+
+      /// <summary>
+      /// Fired when a shape is released after being dragged (moved). The
+      /// payload is the shape's <see cref="GlObject"/>.
+      /// </summary>
+      public event Action<GlObject> ShapeReleased;
+
+      /// <summary>
+      /// Fired when a shape is clicked (pressed and released without moving).
+      /// The payload is the shape's <see cref="GlObject"/>.
+      /// </summary>
+      public event Action<GlObject> ShapeClicked;
+
       private Canvas _canvas;
       public Canvas Instance
       {
@@ -86,6 +104,22 @@ namespace ModelConsole.Graphics.GLibrary
       {
          _handle.Selected = false;
          _grabber = null;
+      }
+
+      /// <summary>
+      /// Clear all interaction state. Called before a full re-render clears
+      /// the canvas, so stale shape references (current/selected shape,
+      /// grips, grabbers) do not point at removed elements.
+      /// </summary>
+      public void Reset()
+      {
+         _currentShape = null;
+         _selectedShape = null;
+         _pointerPoint = null;
+         _grip = null;
+         _handle = new GlHandle();
+         _grabber = null;
+         _dragMoved = false;
       }
 
       /// <summary>
@@ -151,6 +185,11 @@ namespace ModelConsole.Graphics.GLibrary
          delta.X = point.Position.X - _pointerPoint.Position.X;
          delta.Y = point.Position.Y - _pointerPoint.Position.Y;
 
+         if (Math.Abs(delta.X) > 2 || Math.Abs(delta.Y) > 2)
+         {
+            _dragMoved = true;
+         }
+
          var o = shape.Tag as GlObject;
          o.DeltaMove(delta);
 
@@ -178,6 +217,7 @@ namespace ModelConsole.Graphics.GLibrary
          object sender, PointerRoutedEventArgs e)
       {
          e.Handled = true;
+         _dragMoved = false;
 
          if (_currentShape != null)
          {
@@ -358,7 +398,22 @@ namespace ModelConsole.Graphics.GLibrary
             s.ReleasePointerCapture(e.Pointer);
          }
 
+         var released = s?.Tag as GlObject;
+         bool moved = _dragMoved;
+
          ReleaseShape(nameof(Canvas_PointerRelease));
+
+         if (released != null)
+         {
+            if (moved)
+            {
+               ShapeReleased?.Invoke(released);
+            }
+            else
+            {
+               ShapeClicked?.Invoke(released);
+            }
+         }
       }
 
       /// <summary>

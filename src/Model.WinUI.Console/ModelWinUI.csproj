@@ -16,6 +16,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Controls\DiagnosticsLogControl.xaml" />
+    <None Remove="Controls\EntityInspectorControl.xaml" />
     <None Remove="Controls\ModelEditorControl.xaml" />
     <None Remove="Controls\ModelPanelControl.xaml" />
   </ItemGroup>
@@ -58,6 +59,11 @@
   </ItemGroup>
   <ItemGroup>
     <Page Update="Controls\DiagnosticsLogControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Controls\EntityInspectorControl.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

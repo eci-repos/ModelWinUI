@@ -30,6 +30,24 @@ namespace ModelConsole.Graphics.Primitives
       private StackPanel _rowsPanel = new StackPanel();
       public List<TableRowPanel> Rows { get; set; } = new List<TableRowPanel>();
 
+      /// <summary>
+      /// The metadata this table renders. The columns list is shared with the
+      /// model, so editing a column in the inspector is picked up on re-render.
+      /// </summary>
+      public TableInfo TableInfo
+      {
+         get { return _table; }
+      }
+
+      /// <summary>
+      /// The size the table will render at, computed from its column content.
+      /// Unlike <see cref="GlRectangle.Width"/>/<see cref="GlRectangle.Height"/>
+      /// (which return ActualWidth/ActualHeight and are 0 until layout) these
+      /// are valid immediately after construction.
+      /// </summary>
+      public double ComputedWidth { get; private set; }
+      public double ComputedHeight { get; private set; }
+
       private double _column1Width;
       private double _column2Width;
       private double _column3Width;
@@ -164,7 +182,38 @@ namespace ModelConsole.Graphics.Primitives
             y += p.Height;
          }
 
+         // The render size depends only on the column content, so it is known
+         // right after the columns are added (no XAML layout required).
+         double totalHeight = _bannerHeight + CornerRadius * 2;
+         foreach (var row in Rows)
+         {
+            totalHeight += row.Height;
+         }
+         ComputedWidth = _column1Width + _column2Width + _column3Width + 22;
+         ComputedHeight = totalHeight + 40;
+
          _rowsPanel.Children.Clear();
+      }
+
+      /// <summary>
+      /// Absolute canvas Y of the vertical center of the row that renders the
+      /// given column, used to anchor FK connectors at the column row. Falls
+      /// back to the table's vertical edge midpoint.
+      /// </summary>
+      /// <param name="columnName">column to locate</param>
+      /// <returns>the absolute Y coordinate of the row center</returns>
+      public double GetRowCenterY(string columnName)
+      {
+         foreach (var row in Rows)
+         {
+            if (row.Column != null &&
+               string.Equals(row.Column.ColumnName, columnName,
+                  System.StringComparison.Ordinal))
+            {
+               return row.Y + row.Height / 2.0;
+            }
+         }
+         return Y + ComputedHeight / 2.0;
       }
 
       /// <summary>
@@ -217,8 +266,8 @@ namespace ModelConsole.Graphics.Primitives
             height += i.Height;
          }
 
-         Width = _column1Width + _column2Width + _column3Width + 22;
-         Height = height + 40;
+         Width = ComputedWidth;
+         Height = ComputedHeight;
 
          SetInstance(X, Y, Width, Height, GlContext.DefaultRoundCorderRadious);
 
@@ -226,8 +275,18 @@ namespace ModelConsole.Graphics.Primitives
          frame.Instance.Children.Add(NativeInstance);
          frame.Instance.Children.Add(_rowsPanel);
 
+         // The rows panel and banner are display-only; make them hit-test
+         // transparent so a press anywhere on the table reaches the rectangle
+         // and the whole table can be dragged.
+         _rowsPanel.IsHitTestVisible = false;
+
          DeltaMove();
          DrawBannerText(frame, _table.SchemaName, _table.TableName);
+
+         if (Banner != null && Banner.Instance is FrameworkElement bannerElement)
+         {
+            bannerElement.IsHitTestVisible = false;
+         }
       }
 
       /// <summary>

@@ -12,6 +12,44 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-16 — Sprint executed: Editable canvas (backlog item 010)
+
+- `GlContext` gained `ShapeReleased` / `ShapeClicked` events (drag vs click distinguished by a 2 px movement threshold) and a `Reset()` that clears interaction state (current/selected shape, grips, grabbers) before a full re-render. `GlObject` gained a `Data` payload so a connector carries its `FkRelation` edge.
+- `Table` exposes `TableInfo` (the metadata it renders; columns shared with the model) and its rows panel + banner are now hit-test-transparent, so a press anywhere on a table reaches the rectangle and the whole table drags.
+- `ModelPanelControl` refactored to a state-driven pipeline: `_tables` (model) + `_layout` (positions) are the source of truth; `Render()` clears the canvas and re-draws tables + routes connectors from that state. Drag release updates the layout and re-runs the pipeline, so connectors follow; a connector drag snaps back to its routed position.
+- New `EntityInspectorControl` in the right column (below the log): clicking a table lists its columns with editable data types (Enter/LostFocus commits → re-render); clicking a connector shows the FK relationship with a Delete button. Endpoint circles are tagged with their connector so clicking a circle also inspects the relationship.
+- `DeleteConnector` removes the FK `ConstraintInfo` from the model and re-renders; the remaining connectors regenerate as simple non-crossing routes automatically (the "regenerate by default" principle — a route is always derived from current state, never a frozen artifact).
+- **Verified:** full solution `-c Debug -p:Platform=x64` → **0 errors, 0 warnings**; app launches unpackaged and stays running; 42/42 tests still pass.
+- Backlog item archived: `docs/backlog/archive/010-editable-canvas.md`. Sprint record: `docs/sprints/CURRENT.md` (008/009/010 all complete).
+
+### 2026-08-16 — Sprint executed: Zoom & fit (backlog item 009)
+
+- `ModelPanelControl.xaml` restructured: a zoom toolbar row (fit-to-window button + scale slider + % entry box) above the ScrollViewer; the ScrollViewer now has `ZoomMode="Enabled"`, `MinZoomFactor=0.1`, `MaxZoomFactor=4.0` so Ctrl+wheel / pinch zoom around the cursor natively (no hand-rolled `ScaleTransform`).
+- Zoom logic in `ModelPanelControl.xaml.cs`: `ApplyZoom` (zoom-around-viewport-center via `ChangeView`, clamped to the zoom range), `FitToWindow` (`min(viewportW/extentW, viewportH/extentH)` capped at 100%, centered), `ViewChanged` → `SyncZoomUI` (slider + % box follow the actual zoom from any source), `CommitZoomTextBox` (parse + clamp + revert on invalid), and `KeyboardAccelerator`s for Ctrl+0 (100%), Ctrl+1 (fit), Ctrl+Plus/Minus (numpad `Add`/`Subtract` + main-keyboard VK 0xBB/0xBD — the SDK's `VirtualKey` enum omits the `Oem*` names, so raw VK codes are used).
+- **Pointer hit-testing verified at non-100% zoom:** `GlContext` handlers are attached to the Canvas and use `GetCurrentPoint(null)` (Canvas-local coordinates), so hit-testing and delta-move stay correct under ScrollViewer zoom — no changes needed.
+- **Verified:** full solution `-c Debug -p:Platform=x64` → **0 errors, 0 warnings**; app launches unpackaged and stays running; 42/42 tests still pass.
+- Backlog item archived: `docs/backlog/archive/009-zoom-and-fit.md`. Sprint record: `docs/sprints/CURRENT.md` (010 still pending in the same sprint).
+
+### 2026-08-16 — Sprint executed: Connector routing order & readability (backlog item 008)
+
+- New pure modules in ModelGraphLibrary (`ModelConsole.Graph`): `ConnectorAnchors` (`AnchorSide` enum, `Resolve` picks the departure side from the child/parent relative position, `FanOut` offsets shared-column anchors perpendicular to the side) and `SequentialRouter` (`RouteAll` routes edges in deterministic order, feeding each routed polyline back as a **thin** obstacle so later edges avoid crossing it).
+- `OrthogonalRouter.Route` gained a `thinObstacles` parameter (non-inflated obstacles, 4 px margin) plus an A* segment-crossing check so a single grid step cannot jump over a thin obstacle (e.g. an already-routed connector).
+- **Fixed a pre-existing `Rect2.SegmentCrossesInterior` bug:** for a segment parallel to an axis (`d == 0`), `GetStrictInterval` returned an empty interval even when the constant coordinate was strictly inside the rect, so axis-aligned segments were never detected as crossing a rect. Now returns the full interval when inside. The router's direct-path check now uses the **un-inflated** obstacles so a route leaving a table-edge anchor is not rejected for crossing that table's own inflated margin (keeps straight lines for side-by-side tables).
+- App integration: `ModelPanelControl` routes via `ConnectorAnchors.Resolve` + `FanOut` (grouped by child/parent `table::column`), `SequentialRouter.RouteAll`, `StubLength = 20`, and draws 8 px `Colors.DodgerBlue` endpoint circles via the new `GlEllipse` primitive (XAML `Graphics` stack).
+- New tests: `ConnectorAnchorsTests` (6) + `SequentialRouterTests` (4) — straight edges stay straight, later edge avoids earlier edge, routes avoid table obstacles, deterministic.
+- **Verified:** library builds 0/0; **42/42 tests pass** (was 32); full solution `-c Debug -p:Platform=x64` → **0 errors, 0 warnings**; app launches unpackaged and stays running (routing executes without crashing).
+- Backlog item archived: `docs/backlog/archive/008-connector-routing-order.md`. Sprint record: `docs/sprints/CURRENT.md` (009 + 010 still pending in the same sprint).
+
+### 2026-08-15 — Sprint executed: Unit tests + A* FK routing + 50-table schema (backlog item 007)
+
+- Extended `ConstraintInfo` with nullable `ReferencedTableName` / `ReferencedColumnName` (backward compatible; null column ⇒ parent PK default) so FKs can express their parent side.
+- New pure modules in ModelGraphLibrary (`ModelConsole.Graph`): `Geometry` (`Point2`/`Rect2` + strict-interior segment test), `FkEdgeExtractor` (74 edges, deterministic, issue reporting), `TableLayoutEngine` (row-major grid), `OrthogonalRouter` (A* grid pathfinding, obstacle inflation, cell-snapped stubs, collinear simplification, orthogonal Z-path fallback). All Windows.Foundation-free.
+- New fixture `ModelConsole.ModelData.PublicSafetySchema` — exactly 50 tables, 74 FK edges across 8 domain areas (Identity, Reference data, Agencies & personnel, Geography & facilities, Incidents & dispatch, Enforcement, Offenses & case, Courts & sentencing); SentenceCondition→Sentence omits `ReferencedColumnName` to exercise the PK-default rule.
+- **First test project:** `tests/ModelGraphLibrary.Tests` (xUnit, net10.0, added to `ModelWinUI.sln`). 32 tests across `SchemaIntegrityTests`, `FkEdgeExtractorTests`, `TableLayoutEngineTests`, `OrthogonalRouterTests` — **all green (158 ms)**.
+- App integration: `GlOrthoPath.DrawRouted` (absolute-point path), `IConnectorFactory.CreateRouted`, `Table.ComputedWidth/Height` + `GetRowCenterY`, `IModelDataProvider.GetPublicSafetyTables`, `ModelPanelControl` rewrite — measure → layout → draw → route the 50 tables + connectors; Canvas wrapped in a ScrollViewer. Fixed CS0246 (`using System.Collections.Generic;` in `IConnectorFactory.cs` / `ConnectorFactory.cs`).
+- **Verified:** library builds 0/0; tests 32/32; full solution `-c Debug -p:Platform=x64` → **0 errors, 0 warnings**; app launches unpackaged, window "EDAM Studio" responding, 50 tables + ~74 routed FK connectors render without crashing. (Screenshot declined.)
+- Sprint record: `docs/sprints/archive/sprint-2026-08-15-tests-and-fk-routing.md`. Backlog item archived: `docs/backlog/archive/007-unit-tests-and-fk-routing.md`. Functionality map + CLAUDE.md updated.
+
 ### 2026-08-15 — Sprint executed: ModelGraphLibrary split (backlog item 006)
 
 - New project `src/ModelGraphLibrary/ModelGraphLibrary.csproj` — plain `net10.0` class library, `RootNamespace=ModelConsole`, `SkiaSharp` 4.151.1 (core). Added to `ModelWinUI.sln`.
@@ -71,13 +109,14 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ### Next tasks (in priority order)
 
-1. **Backlog item 003 — ERD graphics primitives base library** (from project README roadmap)
+1. **Sprint 2026-08-16 (connector routing) is complete** — backlog items **008**, **009**, **010** all done. Sprint record: `docs/sprints/CURRENT.md`. Archived: `docs/backlog/archive/008-connector-routing-order.md`, `009-zoom-and-fit.md`, `010-editable-canvas.md`.
+   - **010 — Editable canvas** ✅ **Done 2026-08-16** — drag tables (re-route on release), click an entity to inspect its `Model.Data` POCO in the new `EntityInspectorControl`, edit a column data type → re-render, delete a connector → remaining paths regenerate as simplest non-crossing routes by default. The drawing is always *derived* from the model state (`_tables` + `_layout`), never a frozen artifact.
+2. **Backlog item 003 — ERD graphics primitives base library** (from project README roadmap)
    - Define and draw Table and constraint connectors (lines/symbols) as a reusable library.
    - Current state: `Table` primitive and `GlOrthoPath` connectors exist but are early-stage; `GlModel` collection is now functional behind `IGlModel`.
-   - Candidate for the next sprint (`docs/sprints/CURRENT.md` is empty).
-2. **Backlog item 004 — UI controls for viewing the data model** (roadmap)
+3. **Backlog item 004 — UI controls for viewing the data model** (roadmap)
    - Develop the controls needed to view a model (beyond the current sample drawing).
-3. **Backlog item 005 — Non-trivial sample models** (roadmap)
+4. **Backlog item 005 — Non-trivial sample models** (roadmap)
    - Ship sample models showing the tool's capabilities.
 
 ### Known gaps / issues (candidates for backlog items)
@@ -86,7 +125,10 @@ Running record of work done and next pending tasks. **Read this first** when sta
 - Only the **Skia stack** is extracted into ModelGraphLibrary; the XAML `Graphics` stack still lives inside the app project (WinUI-bound). Splitting it out is possible but buys no portability.
 - ModelGraphLibrary keeps the app's namespaces (`ModelConsole.*`, `Model.Data`) — namespace reorganization to the library's own identity is a candidate follow-up.
 - `SkiaPanelControl` (Skia stack) is DI-converted but not wired into `MainWindow`; the Skia stack is the one intended for the Uno/WebAssembly sibling.
-- No test projects exist — ModelGraphLibrary is now a clean target for the first unit tests (pure .NET, no WinUI).
+- Test project exists (backlog 007) but only covers ModelGraphLibrary's pure modules; the XAML `Graphics` stack and the WinUI app have no automated tests.
+- Routed connectors have no corner rounding (deferred from backlog 007) — rounding can re-intersect obstacles in tight gaps.
+- Deferred from backlog 010: editing table text; add/remove whole tables and columns (inspector edit comes first); undo/redo (the model/view separation keeps it possible); live re-route during drag (re-route on release first; optimize to only re-route edges touching the changed table later).
+- The layout is user-driven once a table is dragged (dragging overrides the grid); there is no auto-arrange/re-layout after drags, so a moved table can overlap a neighbour.
 - csproj references `PublishProfile=win10-$(Platform).pubxml` but no `.pubxml` files exist (`NETSDK1198` warning).
 - `Log.Write` is inert (`EVENT_LOG_SUPPORT` not defined); diagnostics flow through `ResultLog.DefaultLog` instead.
 
@@ -103,3 +145,6 @@ Running record of work done and next pending tasks. **Read this first** when sta
 - **XAML instantiation order matters:** `ModelEditorControl.xaml` declares `DiagnosticsLogControl` before `ModelPanelControl` so the log VM subscribes before "GL Context Ready." is written — keep that order.
 - **Container package:** `Microsoft.Extensions.DependencyInjection` 10.0.10 (restored and building). Functionality map lives at `docs/codebase-functionality-map.md`.
 - **ModelGraphLibrary (backlog 006):** the portable Skia stack + `Model.Data` now live in `src/ModelGraphLibrary` (plain `net10.0`, `SkiaSharp` core, `RootNamespace=ModelConsole`, namespaces unchanged). Build it alone with `dotnet build src/ModelGraphLibrary/ModelGraphLibrary.csproj`; the app references it. `SkiaPanelControl` and the `ISkiaTableFactory` DI registration still use `ModelConsole.Services` — unchanged.
+- **Tests (backlog 007):** run with `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug` (no WinUI needed — the test project targets plain `net10.0` and only references ModelGraphLibrary).
+- **`ActualWidth` vs `ComputedWidth`:** `GlRectangle.Width/Height` return `ActualWidth`/`ActualHeight` — **0 until XAML layout**. All layout math in `ModelPanelControl` uses `Table.ComputedWidth`/`ComputedHeight` (valid right after construction).
+- **Row-Y staleness (resolved by 010):** `Table.GetRowCenterY(columnName)` uses the row panels' absolute Ys (valid at draw time). It is static-layout correct only, but since 010 re-creates every table on each `Render()`, the row Ys are always recomputed from the current position — no staleness in practice.

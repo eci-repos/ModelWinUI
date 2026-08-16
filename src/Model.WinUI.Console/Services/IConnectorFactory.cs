@@ -1,5 +1,8 @@
+using System.Collections.Generic;
+
 using ModelConsole.Graphics.GLibrary;
 using ModelConsole.Graphics.GLibrary.GlOrtho;
+using ModelConsole.Graph;
 
 namespace ModelConsole.Services
 {
@@ -22,5 +25,14 @@ namespace ModelConsole.Services
       GlOrthoPath Create(GlContext context,
          double x1, double y1, double x2, double y2,
          GlSide side = GlSide.Right);
+
+      /// <summary>
+      /// Create and draw an orthogonal connector from a pre-computed absolute
+      /// polyline (obstacle-avoiding route).
+      /// </summary>
+      /// <param name="context">drawing context</param>
+      /// <param name="points">absolute path points (at least two)</param>
+      /// <returns>the created connector instance is returned</returns>
+      GlOrthoPath CreateRouted(GlContext context, IReadOnlyList<Point2> points);
    }
 }

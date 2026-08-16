@@ -17,12 +17,20 @@
          <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
 
-      <!-- DiagnosticsLogControl is declared first so its view model subscribes
-           to the log before ModelPanelControl writes its startup message. -->
-      <local:DiagnosticsLogControl x:Name="DiagnosticsPanel" Margin="0"
-         Grid.Column="1" Grid.Row="0" MinWidth="250"
-         VerticalAlignment="Stretch"/>
+      <!-- Right column: log on top, entity inspector below. The log is
+           declared first so its view model subscribes to the log before
+           ModelPanelControl writes its startup message. -->
+      <Grid Grid.Column="1" Grid.Row="0" MinWidth="250">
+         <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+         </Grid.RowDefinitions>
+         <local:DiagnosticsLogControl x:Name="DiagnosticsPanel" Margin="0"
+            Grid.Column="0" Grid.Row="0" VerticalAlignment="Stretch"/>
+         <local:EntityInspectorControl x:Name="InspectorPanel" Margin="0"
+            Grid.Column="0" Grid.Row="1" VerticalAlignment="Stretch"/>
+      </Grid>
 
-      <local:ModelPanelControl Grid.Column="0" />
+      <local:ModelPanelControl x:Name="ModelPanel" Grid.Column="0" />
    </Grid>
 </UserControl>

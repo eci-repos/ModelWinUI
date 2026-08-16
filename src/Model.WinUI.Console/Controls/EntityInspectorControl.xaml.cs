@@ -1,0 +1,174 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using Microsoft.UI.Text;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+
+using Windows.System;
+
+using Model.Data;
+using ModelConsole.Graph;
+
+namespace ModelConsole.Controls
+{
+   /// <summary>
+   /// Entity inspector: shows the metadata of the clicked graphic entity.
+   /// For a table it lists the columns (data type editable - committing
+   /// re-renders the drawing); for a connector it shows the FK relationship
+   /// and offers a delete action that regenerates the remaining routes.
+   /// </summary>
+   public sealed partial class EntityInspectorControl : UserControl
+   {
+      /// <summary>
+      /// Raised when a POCO field was edited; the drawing should re-render.
+      /// </summary>
+      public event EventHandler ModelEdited;
+
+      /// <summary>
+      /// Raised when the user asks to delete a connector.
+      /// </summary>
+      public event EventHandler<FkRelation> DeleteRequested;
+
+      public EntityInspectorControl()
+      {
+         this.InitializeComponent();
+      }
+
+      /// <summary>
+      /// Show a table's metadata: schema::table header plus one row per
+      /// column (name, editable data type, constraints).
+      /// </summary>
+      public void ShowTable(TableInfo table)
+      {
+         HeaderText.Text = table.SchemaName + "::" + table.TableName;
+         ContentPanel.Children.Clear();
+
+         ContentPanel.Children.Add(new TextBlock
+         {
+            Text = "Column / Type / Constraints",
+            FontWeight = FontWeights.SemiBold,
+            FontSize = 12,
+            Margin = new Thickness(0, 0, 0, 4)
+         });
+
+         foreach (var column in table.Columns)
+         {
+            ContentPanel.Children.Add(BuildColumnRow(column));
+         }
+      }
+
+      /// <summary>
+      /// Show a connector's FK relationship with a delete action.
+      /// </summary>
+      public void ShowConnector(FkRelation edge)
+      {
+         HeaderText.Text = "Foreign Key";
+         ContentPanel.Children.Clear();
+
+         ContentPanel.Children.Add(new TextBlock
+         {
+            Text = edge.ChildTable + "." + edge.ChildColumn +
+                   "  →  " + edge.ParentTable + "." + edge.ParentColumn,
+            FontSize = 12,
+            TextWrapping = TextWrapping.WrapWholeWords
+         });
+
+         var deleteButton = new Button
+         {
+            Content = "Delete connector",
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Margin = new Thickness(0, 8, 0, 0)
+         };
+         deleteButton.Click += (s, e) => DeleteRequested?.Invoke(this, edge);
+         ContentPanel.Children.Add(deleteButton);
+      }
+
+      private UIElement BuildColumnRow(ColumnInfo column)
+      {
+         var row = new Grid { Margin = new Thickness(0, 2, 0, 2) };
+         row.ColumnDefinitions.Add(new ColumnDefinition
+         {
+            Width = new GridLength(1, GridUnitType.Star)
+         });
+         row.ColumnDefinitions.Add(new ColumnDefinition
+         {
+            Width = new GridLength(1, GridUnitType.Star)
+         });
+         row.ColumnDefinitions.Add(new ColumnDefinition
+         {
+            Width = new GridLength(1, GridUnitType.Star)
+         });
+
+         var nameText = new TextBlock
+         {
+            Text = column.ColumnName,
+            FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis
+         };
+
+         var typeBox = new TextBox
+         {
+            Text = column.Type,
+            FontSize = 12,
+            Width = 90,
+            VerticalAlignment = VerticalAlignment.Center
+         };
+         typeBox.KeyDown += (s, e) =>
+         {
+            if (e.Key == VirtualKey.Enter)
+            {
+               CommitType(column, typeBox);
+               e.Handled = true;
+            }
+         };
+         typeBox.LostFocus += (s, e) => CommitType(column, typeBox);
+
+         var constraintText = new TextBlock
+         {
+            Text = GetConstraintText(column),
+            FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center
+         };
+
+         Grid.SetColumn(nameText, 0);
+         Grid.SetColumn(typeBox, 1);
+         Grid.SetColumn(constraintText, 2);
+         row.Children.Add(nameText);
+         row.Children.Add(typeBox);
+         row.Children.Add(constraintText);
+
+         return row;
+      }
+
+      /// <summary>
+      /// Commit an edited data type to the shared POCO and ask for a
+      /// re-render when it actually changed.
+      /// </summary>
+      private void CommitType(ColumnInfo column, TextBox box)
+      {
+         if (!string.Equals(column.Type, box.Text, StringComparison.Ordinal))
+         {
+            column.Type = box.Text;
+            ModelEdited?.Invoke(this, EventArgs.Empty);
+         }
+      }
+
+      private static string GetConstraintText(ColumnInfo column)
+      {
+         var parts = new List<string>();
+         if (column.IsKey)
+         {
+            parts.Add("PK");
+         }
+         if (column.IsForeignKey)
+         {
+            parts.Add("FK");
+         }
+         return string.Join(", ", parts);
+      }
+   }
+}

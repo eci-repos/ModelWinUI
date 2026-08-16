@@ -13,6 +13,8 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 
+using ModelConsole.Graph;
+
 namespace ModelConsole.Graphics.GLibrary.GlOrtho
 {
 
@@ -464,6 +466,41 @@ namespace ModelConsole.Graphics.GLibrary.GlOrtho
          shape.GetPath(x1, y1, x2, y2, side);
          shape.Draw(context);
 
+         return shape;
+      }
+
+      /// <summary>
+      /// Draw an orthogonal connector from a pre-computed absolute polyline
+      /// (e.g. the output of <see cref="OrthogonalRouter"/>). No grips and no
+      /// corner rounding - the points are used as-is, positioned at the
+      /// canvas origin.
+      /// </summary>
+      /// <param name="context">drawing canvas and context</param>
+      /// <param name="points">absolute path points (at least two)</param>
+      /// <returns>the connector instance is returned</returns>
+      public static GlOrthoPath DrawRouted(
+         GlContext context, IReadOnlyList<Point2> points)
+      {
+         GlOrthoPath shape = new GlOrthoPath();
+         shape.Context = context;
+
+         var geometry = new PathGeometry();
+         var figure = new PathFigure();
+         figure.StartPoint = new Point(points[0].X, points[0].Y);
+         for (int i = 1; i < points.Count; i++)
+         {
+            figure.Segments.Add(new LineSegment
+            {
+               Point = new Point(points[i].X, points[i].Y)
+            });
+         }
+         geometry.Figures.Add(figure);
+
+         shape._path.Data = geometry;
+         shape._path.Tag = shape;
+
+         // points are absolute; keep the path at the canvas origin
+         context.Instance.Children.Add(shape._path);
          return shape;
       }
 

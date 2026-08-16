@@ -21,13 +21,16 @@ dotnet build ModelWinUI.sln -p:Platform=x64
 
 # Build the portable graphics library alone (no WinUI dependencies)
 dotnet build src/ModelGraphLibrary/ModelGraphLibrary.csproj -c Debug
+
+# Run the unit tests (pure net10.0 — no WinUI needed)
+dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug
 ```
 
 Run from Visual Studio using the launch profiles in `Properties/launchSettings.json`:
 - **ModelWinUI (Unpackaged)** — `commandName: Project` (fastest for dev)
 - **ModelWinUI (Package)** — `commandName: MsixPackage`
 
-There are **no test projects** in the repo.
+The unit-test project `tests/ModelGraphLibrary.Tests` (xUnit, net10.0) covers ModelGraphLibrary's pure modules: schema integrity, FK edge extraction, table layout, and orthogonal routing.
 
 Known build warnings (not errors):
 - `NETSDK1198` — the csproj sets `PublishProfile=win10-$(Platform).pubxml` but no `.pubxml` files exist in the repo. Harmless for `dotnet build`.
@@ -43,10 +46,13 @@ App (App.xaml.cs)
 └── MainWindow (title "EDAM Studio")
     └── ModelEditorControl            (Controls/ModelEditorControl.xaml)
         ├── ModelPanelControl         (left) — hosts the drawing Canvas
-        └── DiagnosticsLogControl     (right) — log list view
+        └── right column
+            ├── DiagnosticsLogControl (top) — log list view
+            └── EntityInspectorControl (bottom) — entity metadata inspector
 ```
 
-- `ModelPanelControl` creates a `GlContext` over its XAML `Canvas` and draws the sample model: two `Table` primitives plus `GlOrthoPath` connectors. This is the entry point for exercising the graphics library.
+- `ModelPanelControl` creates a `GlContext` over its XAML `Canvas` and draws the sample model: a 50-table public-safety schema with every FK routed around the tables as an obstacle-avoiding `GlOrthoPath` connector (Canvas wrapped in a zoomable ScrollViewer). Connectors are anchored per-edge via `ConnectorAnchors`, routed sequentially via `SequentialRouter.RouteAll` (each routed edge becomes an obstacle for the next), and marked with 8 px `GlEllipse` endpoint circles. A zoom toolbar (fit button + slider + % box) drives the ScrollViewer's native zoom (`ChangeView`); Ctrl+0/1/Plus/Minus are wired as `KeyboardAccelerator`s. This is the entry point for exercising the graphics library.
+- **The canvas is editable (backlog 010):** the drawing is always *derived* from the model state — `ModelPanelControl` holds `_tables` (the `TableInfo` model) + `_layout` (current table positions) and `Render()` re-draws everything from that state. Dragging a table updates the layout and re-runs the pipeline (connectors follow); clicking a table or connector raises `EntitySelected`; `DeleteConnector` removes the FK `ConstraintInfo` from the model and re-renders so the remaining connectors regenerate as simple non-crossing routes. `EntityInspectorControl` shows the clicked entity's metadata (editable column data types → re-render) and offers a Delete button for connectors.
 - `SkiaPanelControl` is an **alternative, currently unwired** rendering path using the Skia stack (see below). It is not referenced by `MainWindow`.
 
 ### Two parallel graphics stacks
@@ -54,11 +60,12 @@ App (App.xaml.cs)
 The codebase contains two independent graphics libraries. Do not confuse them — they share class names (`GlObject`, `GlModel`, `Table`) under different namespaces.
 
 1. **`ModelConsole.Graphics.GLibrary`** (active) — WinUI XAML `Shape`-based rendering onto a `Canvas`.
-   - `GlContext` wraps the `Canvas` and owns all pointer handling (press/move/release/capture), selection, and the current grabber. It implements `IDiagnosticWritter` and logs through `ILogService` (resolved via the DI container).
-   - `GlObject` (abstract) is the base for all drawable objects: `DeltaMove`, `Move`, `PointerEvent`, `Reshape`, `Selected`. Each object wraps a native XAML `Shape` (e.g. `GlRectangle` wraps a `Rectangle`, `GlOrthoPath` wraps a `Path`).
+   - `GlContext` wraps the `Canvas` and owns all pointer handling (press/move/release/capture), selection, and the current grabber. It implements `IDiagnosticWritter` and logs through `ILogService` (resolved via the DI container). It raises `ShapeReleased` / `ShapeClicked` (drag vs click via a 2 px movement threshold) and `Reset()` clears interaction state before a full re-render.
+   - `GlObject` (abstract) is the base for all drawable objects: `DeltaMove`, `Move`, `PointerEvent`, `Reshape`, `Selected`. Each object wraps a native XAML `Shape` (e.g. `GlRectangle` wraps a `Rectangle`, `GlOrthoPath` wraps a `Path`) and carries a `Data` payload (e.g. a connector's `FkRelation`).
    - Interaction model: `GlGrip` (resize nodes) and `GlHandle` (move) both implement `IGlGrabber`; `GlContext.SetPointerHandle` decides which one is active based on hit-testing `IGlGrip` nodes.
    - `GlOrtho/GlOrthoPath` draws orthogonal rounded-edge connector lines between shapes, with three grip nodes (start, end, middle) for reshaping.
-   - `Graphics/Primitives/Table.cs` renders a `TableInfo` as a rounded rectangle with a banner (`schema::table`) and one `TableRowPanel` per column (constraint text, name, data type).
+   - `GlEllipse` is a small ellipse primitive — `Draw(context, centerX, centerY, diameter, fill)` positions it centered on a point (used for connector endpoint markers).
+   - `Graphics/Primitives/Table.cs` renders a `TableInfo` as a rounded rectangle with a banner (`schema::table`) and one `TableRowPanel` per column (constraint text, name, data type). It exposes `TableInfo` (the metadata it renders; columns shared with the model) and its rows panel + banner are hit-test-transparent so the whole table drags.
    - `GlModel` implements `IGlModel` (`Items` list; `Add` adds and returns the instance). Resolved **transiently** from the DI container (a singleton would accumulate items across draws).
 
 2. **`ModelConsole.Skia.GLibrary`** (experimental, portable) — SkiaSharp rendering onto an `SKSurface`.
@@ -69,7 +76,19 @@ The codebase contains two independent graphics libraries. Do not confuse them �
 
 ### Data model (`Model.Data`)
 
-Relational metadata classes: `CatalogInfo`, `TableInfo`, `ColumnInfo`, `ColumnList`, `ConstraintInfo`. `TableInfo` supports JSON round-tripping (`ToJson`, `ToJsonFile`, `FromJsonFile`). **These POCOs live in `ModelGraphLibrary`** (namespace `Model.Data`). Sample data stays in the app at `Model/ModelData/Data_Table_Entity.cs` (namespace `Model.Test`) — `GetPersonTable()` / `GetPersonNameTable()` are the fixtures used by the sample drawings.
+Relational metadata classes: `CatalogInfo`, `TableInfo`, `ColumnInfo`, `ColumnList`, `ConstraintInfo`. `TableInfo` supports JSON round-tripping (`ToJson`, `ToJsonFile`, `FromJsonFile`). **These POCOs live in `ModelGraphLibrary`** (namespace `Model.Data`). `ConstraintInfo` carries nullable FK parent references (`ReferencedTableName` / `ReferencedColumnName`; null column ⇒ resolve to the parent's PK). Sample data stays in the app at `Model/ModelData/Data_Table_Entity.cs` (namespace `Model.Test`) — `GetPersonTable()` / `GetPersonNameTable()` are the fixtures used by the Skia path.
+
+### Pure graph modules (`ModelConsole.Graph`)
+
+Portable, deterministic, unit-tested geometry + routing in `ModelGraphLibrary` (no Windows.Foundation):
+- `Geometry` — `Point2` / `Rect2` structs with strict-interior segment/rect tests.
+- `FkEdgeExtractor` — resolves `ConstraintInfo` FK references into `FkRelation` edges (parent PK default), reporting issues and skipping bad edges.
+- `TableLayoutEngine` — row-major grid layout of `TableInfo` into non-overlapping `Rect2` slots.
+- `OrthogonalRouter` — A* grid pathfinding with obstacle inflation, outward stubs, collinear simplification, and an orthogonal Z-path fallback. Accepts `thinObstacles` (non-inflated, e.g. already-routed connectors) and checks segment crossings so a grid step cannot jump over a thin obstacle.
+- `ConnectorAnchors` — `AnchorSide` + `Resolve` (departure side from child/parent relative position) + `FanOut` (offset shared-column anchors perpendicular to the side).
+- `SequentialRouter` — `RouteAll` routes edges in deterministic order, feeding each routed polyline back as a thin obstacle so later edges avoid crossing it.
+
+These are pure static library calls — the app calls them directly (no DI registration). The 50-table fixture lives in `ModelConsole.ModelData.PublicSafetySchema` (`ModelGraphLibrary/ModelData/`): 50 tables, 74 FK edges across the public-safety / criminal-justice domain.
 
 ### Diagnostics (`Model/Diagnostics`)
 

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 using Model.Data;
 
 namespace ModelConsole.Services
@@ -16,5 +18,10 @@ namespace ModelConsole.Services
       /// Sample Person Name table.
       /// </summary>
       TableInfo GetPersonNameTable();
+
+      /// <summary>
+      /// The 50-table public-safety / criminal-justice sample schema.
+      /// </summary>
+      IReadOnlyList<TableInfo> GetPublicSafetyTables();
    }
 }
