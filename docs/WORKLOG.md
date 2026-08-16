@@ -12,6 +12,15 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-16 — Fixed: dragging a table hangs the app (backlog item 013)
+
+- **Root cause (investigated):** (1) `GetCurrentPoint(null)` returns **window-relative** coordinates (per WinUI docs), so at non-100% zoom the drag delta was applied in window pixels to content coordinates → the table moved `zoom×` too far and got flung across the canvas. (2) The A* re-route cost grows **quadratically** with canvas size; a flung table grows the canvas and the release re-route took minutes. Benchmark: full re-route 4.2 s baseline, 223 s at a 20000 px drag.
+- **Fix 1 — coordinate space:** `GlContext` uses `e.GetCurrentPoint(_canvas)` (Canvas-relative → content space) in all six pointer handlers. Drag delta is now correct at any zoom.
+- **Fix 2 — partial re-route:** `ModelPanelControl.Render(string onlyTable = null)` stores the last routes and, on drag release, re-routes **only the moved table's edges** against the stored routes as thin obstacles (full re-route for initial/delete/POCO-edit). Measured: 4.2 s → **2.2 s** for a drag release.
+- **Fix 3 — node budget:** `RouterOptions.MaxExpansions` (default 100000) caps A* work; the 20000 px case that took 223 s is now bounded. New test `NodeBudgetCapsAStarWork`.
+- **Verified:** full solution `-c Debug -p:Platform=x64` → 0 errors; **45/45 tests pass**; app launches unpackaged and stays running.
+- Backlog item: `docs/backlog/013-drag-table-hangs-app.md` (fix implemented; per-edge timing diagnostics deferred).
+
 ### 2026-08-16 — Sprint executed: Editable canvas (backlog item 010)
 
 - `GlContext` gained `ShapeReleased` / `ShapeClicked` events (drag vs click distinguished by a 2 px movement threshold) and a `Reset()` that clears interaction state (current/selected shape, grips, grabbers) before a full re-render. `GlObject` gained a `Data` payload so a connector carries its `FkRelation` edge.
@@ -118,6 +127,12 @@ Running record of work done and next pending tasks. **Read this first** when sta
    - Develop the controls needed to view a model (beyond the current sample drawing).
 4. **Backlog item 005 — Non-trivial sample models** (roadmap)
    - Ship sample models showing the tool's capabilities.
+5. **Backlog item 011 — Drawing panning** (planned 2026-08-16)
+   - Mouse-driven panning of the drawing: left-drag on empty canvas, middle-mouse drag, space+drag; preserves zoom; table-drag (010) stays intact. Natural follow-up to zoom (009). File: `docs/backlog/011-drawing-panning.md`.
+6. **Backlog item 012 — Connectors never cross tables** (planned 2026-08-16)
+   - Make "no connector segment crosses a table interior" a hard invariant. Closes three gaps in `OrthogonalRouter.Route`: the Z-path fallback is unchecked, the anchor-stitching segments are unvalidated, and the direct path uses un-inflated obstacles (zero clearance). Route through the gaps between tables. File: `docs/backlog/012-connectors-never-cross-tables.md`.
+7. **Backlog item 013 — Dragging a table hangs the app** (bug report, **fixed 2026-08-16**)
+   - **Root cause:** (1) `GetCurrentPoint(null)` is window-relative → drag delta wrong at non-100% zoom → table flung `zoom×` too far. (2) A* re-route cost grows quadratically with canvas size → minutes. **Fix:** `GetCurrentPoint(_canvas)`; partial re-route (only the moved table's edges); `RouterOptions.MaxExpansions` node budget. Measured: 4.2 s → 2.2 s drag release; 20000 px case capped. 45/45 tests pass. Remaining: per-edge timing diagnostics (deferred). File: `docs/backlog/013-drag-table-hangs-app.md`.
 
 ### Known gaps / issues (candidates for backlog items)
 

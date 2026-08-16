@@ -165,6 +165,34 @@ namespace ModelConsole.Tests
          Assert.Equal(new[] { new Point2(50, 50), new Point2(50, 50) }, pts);
       }
 
+      [Fact]
+      public void NodeBudgetCapsAStarWork()
+      {
+         // A tiny budget forces A* to give up and fall back to the Z path
+         // (backlog 013 safety net). The route still has exact endpoints and
+         // axis-aligned segments.
+         var options = new RouterOptions
+         {
+            GridSize = 16,
+            ObstacleMargin = 14,
+            StubLength = 32,
+            MaxExpansions = 1
+         };
+         var pts = OrthogonalRouter.Route(
+            new Point2(0, 100), new Point2(400, 300),
+            new[] { new Rect2(150, 50, 100, 100) },
+            Bounds, options);
+
+         Assert.True(pts.Count >= 2);
+         Assert.Equal(new Point2(0, 100), pts[0]);
+         Assert.Equal(new Point2(400, 300), pts[pts.Count - 1]);
+         for (int i = 0; i < pts.Count - 1; i++)
+         {
+            Assert.True(
+               pts[i].X == pts[i + 1].X || pts[i].Y == pts[i + 1].Y);
+         }
+      }
+
       private static void AssertNoCrossing(
          IReadOnlyList<Point2> pts, IReadOnlyList<Rect2> obstacles)
       {

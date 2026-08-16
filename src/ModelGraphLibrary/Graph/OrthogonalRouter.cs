@@ -19,6 +19,12 @@ namespace ModelConsole.Graph
       /// <summary>How far the route travels straight out from an anchor before
       /// the first turn, in pixels.</summary>
       public double StubLength { get; set; } = 32;
+
+      /// <summary>Safety cap on A* cell expansions. When exceeded, the route
+      /// falls back to the orthogonal Z path instead of exploring a huge grid
+      /// (e.g. a table dragged far away grows the canvas quadratically -
+      /// backlog 013).</summary>
+      public long MaxExpansions { get; set; } = 100000;
    }
 
    /// <summary>
@@ -61,6 +67,8 @@ namespace ModelConsole.Graph
          double grid = options != null && options.GridSize > 0 ? options.GridSize : 16;
          double margin = options != null ? options.ObstacleMargin : 0;
          double stub = options != null && options.StubLength > 0 ? options.StubLength : 0;
+         long maxExpansions = options != null && options.MaxExpansions > 0
+            ? options.MaxExpansions : 100000;
 
          var inflated = obstacles == null
             ? new List<Rect2>()
@@ -94,7 +102,8 @@ namespace ModelConsole.Graph
          Point2 endStub = SnapStub(end, endDir, stub, bounds, grid);
 
          // 3. Grid A* between the stub points.
-         List<Point2> gridPath = AStar(startStub, endStub, inflated, thin, bounds, grid);
+         List<Point2> gridPath = AStar(
+            startStub, endStub, inflated, thin, bounds, grid, maxExpansions);
          if (gridPath == null)
          {
             // Unreachable on the grid (e.g. a full-height wall): fall back to
@@ -300,7 +309,7 @@ namespace ModelConsole.Graph
       /// </summary>
       private static List<Point2> AStar(
          Point2 start, Point2 end, IReadOnlyList<Rect2> inflated,
-         IReadOnlyList<Rect2> thin, Rect2 bounds, double grid)
+         IReadOnlyList<Rect2> thin, Rect2 bounds, double grid, long maxExpansions)
       {
          int cols = Math.Max(1, (int)Math.Ceiling(bounds.Width / grid));
          int rows = Math.Max(1, (int)Math.Ceiling(bounds.Height / grid));
@@ -330,8 +339,16 @@ namespace ModelConsole.Graph
          // deterministic neighbour order
          var neighbours = new (int dc, int dr)[] { (1, 0), (-1, 0), (0, 1), (0, -1) };
 
+         long expansions = 0;
          while (open.Count > 0)
          {
+            // Safety cap: a huge grid (e.g. a table dragged far away) must not
+            // stall the UI thread for minutes. Fall back to the Z path.
+            if (++expansions > maxExpansions)
+            {
+               return null;
+            }
+
             (int col, int row) = open.Dequeue();
             if (col == ec && row == er)
             {

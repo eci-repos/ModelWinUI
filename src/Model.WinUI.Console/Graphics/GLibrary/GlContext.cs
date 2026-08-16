@@ -230,7 +230,10 @@ namespace ModelConsole.Graphics.GLibrary
             s = _currentShape;
          }
 
-         var pt = e.GetCurrentPoint(null);
+         // Canvas-relative (content-space) coordinates. GetCurrentPoint(null)
+         // would return window-relative coordinates, which at non-100% zoom
+         // make the drag delta move the shape zoom* too far (backlog 013).
+         var pt = e.GetCurrentPoint(_canvas);
 
          if (s != null)
          {
@@ -283,7 +286,7 @@ namespace ModelConsole.Graphics.GLibrary
       private void Canvas_PointerMoved(
          object sender, PointerRoutedEventArgs e)
       {
-         PointerPoint pt = e.GetCurrentPoint(null);
+         PointerPoint pt = e.GetCurrentPoint(_canvas);
          e.Handled = true;
 
          if (_currentShape != null)
@@ -390,7 +393,7 @@ namespace ModelConsole.Graphics.GLibrary
             s = _currentShape;
          }
 
-         PointerPoint pt = e.GetCurrentPoint(null);
+         PointerPoint pt = e.GetCurrentPoint(_canvas);
 
          if (s != null)
          {
@@ -437,7 +440,7 @@ namespace ModelConsole.Graphics.GLibrary
             s = _currentShape;
          }
 
-         PointerPoint pt = e.GetCurrentPoint(null);
+         PointerPoint pt = e.GetCurrentPoint(_canvas);
 
          if (s != null)
          {
@@ -463,7 +466,7 @@ namespace ModelConsole.Graphics.GLibrary
             s = _currentShape;
          }
 
-         PointerPoint pt = e.GetCurrentPoint(null);
+         PointerPoint pt = e.GetCurrentPoint(_canvas);
 
          if (s != null)
          {
@@ -490,7 +493,7 @@ namespace ModelConsole.Graphics.GLibrary
             s = _currentShape;
          }
 
-         PointerPoint pt = e.GetCurrentPoint(null);
+         PointerPoint pt = e.GetCurrentPoint(_canvas);
 
          if (s != null)
          {

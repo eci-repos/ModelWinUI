@@ -57,6 +57,15 @@ namespace ModelConsole.Controls
       private Dictionary<string, Rect2> _layout;
 
       /// <summary>
+      /// Routes from the last render, keyed by edge. A drag release re-routes
+      /// only the moved table's edges and reuses the rest, so the re-route
+      /// cost stays proportional to the moved table's degree instead of the
+      /// whole schema (backlog 013).
+      /// </summary>
+      private List<(FkRelation Edge, IReadOnlyList<Point2> Points)> _routes =
+         new List<(FkRelation Edge, IReadOnlyList<Point2> Points)>();
+
+      /// <summary>
       /// Raised when the user clicks a graphic entity. The payload is the
       /// entity's <see cref="TableInfo"/> or <see cref="FkRelation"/>.
       /// </summary>
@@ -305,7 +314,11 @@ namespace ModelConsole.Controls
       /// constraints), never a frozen artifact, so any change - a drag, a
       /// deleted connector, an edited POCO field - re-runs this pipeline.
       /// </summary>
-      private void Render()
+      /// <param name="onlyTable">when set (a drag release), re-route only the
+      /// edges touching this table and reuse the stored routes for the rest,
+      /// so the re-route cost is proportional to the moved table's degree
+      /// rather than the whole schema (backlog 013)</param>
+      private void Render(string onlyTable = null)
       {
          ModelCanvas.Children.Clear();
          _context.Reset();
@@ -381,15 +394,56 @@ namespace ModelConsole.Controls
             anchorEdges.Add((start, end, edge));
          }
 
-         var routes = SequentialRouter.RouteAll(
-            anchorEdges.Select(a => (a.Start, a.End)).ToList(),
-            obstacles, bounds, routerOptions);
-
-         for (int i = 0; i < routes.Count; i++)
+         if (onlyTable == null)
          {
-            var pts = routes[i];
+            // Full re-route (initial render, delete, POCO edit).
+            var routes = SequentialRouter.RouteAll(
+               anchorEdges.Select(a => (a.Start, a.End)).ToList(),
+               obstacles, bounds, routerOptions);
+            _routes = anchorEdges
+               .Select((a, i) => (a.Edge, (IReadOnlyList<Point2>)routes[i]))
+               .ToList();
+         }
+         else
+         {
+            // Drag release: re-route only the moved table's edges, keeping
+            // the stored routes for the rest as thin obstacles so the new
+            // routes avoid them.
+            var toRoute = anchorEdges
+               .Where(a => a.Edge.ChildTable == onlyTable ||
+                           a.Edge.ParentTable == onlyTable)
+               .ToList();
+
+            var thin = new List<Rect2>();
+            foreach (var (edge, pts) in _routes)
+            {
+               if (edge.ChildTable == onlyTable || edge.ParentTable == onlyTable)
+               {
+                  continue;
+               }
+               AddSegmentObstacles(thin, pts, 4);
+            }
+
+            var newRoutes = new List<(FkRelation Edge, IReadOnlyList<Point2> Points)>();
+            foreach (var a in toRoute)
+            {
+               var pts = OrthogonalRouter.Route(
+                  a.Start, a.End, obstacles, bounds, routerOptions, thin);
+               newRoutes.Add((a.Edge, pts));
+               AddSegmentObstacles(thin, pts, 4);
+            }
+
+            _routes = _routes
+               .Where(r => r.Edge.ChildTable != onlyTable &&
+                           r.Edge.ParentTable != onlyTable)
+               .Concat(newRoutes)
+               .ToList();
+         }
+
+         foreach (var (edge, pts) in _routes)
+         {
             var connector = _connectorFactory.CreateRouted(_context, pts);
-            connector.Data = anchorEdges[i].Edge;
+            connector.Data = edge;
 
             // Endpoint markers; tag them with the connector so clicking a
             // circle also inspects the relationship.
@@ -412,16 +466,49 @@ namespace ModelConsole.Controls
       /// <summary>
       /// A shape was dragged and released. Update the layout state for a
       /// moved table, then re-render so its connectors follow (and any
-      /// connector drag snaps back to its routed position).
+      /// connector drag snaps back to its routed position). Only the moved
+      /// table's edges are re-routed (backlog 013).
       /// </summary>
       private void OnShapeReleased(GlObject obj)
       {
          if (obj is Table table)
          {
-            _layout[table.TableInfo.TableName] = new Rect2(
+            string name = table.TableInfo.TableName;
+            _layout[name] = new Rect2(
                table.X, table.Y, table.ComputedWidth, table.ComputedHeight);
+            Render(onlyTable: name);
          }
-         Render();
+      }
+
+      /// <summary>
+      /// Add each segment of a routed polyline to the thin-obstacle list as a
+      /// rectangle around the segment (mirrors
+      /// <see cref="SequentialRouter"/>'s internal helper).
+      /// </summary>
+      private static void AddSegmentObstacles(
+         List<Rect2> thin, IReadOnlyList<Point2> pts, double margin)
+      {
+         for (int i = 0; i < pts.Count - 1; i++)
+         {
+            Point2 a = pts[i];
+            Point2 b = pts[i + 1];
+            if (a.Y == b.Y)
+            {
+               double x1 = Math.Min(a.X, b.X);
+               double x2 = Math.Max(a.X, b.X);
+               thin.Add(new Rect2(
+                  x1 - margin, a.Y - margin,
+                  (x2 - x1) + 2 * margin, 2 * margin));
+            }
+            else
+            {
+               double y1 = Math.Min(a.Y, b.Y);
+               double y2 = Math.Max(a.Y, b.Y);
+               thin.Add(new Rect2(
+                  a.X - margin, y1 - margin,
+                  2 * margin, (y2 - y1) + 2 * margin));
+            }
+         }
       }
 
       /// <summary>
