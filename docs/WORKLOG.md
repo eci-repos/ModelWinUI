@@ -12,6 +12,16 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-16 — Connectors never cross tables (backlog item 012)
+
+- **Root cause (investigated):** 143 of 74 routed edges crossed a table, all from the **Z-path fallback**. A* returned null (grid unreachable) for ~50 edges because the **thin obstacles** (already-routed connectors) form barriers: e.g. the PersonAlias→RefId connector (vertical at x=581, horizontal at y=619) combined with the tables makes the grid genuinely unreachable for PersonName→Person. The Z fallback then drew a straight 4-point Z through tables. (A BFS reachability probe reached the goal only because it used an **empty** thin list — the barrier is real.)
+- **Fix — retry A* without thin obstacles:** when A* returns null with thin obstacles, `OrthogonalRouter.Route` retries with only the inflated table obstacles. The hard invariant is "no connector crosses a table interior", so crossing a connector is acceptable when the alternative is crossing a table. This eliminated all 143 crossings.
+- **Fix — clear-cell stubs:** `SnapStub` now moves the stub outward until its grid cell is not blocked and the anchor→stub segment does not cross a table interior, so a route never starts inside a blocked cell or crosses a neighbour table on its way out.
+- **Fix — table-aware Z fallback:** when even the no-thin A* returns null (genuinely unreachable, e.g. a full-height wall), the fallback tries both HV and VH variants and returns the first that does not cross a table interior; when neither is clear, the variant with fewer crossings.
+- **New tests** (`NoCrossingInvariantTests`, 4): the 50-table `PublicSafetySchema` fixture has **0 table crossings**; a tight layout (20 px slots) has 0; the PersonName→Person thin-barrier case routes without crossing a table; the direct HV path for side-by-side tables does not enter either interior.
+- **Verified:** full solution `-c Debug -p:Platform=x64` → 0 errors; **49/49 tests pass** (was 45); app launches unpackaged and stays running.
+- Backlog item: `docs/backlog/012-connectors-never-cross-tables.md`.
+
 ### 2026-08-16 — Fixed: dragging a table hangs the app (backlog item 013)
 
 - **Root cause (investigated):** (1) `GetCurrentPoint(null)` returns **window-relative** coordinates (per WinUI docs), so at non-100% zoom the drag delta was applied in window pixels to content coordinates → the table moved `zoom×` too far and got flung across the canvas. (2) The A* re-route cost grows **quadratically** with canvas size; a flung table grows the canvas and the release re-route took minutes. Benchmark: full re-route 4.2 s baseline, 223 s at a 20000 px drag.
@@ -129,8 +139,8 @@ Running record of work done and next pending tasks. **Read this first** when sta
    - Ship sample models showing the tool's capabilities.
 5. **Backlog item 011 — Drawing panning** (planned 2026-08-16)
    - Mouse-driven panning of the drawing: left-drag on empty canvas, middle-mouse drag, space+drag; preserves zoom; table-drag (010) stays intact. Natural follow-up to zoom (009). File: `docs/backlog/011-drawing-panning.md`.
-6. **Backlog item 012 — Connectors never cross tables** (planned 2026-08-16)
-   - Make "no connector segment crosses a table interior" a hard invariant. Closes three gaps in `OrthogonalRouter.Route`: the Z-path fallback is unchecked, the anchor-stitching segments are unvalidated, and the direct path uses un-inflated obstacles (zero clearance). Route through the gaps between tables. File: `docs/backlog/012-connectors-never-cross-tables.md`.
+6. **Backlog item 012 — Connectors never cross tables** ✅ **Done 2026-08-16**
+   - "No connector segment crosses a table interior" is now a hard invariant. `OrthogonalRouter.Route` retries A* without thin obstacles when they form a barrier, `SnapStub` finds clear cells, and the Z fallback tries HV/VH variants that avoid tables. 0 crossings across the 50-table schema (was 143). File: `docs/backlog/012-connectors-never-cross-tables.md`.
 7. **Backlog item 013 — Dragging a table hangs the app** (bug report, **fixed 2026-08-16**)
    - **Root cause:** (1) `GetCurrentPoint(null)` is window-relative → drag delta wrong at non-100% zoom → table flung `zoom×` too far. (2) A* re-route cost grows quadratically with canvas size → minutes. **Fix:** `GetCurrentPoint(_canvas)`; partial re-route (only the moved table's edges); `RouterOptions.MaxExpansions` node budget. Measured: 4.2 s → 2.2 s drag release; 20000 px case capped. 45/45 tests pass. Remaining: per-edge timing diagnostics (deferred). File: `docs/backlog/013-drag-table-hangs-app.md`.
 

@@ -98,25 +98,27 @@ namespace ModelConsole.Graph
          //    stub -> first grid point) stay axis-aligned.
          Point2 startDir = OutwardDirection(start, obstacles);
          Point2 endDir = OutwardDirection(end, obstacles);
-         Point2 startStub = SnapStub(start, startDir, stub, bounds, grid);
-         Point2 endStub = SnapStub(end, endDir, stub, bounds, grid);
+         Point2 startStub = SnapStub(start, startDir, stub, bounds, grid, inflated, thin, raw);
+         Point2 endStub = SnapStub(end, endDir, stub, bounds, grid, inflated, thin, raw);
 
-         // 3. Grid A* between the stub points.
+         // 3. Grid A* between the stub points. When the thin obstacles
+         //    (already-routed connectors) form a barrier that makes the grid
+         //    unreachable, retry without them: the hard invariant is "no
+         //    connector crosses a table interior", so crossing a connector is
+         //    acceptable when the alternative is crossing a table.
          List<Point2> gridPath = AStar(
             startStub, endStub, inflated, thin, bounds, grid, maxExpansions);
          if (gridPath == null)
          {
-            // Unreachable on the grid (e.g. a full-height wall): fall back to
-            // an orthogonal Z route with stubs.
-            var fallback = new List<Point2>
-            {
-               start,
-               startStub,
-               new Point2(endStub.X, startStub.Y),
-               endStub,
-               end
-            };
-            return Simplify(fallback);
+            gridPath = AStar(
+               startStub, endStub, inflated, new List<Rect2>(), bounds, grid,
+               maxExpansions);
+         }
+         if (gridPath == null)
+         {
+            // Genuinely unreachable (e.g. a full-height wall): best-effort Z
+            // that avoids tables when possible.
+            return ZFallback(start, startStub, endStub, end, raw);
          }
 
          // 4. Stitch the anchors onto the grid path and simplify.
@@ -283,24 +285,106 @@ namespace ModelConsole.Graph
       /// A* will start from, so the stub point and the first grid point share
       /// that coordinate exactly (the anchor-to-stub segment stays
       /// perpendicular-aligned and the stub-to-first-point segment stays
-      /// parallel-aligned).
+      /// parallel-aligned). The stub is moved outward until its cell is not
+      /// blocked and the anchor-to-stub segment does not cross a table
+      /// interior, so the route never starts inside a blocked cell or crosses
+      /// a neighbour table on its way out.
       /// </summary>
       private static Point2 SnapStub(
-         Point2 anchor, Point2 dir, double stub, Rect2 bounds, double grid)
+         Point2 anchor, Point2 dir, double stub, Rect2 bounds, double grid,
+         IReadOnlyList<Rect2> inflated, IReadOnlyList<Rect2> thin,
+         IReadOnlyList<Rect2> raw)
       {
          int cols = Math.Max(1, (int)Math.Ceiling(bounds.Width / grid));
          int rows = Math.Max(1, (int)Math.Ceiling(bounds.Height / grid));
 
+         double dist = stub;
+         double maxDist = Math.Max(bounds.Width, bounds.Height);
+         while (dist <= maxDist)
+         {
+            Point2 candidate = SnapAt(anchor, dir, dist, bounds, grid, cols, rows);
+            int ccol = ToCol(candidate.X, bounds.Left, grid, cols);
+            int crow = ToRow(candidate.Y, bounds.Top, grid, rows);
+            if (!IsBlocked(ccol, crow, inflated, thin, bounds, grid) &&
+                !SegmentCrossesAny(anchor, candidate, raw, new List<Rect2>()))
+            {
+               return candidate;
+            }
+            dist += grid;
+         }
+
+         // Best effort: the original snap (e.g. the outward direction points
+         // into a neighbour table, so no outward stub can avoid it).
+         return SnapAt(anchor, dir, stub, bounds, grid, cols, rows);
+      }
+
+      /// <summary>
+      /// The stub point at a given distance along the outward direction,
+      /// snapped to the center of the grid cell it falls in.
+      /// </summary>
+      private static Point2 SnapAt(
+         Point2 anchor, Point2 dir, double dist, Rect2 bounds, double grid,
+         int cols, int rows)
+      {
          if (dir.X != 0)
          {
-            double rawX = anchor.X + dir.X * stub;
+            double rawX = anchor.X + dir.X * dist;
             int col = (int)Clamp(Math.Floor((rawX - bounds.X) / grid), 0, cols - 1);
             return new Point2(bounds.X + (col + 0.5) * grid, anchor.Y);
          }
 
-         double rawY = anchor.Y + dir.Y * stub;
+         double rawY = anchor.Y + dir.Y * dist;
          int row = (int)Clamp(Math.Floor((rawY - bounds.Y) / grid), 0, rows - 1);
          return new Point2(anchor.X, bounds.Y + (row + 0.5) * grid);
+      }
+
+      /// <summary>
+      /// Best-effort orthogonal Z route used when the grid is genuinely
+      /// unreachable (e.g. a full-height wall). Tries both the HV and VH
+      /// variants and returns the first that does not cross a table interior;
+      /// when neither is clear, returns the variant with fewer crossings.
+      /// </summary>
+      private static List<Point2> ZFallback(
+         Point2 start, Point2 startStub, Point2 endStub, Point2 end,
+         IReadOnlyList<Rect2> raw)
+      {
+         var hv = new List<Point2>
+         {
+            start, startStub, new Point2(endStub.X, startStub.Y), endStub, end
+         };
+         if (IsClear(hv, raw, new List<Rect2>()))
+         {
+            return Simplify(hv);
+         }
+         var vh = new List<Point2>
+         {
+            start, startStub, new Point2(startStub.X, endStub.Y), endStub, end
+         };
+         if (IsClear(vh, raw, new List<Rect2>()))
+         {
+            return Simplify(vh);
+         }
+         return Simplify(CountCrossings(hv, raw) <= CountCrossings(vh, raw) ? hv : vh);
+      }
+
+      /// <summary>
+      /// Number of obstacle interiors crossed by the polyline's segments.
+      /// </summary>
+      private static int CountCrossings(
+         IReadOnlyList<Point2> points, IReadOnlyList<Rect2> obstacles)
+      {
+         int count = 0;
+         for (int i = 0; i < points.Count - 1; i++)
+         {
+            foreach (var o in obstacles)
+            {
+               if (Rect2.SegmentCrossesInterior(points[i], points[i + 1], o))
+               {
+                  count++;
+               }
+            }
+         }
+         return count;
       }
 
       /// <summary>

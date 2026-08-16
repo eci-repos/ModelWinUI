@@ -73,7 +73,7 @@ Portable, deterministic geometry + routing that the app uses to lay out tables a
 | `Point2`, `Rect2` | Portable geometry structs — `Contains`, `Intersects`, `SegmentCrossesInterior` (strict interior), `Inflate` |
 | `FkRelation`, `FkEdgeExtractor` | Resolves `ConstraintInfo` FK references into `FkRelation` edges; `ReferencedColumnName ?? parent PK`; reports issues and skips bad edges; deterministic order |
 | `TableLayoutEngine` | Row-major non-overlapping grid layout of `TableInfo` into `Rect2` slots |
-| `OrthogonalRouter` | A* grid pathfinding — obstacle inflation, outward stubs snapped to cell centers, collinear simplification, unreachable → orthogonal Z-path fallback; `thinObstacles` (non-inflated) + A* segment-crossing check so a grid step cannot jump over a thin obstacle |
+| `OrthogonalRouter` | A* grid pathfinding — obstacle inflation, outward stubs snapped to clear cell centers, collinear simplification; `thinObstacles` (non-inflated) + A* segment-crossing check so a grid step cannot jump over a thin obstacle. **No connector crosses a table interior (backlog 012):** when the thin obstacles form a barrier that makes the grid unreachable, A* retries without them (crossing a connector is acceptable when the alternative is crossing a table); the Z fallback tries HV/VH variants and returns the first that avoids tables |
 | `ConnectorAnchors` | `AnchorSide` enum; `Resolve` picks the departure side from the child/parent relative position; `FanOut` offsets shared-column anchors perpendicular to the side |
 | `SequentialRouter` | `RouteAll` — routes edges in deterministic order, feeding each routed polyline back as a thin obstacle so later edges avoid crossing it |
 
@@ -83,7 +83,7 @@ Portable, deterministic geometry + routing that the app uses to lay out tables a
 
 ### Unit tests — `tests/ModelGraphLibrary.Tests` (namespace `ModelConsole.Tests`, Active)
 
-The repo's first test project (xUnit, net10.0, references ModelGraphLibrary only — no WinUI). 42 tests across `SchemaIntegrityTests`, `FkEdgeExtractorTests`, `TableLayoutEngineTests`, `OrthogonalRouterTests`, `ConnectorAnchorsTests`, `SequentialRouterTests`. Run: `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug`.
+The repo's first test project (xUnit, net10.0, references ModelGraphLibrary only — no WinUI). 49 tests across `SchemaIntegrityTests`, `FkEdgeExtractorTests`, `TableLayoutEngineTests`, `OrthogonalRouterTests`, `ConnectorAnchorsTests`, `SequentialRouterTests`, `NoCrossingInvariantTests` (backlog 012 — asserts no routed segment crosses any table rect across the 50-table schema and tight/adversarial layouts). Run: `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug`.
 
 ### Sample data fixtures — `Model/ModelData` (Active)
 

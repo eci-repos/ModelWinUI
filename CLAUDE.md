@@ -84,7 +84,7 @@ Portable, deterministic, unit-tested geometry + routing in `ModelGraphLibrary` (
 - `Geometry` — `Point2` / `Rect2` structs with strict-interior segment/rect tests.
 - `FkEdgeExtractor` — resolves `ConstraintInfo` FK references into `FkRelation` edges (parent PK default), reporting issues and skipping bad edges.
 - `TableLayoutEngine` — row-major grid layout of `TableInfo` into non-overlapping `Rect2` slots.
-- `OrthogonalRouter` — A* grid pathfinding with obstacle inflation, outward stubs, collinear simplification, and an orthogonal Z-path fallback. Accepts `thinObstacles` (non-inflated, e.g. already-routed connectors) and checks segment crossings so a grid step cannot jump over a thin obstacle.
+- `OrthogonalRouter` — A* grid pathfinding with obstacle inflation, outward stubs snapped to clear cells, collinear simplification, and an orthogonal Z-path fallback. Accepts `thinObstacles` (non-inflated, e.g. already-routed connectors) and checks segment crossings so a grid step cannot jump over a thin obstacle. **No connector crosses a table interior (backlog 012):** when the thin obstacles form a barrier that makes the grid unreachable, A* retries without them (crossing a connector is acceptable when the alternative is crossing a table); the Z fallback tries HV/VH variants and returns the first that avoids tables.
 - `ConnectorAnchors` — `AnchorSide` + `Resolve` (departure side from child/parent relative position) + `FanOut` (offset shared-column anchors perpendicular to the side).
 - `SequentialRouter` — `RouteAll` routes edges in deterministic order, feeding each routed polyline back as a thin obstacle so later edges avoid crossing it.
 

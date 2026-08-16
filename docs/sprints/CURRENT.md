@@ -1,6 +1,6 @@
 # Sprint 2026-08-16 — Connector routing order & readability
 
-> Executed copy of the sprint. Backlog items: `docs/backlog/008-connector-routing-order.md`, `docs/backlog/009-zoom-and-fit.md`, `docs/backlog/010-editable-canvas.md`.
+> Executed copy of the sprint. Backlog items: `docs/backlog/008-connector-routing-order.md`, `docs/backlog/009-zoom-and-fit.md`, `docs/backlog/010-editable-canvas.md`, `docs/backlog/012-connectors-never-cross-tables.md`.
 
 ## Dates
 
@@ -14,6 +14,7 @@ Backlog items in this sprint (reference by number):
 - [x] `008` — Connector routing: logical order, port-based anchors, endpoint markers
 - [x] `009` — Zoom & fit: scale slider, % entry, fit-to-window
 - [x] `010` — Editable canvas: drag tables, connectors follow, entity inspector, delete-and-regenerate
+- [x] `012` — Connectors never cross tables: no connector segment crosses a table interior (hard invariant)
 
 ## Execution Log
 
@@ -33,10 +34,11 @@ Backlog items in this sprint (reference by number):
 - 2026-08-16 — New `EntityInspectorControl` (right column, below the log): clicking a table lists its columns with editable data types (commit re-renders); clicking a connector shows the FK relationship with a Delete button. `ModelEditorControl` wires `EntitySelected` → inspector and inspector `ModelEdited`/`DeleteRequested` → `ModelPanel.Refresh()`/`DeleteConnector()`.
 - 2026-08-16 — `DeleteConnector` removes the FK `ConstraintInfo` from the model and re-renders; the remaining connectors regenerate as simple non-crossing routes automatically. Endpoint circles are tagged with their connector so clicking a circle also inspects the relationship.
 - 2026-08-16 — Verified: full solution `-c Debug -p:Platform=x64` → **0 errors, 0 warnings**; app launches unpackaged and stays running; 42/42 tests still pass.
+- 2026-08-16 — Item `012` (connectors never cross tables) executed. Root cause: 143 of 74 routed edges crossed a table, all from the Z-path fallback — A* returned null (grid unreachable) for ~50 edges because the **thin obstacles** (already-routed connectors) form barriers. Fix: `OrthogonalRouter.Route` retries A* without thin obstacles when they form a barrier (crossing a connector is acceptable when the alternative is crossing a table); `SnapStub` finds clear cells; the Z fallback tries HV/VH variants that avoid tables. New `NoCrossingInvariantTests` (4): 50-table schema → 0 crossings, tight layout → 0, thin-barrier case → no table crossing, direct HV path → no interior crossing. **49/49 tests pass** (was 45).
 
 ## Results
 
-- **Completed:** `008`, `009`, `010`
+- **Completed:** `008`, `009`, `010`, `012`
 - **Notes:**
   - App router options now `GridSize=16, ObstacleMargin=14, StubLength=20`.
   - Sequential edges are added as **thin** obstacles (4 px margin, not inflated) so port fan-out still fits through tight gaps.
