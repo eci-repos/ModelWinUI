@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="ModelConsole.Controls.ModelExplorerControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ModelConsole.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+   <Grid BorderBrush="#EDEDED" BorderThickness=".5">
+      <Grid.RowDefinitions>
+         <RowDefinition Height="Auto" />
+         <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+
+      <Border Grid.Row="0" Background="#fbfbfb" BorderBrush="LightGray"
+              BorderThickness="1" Padding="8,6">
+         <TextBlock x:Name="HeaderText" Text="Model Explorer"
+                    FontWeight="SemiBold" FontSize="13" />
+      </Border>
+
+      <TreeView x:Name="ModelTree" Grid.Row="1"
+                SelectionMode="Single"
+                ItemInvoked="ModelTree_ItemInvoked" />
+   </Grid>
+</UserControl>

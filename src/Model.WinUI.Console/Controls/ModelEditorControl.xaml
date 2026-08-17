@@ -13,15 +13,41 @@
          <RowDefinition Height="*" />
       </Grid.RowDefinitions>
       <Grid.ColumnDefinitions>
+         <ColumnDefinition Width="Auto" />
+         <ColumnDefinition Width="Auto" />
          <ColumnDefinition Width="*" />
          <ColumnDefinition Width="Auto" />
          <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
 
+      <!-- Left panel: model explorer (backlog 004). Collapsible so the
+           drawing reflows into the freed space, mirroring the right panel. -->
+      <Grid x:Name="LeftPanel" Grid.Column="0" Grid.Row="0" MinWidth="220">
+         <local:ModelExplorerControl x:Name="ExplorerPanel" Margin="0" />
+      </Grid>
+
+      <!-- Left toggle strip: collapses/expands the explorer. The chevron
+           points at the panel while open (left) and back at the reopen
+           button while collapsed (right). -->
+      <Border Grid.Column="1" Grid.Row="0"
+              Background="#fbfbfb"
+              BorderBrush="LightGray"
+              BorderThickness="0,0,1,0">
+         <Button x:Name="LeftPanelToggle" Click="ToggleLeftPanel_Click"
+                 VerticalAlignment="Center"
+                 Background="Transparent" BorderThickness="0"
+                 Padding="4,8"
+                 ToolTipService.ToolTip="Collapse model explorer">
+            <FontIcon x:Name="LeftToggleGlyph" Glyph="&#xE76C;" FontSize="12" />
+         </Button>
+      </Border>
+
+      <local:ModelPanelControl x:Name="ModelPanel" Grid.Column="2" />
+
       <!-- Right panel: log on top, entity inspector below. Declared first
            so its view model subscribes to the log before ModelPanelControl
            writes its startup message (backlog 014). -->
-      <Grid x:Name="RightPanel" Grid.Column="2" Grid.Row="0" MinWidth="250">
+      <Grid x:Name="RightPanel" Grid.Column="4" Grid.Row="0" MinWidth="250">
          <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -32,10 +58,10 @@
             Grid.Column="0" Grid.Row="1" VerticalAlignment="Stretch"/>
       </Grid>
 
-      <!-- Toggle strip: collapses/expands the right panel so the drawing
-           reflows into the freed space. It lives in its own column so the
-           button stays reachable while the panel is collapsed. -->
-      <Border Grid.Column="1" Grid.Row="0"
+      <!-- Right toggle strip: collapses/expands the right panel so the
+           drawing reflows into the freed space. It lives in its own column
+           so the button stays reachable while the panel is collapsed. -->
+      <Border Grid.Column="3" Grid.Row="0"
               Background="#fbfbfb"
               BorderBrush="LightGray"
               BorderThickness="1,0,0,0">
@@ -47,7 +73,5 @@
             <FontIcon x:Name="ToggleGlyph" Glyph="&#xE76B;" FontSize="12" />
          </Button>
       </Border>
-
-      <local:ModelPanelControl x:Name="ModelPanel" Grid.Column="0" />
    </Grid>
 </UserControl>

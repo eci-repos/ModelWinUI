@@ -51,6 +51,7 @@ namespace ModelConsole.Controls
       private readonly IModelDataProvider _dataProvider;
       private readonly ITableFactory _tableFactory;
       private readonly IConnectorFactory _connectorFactory;
+      private readonly IRectangleFactory _rectangleFactory;
 
       /// <summary>
       /// The model (source of truth). The drawing is always derived from this
@@ -81,10 +82,22 @@ namespace ModelConsole.Controls
       private Rect2 _contentBounds;
 
       /// <summary>
+      /// Name of the currently selected table, highlighted on the canvas
+      /// (set by <see cref="SelectTable"/>).
+      /// </summary>
+      private string _selectedTable;
+
+      /// <summary>
       /// Raised when the user clicks a graphic entity. The payload is the
       /// entity's <see cref="TableInfo"/> or <see cref="FkRelation"/>.
       /// </summary>
       public event EventHandler<object> EntitySelected;
+
+      /// <summary>
+      /// Raised when the model is replaced (via <see cref="SetModel"/>); the
+      /// explorer refreshes its tree.
+      /// </summary>
+      public event EventHandler ModelChanged;
 
       public ModelPanelControl()
       {
@@ -93,6 +106,7 @@ namespace ModelConsole.Controls
          _dataProvider = Ioc.Default.GetRequiredService<IModelDataProvider>();
          _tableFactory = Ioc.Default.GetRequiredService<ITableFactory>();
          _connectorFactory = Ioc.Default.GetRequiredService<IConnectorFactory>();
+         _rectangleFactory = Ioc.Default.GetRequiredService<IRectangleFactory>();
          _context = new GlContext(
             ModelCanvas, Ioc.Default.GetRequiredService<ILogService>());
 
@@ -124,6 +138,14 @@ namespace ModelConsole.Controls
       public void WriteMessage(string message)
       {
          _context.WriteMessage(message);
+      }
+
+      /// <summary>
+      /// The current model (source of truth for the drawing).
+      /// </summary>
+      public IReadOnlyList<TableInfo> Tables
+      {
+         get { return _tables; }
       }
 
       // ------------------------------------------------------------------
@@ -536,6 +558,22 @@ namespace ModelConsole.Controls
             endCircle.NativeInstance.Tag = connector;
          }
 
+         // Selection highlight: an accent outline around the selected table,
+         // drawn on top and hit-test transparent so it never intercepts
+         // clicks (the table itself stays clickable).
+         if (_selectedTable != null &&
+             drawn.TryGetValue(_selectedTable, out var selected))
+         {
+            var highlight = _rectangleFactory.Draw(
+               _context, selected.X, selected.Y,
+               selected.ComputedWidth, selected.ComputedHeight, 10);
+            highlight.NativeInstance.Stroke =
+               new SolidColorBrush(Colors.DodgerBlue);
+            highlight.NativeInstance.StrokeThickness = 2;
+            highlight.NativeInstance.Fill = null;
+            highlight.NativeInstance.IsHitTestVisible = false;
+         }
+
          foreach (var issue in issues)
          {
             WriteMessage("FK issue: " + issue);
@@ -619,6 +657,34 @@ namespace ModelConsole.Controls
       public void Refresh()
       {
          Render();
+      }
+
+      /// <summary>
+      /// Replace the model and re-render from scratch (used by File → Open).
+      /// </summary>
+      public void SetModel(IReadOnlyList<TableInfo> tables)
+      {
+         _tables = tables;
+         _selectedTable = null;
+         InitializeLayout();
+         Render();
+         ModelChanged?.Invoke(this, EventArgs.Empty);
+      }
+
+      /// <summary>
+      /// Select a table by name: highlight it on the canvas and raise
+      /// <see cref="EntitySelected"/> so the inspector shows it.
+      /// </summary>
+      public void SelectTable(string tableName)
+      {
+         if (_tables == null || _tables.All(t => t.TableName != tableName))
+         {
+            return;
+         }
+         _selectedTable = tableName;
+         Render();
+         var table = _tables.First(t => t.TableName == tableName);
+         EntitySelected?.Invoke(this, table);
       }
 
       /// <summary>

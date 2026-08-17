@@ -12,6 +12,16 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-17 — UI controls for viewing the data model (backlog item 004)
+
+- **Model explorer panel** (`ModelExplorerControl`): a `TreeView` built in code-behind (`TreeViewNode`s) — schema root → one node per table with a child node per column (name, type, PK/FK tags), plus a "Foreign Keys (N)" section listing every FK via `FkEdgeExtractor.Extract`. `SetModel` rebuilds the tree; `TableSelected` fires on a table-node click. `TreeViewNode` has no `Tag`, so table nodes are mapped via a `Dictionary<TreeViewNode, TableInfo>`.
+- **Canvas selection:** `ModelPanelControl.SelectTable` highlights the selected table with a DodgerBlue accent outline (`IRectangleFactory.Draw`, 2 px stroke, transparent fill, `IsHitTestVisible = false` so it never intercepts clicks) and raises `EntitySelected` so the inspector shows it. `SetModel` replaces the model, re-lays-out, re-renders, and raises `ModelChanged`; a `Tables` accessor exposes the current model.
+- **File → Open (JSON load):** `ModelFile` (ModelGraphLibrary, `Model.Data`) — `ToJson`/`LoadJson`/`Load` over a JSON array of `TableInfo` (round-trips columns + FK constraints). `MainWindow` gained a `MenuBar` ("File → Open Model…") with a `FileOpenPicker` initialized for the unpackaged app via `WinRT.Interop.WindowNative.GetWindowHandle` + `InitializeWithWindow.Initialize`; load errors surface in a `ContentDialog`. Both renderers get the loaded model (`XamlEditor.SetModel` + `SkiaEditor.SetModel`; the Skia path clears its cached `ErdDiagram` and re-composes once on the next paint).
+- **Layout:** `ModelEditorControl` hosts the explorer as a **collapsible left panel** (mirroring the right panel's backlog-014 toggle) — the grid gains two columns (explorer + toggle strip) and the drawing column shifts to the middle: explorer | drawing | log+inspector.
+- **Tests:** `ModelFileTests` (3 — round-trip incl. FK constraints, temp-file load, empty model). **66/66 tests pass** (was 63).
+- **Verified:** app project builds 0 errors / 0 warnings; `ModelFileTests` 3/3 pass. (Full-solution `--no-incremental` build + full test suite + launch check pending.)
+- Backlog item: `docs/backlog/004-ui-controls-for-viewing-the-data-model.md`. Sprint record: `docs/sprints/CURRENT.md` (2026-08-17); the 003 sprint was promoted to `docs/sprints/archive/sprint-2026-08-17-erd-graphics-primitives-base-library.md`.
+
 ### 2026-08-17 — ERD graphics primitives base library (backlog item 003)
 
 - **Skia connector primitive** (`ModelConsole.Skia.Primitives.Connector`): strokes a routed `Point2` polyline via `SKPathBuilder` + filled endpoint circles onto `GlFrame.Canvas` — the portable Skia stack's first connector primitive (parity with the XAML `GlOrthoPath.DrawRouted` + `GlEllipse` markers). Null/empty points are a no-op. DodgerBlue colors in `GlPastelPalette`.
@@ -181,10 +191,8 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ### Next tasks (in priority order)
 
-1. **Backlog items 001–014 and 003 are complete** — sprints 2026-08-16 (items 008–012), 2026-08-17 (item 014), and 2026-08-17 (item 003) are done: records at `docs/sprints/archive/sprint-2026-08-16-connector-routing.md`, `docs/sprints/archive/sprint-2026-08-17-closeable-right-panel.md`, and `docs/sprints/CURRENT.md`; archived items `docs/backlog/archive/001`–`014` (bug-fix item 013 archived with per-edge timing diagnostics deferred). The roadmap items below are the only open work.
-2. **Backlog item 004 — UI controls for viewing the data model** (roadmap)
-   - Develop the controls needed to view a model (beyond the current sample drawing).
-3. **Backlog item 005 — Non-trivial sample models** (roadmap)
+1. **Backlog items 001–014, 003, and 004 are complete** — sprints 2026-08-16 (items 008–012), 2026-08-17 (items 014, 003, 004) are done: records at `docs/sprints/archive/sprint-2026-08-16-connector-routing.md`, `docs/sprints/archive/sprint-2026-08-17-closeable-right-panel.md`, `docs/sprints/archive/sprint-2026-08-17-erd-graphics-primitives-base-library.md`, and `docs/sprints/CURRENT.md`; archived items `docs/backlog/archive/001`–`014` (bug-fix item 013 archived with per-edge timing diagnostics deferred). The roadmap item below is the only open work.
+2. **Backlog item 005 — Non-trivial sample models** (roadmap)
    - Ship sample models showing the tool's capabilities.
 
 ### Known gaps / issues (candidates for backlog items)

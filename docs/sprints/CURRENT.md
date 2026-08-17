@@ -1,6 +1,6 @@
-# Sprint 2026-08-17 — ERD graphics primitives base library
+# Sprint 2026-08-17 — UI controls for viewing the data model
 
-> Executed copy of the sprint. Backlog item: `docs/backlog/003-erd-graphics-primitives-base-library.md`.
+> Executed copy of the sprint. Backlog item: `docs/backlog/004-ui-controls-for-viewing-the-data-model.md`.
 
 ## Dates
 
@@ -11,24 +11,23 @@
 
 Backlog items in this sprint (reference by number):
 
-- [x] `003` — ERD primitives base library: Skia connector + reusable ERD composition API, Skia Table parity, app renderer toggle (XAML ⇄ Skia), XAML-stack cleanup, tests, docs
+- [x] `004` — UI controls for viewing the data model: model explorer panel + File → Open (JSON load)
 
 ## Execution Log
 
-- 2026-08-17 — Sprint defined from backlog item `003`. User scope decision: **both stacks** (build the Skia connector + composition API AND tidy the XAML stack) and **wire into the app** (a MainWindow renderer bar switches the running app between the XAML ERD and the Skia ERD). The portable Skia stack had a `Table` primitive + the full pure Graph engine but **no connector primitive** — "define and draw Table and constraint connectors" was half-built on the stack it was meant for.
-- 2026-08-17 — Skia `Table` parity members (`ComputedWidth`/`ComputedHeight`/`GetRowCenterY`, mirroring the XAML `Table`) so tables can be measured and anchored before anything is drawn. Added `Connector` primitive (`ModelConsole.Skia.Primitives`): strokes a `Point2` polyline via `SKPathBuilder` + filled endpoint circles, no-op on empty/null; DodgerBlue colors in `GlPastelPalette`.
-- 2026-08-17 — Reusable composition API: `ErdComposer.Compose(tables, frame, options)` → `ErdDiagram` (Layout/Edges/Routes/Issues) — measure probes → `TableLayoutEngine.Layout` (7 cols) → `FkEdgeExtractor.Extract` → `ConnectorAnchors.Resolve`+`FanOut` (grouped per `table::column`) → `SequentialRouter.RouteAll` (the app's router options). Row Y = `probe.GetRowCenterY(col) + slot.Y`. This is the "define and draw an ERD by writing code" heart of the roadmap item.
-- 2026-08-17 — `ISkiaConnectorFactory`/`SkiaConnectorFactory` (parity with `ISkiaTableFactory`), registered **singleton** in `App.ConfigureServices`.
-- 2026-08-17 — `SkiaPanelControl` renders the **full public-safety ERD** (50 tables, 74 FKs): composes once on first paint (routing is seconds — must not run per frame), caches the `ErdDiagram`, replays tables + connectors per paint; logs counts + FK issues.
-- 2026-08-17 — MainWindow renderer bar: two mutually-exclusive `ToggleButton`s ("XAML model" / "Skia render") swap `ModelEditorControl` and `SkiaPanelControl` visibility in a shared grid; both XAML-instantiated (Ioc.Default configured before MainWindow). XAML-stack cleanup: deleted the dead `Graphics/Primitives/Connector.cs` (referenced the Skia stack, empty body, unreferenced); documented the two `GlOrthoPath` modes (`Draw`/`GetPath` = shaped+grips vs `DrawRouted` = static router polyline).
-- 2026-08-17 — New tests (9): `SkiaConnectorTests` (strokes polyline + endpoint markers; null/empty no-op), `SkiaTableTests` (computed size, matched row center, unknown-column fallback), `ErdComposerTests` (50 tables / 74 edges, routes cross no table interior, render-to-bitmap without throwing). Fixed the pre-existing `SKPath.MoveTo/LineTo` obsolete warnings in `RoutingDiagnosticTests.cs` (same `SKPathBuilder` migration) so a clean rebuild stays warning-free. **63/63 tests pass** (was 54).
-- 2026-08-17 — Verified: full solution `-c Debug -p:Platform=x64 --no-incremental` → **0 errors, 0 warnings**; **63/63 tests pass**; app launches unpackaged and stays running. (The renderer-bar toggle + Skia paint need a manual pass — a CLI launch runs on the agent's non-interactive desktop; `ErdComposerTests.ComposeRendersToBitmap` gives an inspectable image.)
+- 2026-08-17 — Sprint defined from backlog item `004`. User scope decision: **Explorer + JSON load** — a model explorer panel (tree of tables → columns → constraints, plus an FK list; clicking a table selects it on the canvas) AND a File → Open that loads a model from JSON and renders it.
+- 2026-08-17 — `ModelFile` (ModelGraphLibrary, `Model.Data`): `ToJson`/`LoadJson`/`Load` over a JSON array of `TableInfo` — the POCOs round-trip cleanly through System.Text.Json, including `Constraints` with `ReferencedTableName`/`ReferencedColumnName`. New `ModelFileTests` (round-trip incl. FK constraints, temp-file load, empty model) — 3 tests.
+- 2026-08-17 — `ModelExplorerControl`: a `TreeView` built in code-behind (`TreeViewNode`s) — schema root → one node per table with a child node per column (name, type, PK/FK tags), plus a "Foreign Keys (N)" section via `FkEdgeExtractor.Extract`. `SetModel` rebuilds; `TableSelected` fires on a table-node click. `TreeViewNode` has no `Tag`, so table nodes are mapped via a `Dictionary<TreeViewNode, TableInfo>`.
+- 2026-08-17 — `ModelPanelControl`: `SetModel` (replace model, re-layout, re-render, `ModelChanged` event), `SelectTable` (DodgerBlue accent outline via `IRectangleFactory`, hit-test transparent, plus `EntitySelected` so the inspector shows it), `Tables` accessor. `SkiaPanelControl.SetModel` clears the cached `ErdDiagram` so it re-composes on the next paint.
+- 2026-08-17 — `ModelEditorControl` hosts the explorer as a **collapsible left panel** (mirroring the right panel's backlog-014 toggle): grid gains two columns (explorer + toggle strip), the drawing column shifts to the middle. Wires explorer → canvas selection + inspector, `ModelChanged` → explorer refresh, public `SetModel`.
+- 2026-08-17 — `MainWindow` gains a `MenuBar` ("File → Open Model…") with a `FileOpenPicker` initialized for the unpackaged app via `WinRT.Interop.WindowNative.GetWindowHandle` + `InitializeWithWindow.Initialize`; load errors surface in a `ContentDialog`. Both renderers get the loaded model.
+- 2026-08-17 — Verified: app project builds 0 errors / 0 warnings; `ModelFileTests` 3/3 pass. (Full-solution `--no-incremental` build + full test suite + launch check pending.)
 
 ## Results
 
-- **Completed:** `003`
+- **Completed:** `004`
 - **Notes:**
-  - The composition is pure data (`ErdDiagram`) cached and replayed per paint — the routing pass runs once, never per frame.
-  - `ErdOptions` defaults mirror the XAML path (`BannerHeight 40`, `Columns 7`, `Gutter/SlotPadding/ExtentMargin 80`, `RouterOptions { GridSize 16, ObstacleMargin 14, StubLength 20 }`).
-  - The Skia render is a flat canvas (no zoom/pan/inspector) — the XAML path keeps those; the renderer bar is the switch.
-  - Deferred: shared anchor/fan-out helper for `ModelPanelControl` too; corner rounding on routed connectors; the `RoundCorderRadious` typo rename.
+  - The explorer is the primary "view a model" surface: browse structure, click a table → it highlights on the canvas and shows in the inspector.
+  - The model file is a JSON array of `TableInfo`; `ModelFile.ToJson` exists for tests but there is no Save UI (004 is view-only).
+  - Canvas → explorer selection sync is a small follow-up (explorer → canvas is wired).
+  - The Skia render stays a flat canvas (no selection); it only tracks the loaded model.

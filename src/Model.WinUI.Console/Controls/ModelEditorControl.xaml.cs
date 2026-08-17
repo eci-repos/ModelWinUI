@@ -43,6 +43,45 @@ namespace ModelConsole.Controls
 
          InspectorPanel.ModelEdited += (s, e) => ModelPanel.Refresh();
          InspectorPanel.DeleteRequested += (s, edge) => ModelPanel.DeleteConnector(edge);
+
+         // Explorer → canvas selection + inspector (backlog 004).
+         ExplorerPanel.TableSelected += (s, table) =>
+         {
+            ModelPanel.SelectTable(table.TableName);
+            InspectorPanel.ShowTable(table);
+         };
+
+         // Model replaced (File → Open) → refresh the explorer tree.
+         ModelPanel.ModelChanged += (s, e) =>
+            ExplorerPanel.SetModel(ModelPanel.Tables);
+      }
+
+      /// <summary>
+      /// Replace the model in the drawing and the explorer (File → Open).
+      /// </summary>
+      public void SetModel(IReadOnlyList<TableInfo> tables)
+      {
+         ModelPanel.SetModel(tables);
+         ExplorerPanel.SetModel(tables);
+      }
+
+      /// <summary>Whether the left panel (model explorer) is currently shown.</summary>
+      private bool m_leftPanelOpen = true;
+
+      /// <summary>
+      /// Collapse/expand toggle for the left explorer panel (backlog 004),
+      /// mirroring the right panel's toggle (backlog 014).
+      /// </summary>
+      private void ToggleLeftPanel_Click(object sender, RoutedEventArgs e)
+      {
+         m_leftPanelOpen = !m_leftPanelOpen;
+
+         LeftPanel.Visibility = m_leftPanelOpen ? Visibility.Visible : Visibility.Collapsed;
+         // ChevronLeft (E76C) while open (points at the panel), ChevronRight
+         // (E76B) while collapsed (points back at the reopen button).
+         LeftToggleGlyph.Glyph = m_leftPanelOpen ? "\uE76C" : "\uE76B";
+         ToolTipService.SetToolTip(LeftPanelToggle,
+            m_leftPanelOpen ? "Collapse model explorer" : "Expand model explorer");
       }
 
       /// <summary>Whether the right panel (log + inspector) is currently shown.</summary>

@@ -38,8 +38,8 @@ namespace ModelConsole.Controls
       private readonly IModelDataProvider _dataProvider;
       private readonly ISkiaTableFactory _tableFactory;
       private readonly ISkiaConnectorFactory _connectorFactory;
-      private readonly IReadOnlyList<TableInfo> _tables;
-      private readonly Dictionary<string, TableInfo> _tablesByName;
+      private IReadOnlyList<TableInfo> _tables;
+      private Dictionary<string, TableInfo> _tablesByName;
 
       /// <summary>Composed on the first paint, then replayed on every paint.</summary>
       private ErdDiagram _diagram;
@@ -53,6 +53,19 @@ namespace ModelConsole.Controls
          _connectorFactory = Ioc.Default.GetRequiredService<ISkiaConnectorFactory>();
          _tables = _dataProvider.GetPublicSafetyTables();
          _tablesByName = _tables.ToDictionary(t => t.TableName, t => t);
+      }
+
+      /// <summary>
+      /// Replace the model and re-compose on the next paint (used by
+      /// File → Open). The cached diagram is cleared so the routing pass
+      /// runs once for the new model.
+      /// </summary>
+      public void SetModel(IReadOnlyList<TableInfo> tables)
+      {
+         _tables = tables;
+         _tablesByName = tables.ToDictionary(t => t.TableName, t => t);
+         _diagram = null;
+         SkiaCanvas.Invalidate();
       }
 
       private void SkiaCanvas_PaintSurface(
