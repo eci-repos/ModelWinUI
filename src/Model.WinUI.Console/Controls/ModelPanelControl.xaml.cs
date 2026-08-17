@@ -38,6 +38,9 @@ namespace ModelConsole.Controls
       private const double Gutter = 80;
       private const double ExtentMargin = 80;
 
+      /// <summary>Margin (px) left around the model when fitting to the window.</summary>
+      private const double FitMargin = 5;
+
       /// <summary>
       /// Side length of the drawing "paper". The canvas is this large (with
       /// the content centered in it) so panning has room in all directions and
@@ -204,10 +207,12 @@ namespace ModelConsole.Controls
 
       /// <summary>
       /// Zoom to the given factor, keeping the content point under the
-      /// viewport center fixed (zoom-around-center). Clamped to the
-      /// ScrollViewer's zoom range.
+      /// given anchor fixed (default: the viewport center). Clamped to the
+      /// ScrollViewer's zoom range. The anchor is a content-space point —
+      /// the wheel handler passes the cursor position so the drawing zooms
+      /// around the mouse.
       /// </summary>
-      private void ApplyZoom(double zoom)
+      private void ApplyZoom(double zoom, double? anchorX = null, double? anchorY = null)
       {
          if (ModelScrollViewer == null)
          {
@@ -223,15 +228,39 @@ namespace ModelConsole.Controls
 
          // Offsets are in content units; the viewport shows
          // ViewportWidth / zoom content units, so the content point under
-         // the viewport center is offset + viewport / (2 * zoom).
-         double cx = ModelScrollViewer.HorizontalOffset +
-            ModelScrollViewer.ViewportWidth / (2.0 * oldZoom);
-         double cy = ModelScrollViewer.VerticalOffset +
-            ModelScrollViewer.ViewportHeight / (2.0 * oldZoom);
-         double newH = cx - ModelScrollViewer.ViewportWidth / (2.0 * zoom);
-         double newV = cy - ModelScrollViewer.ViewportHeight / (2.0 * zoom);
+         // the anchor is offset + viewport / (2 * zoom) for the center.
+         double cx = anchorX ?? (ModelScrollViewer.HorizontalOffset +
+            ModelScrollViewer.ViewportWidth / (2.0 * oldZoom));
+         double cy = anchorY ?? (ModelScrollViewer.VerticalOffset +
+            ModelScrollViewer.ViewportHeight / (2.0 * oldZoom));
+         // The anchor sits at this viewport position (in viewport px); keep
+         // it there after the zoom: newH = cx - viewportX / zoom.
+         double viewportX = (cx - ModelScrollViewer.HorizontalOffset) * oldZoom;
+         double viewportY = (cy - ModelScrollViewer.VerticalOffset) * oldZoom;
+         double newH = cx - viewportX / zoom;
+         double newV = cy - viewportY / zoom;
 
          ModelScrollViewer.ChangeView(newH, newV, (float)zoom, true);
+      }
+
+      /// <summary>
+      /// The mouse wheel zooms the drawing around the cursor instead of
+      /// scrolling (the user's requested behavior). Handled on the canvas so
+      /// the event never bubbles to the ScrollViewer's scroll handler.
+      /// </summary>
+      private void ModelCanvas_PointerWheelChanged(
+         object sender, PointerRoutedEventArgs e)
+      {
+         var point = e.GetCurrentPoint(ModelCanvas);
+         double delta = point.Properties.MouseWheelDelta;
+         if (delta == 0)
+         {
+            return;
+         }
+         double factor = delta > 0 ? ZoomStep : 1.0 / ZoomStep;
+         ApplyZoom(ModelScrollViewer.ZoomFactor * factor,
+            point.Position.X, point.Position.Y);
+         e.Handled = true;
       }
 
       /// <summary>
@@ -254,8 +283,10 @@ namespace ModelConsole.Controls
          }
 
          // Fit to the content (all tables), not the canvas: the canvas is a
-         // large "paper" whose extent would zoom the drawing way out.
-         double fit = Math.Min(vw / b.Width, vh / b.Height);
+         // large "paper" whose extent would zoom the drawing way out. Leave
+         // a ~5 px margin around the model.
+         double fit = Math.Min((vw - 2 * FitMargin) / b.Width,
+                               (vh - 2 * FitMargin) / b.Height);
          fit = Math.Max(MinZoom, Math.Min(1.0, fit));
          double hOff = b.X + b.Width / 2.0 - vw / (2.0 * fit);
          double vOff = b.Y + b.Height / 2.0 - vh / (2.0 * fit);

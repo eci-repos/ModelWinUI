@@ -40,6 +40,10 @@ namespace ModelConsole.Controls
       /// <summary>Margin (px) left around the model when fitting to the window.</summary>
       private const double FitMargin = 5;
 
+      private const double MinZoom = 0.1;
+      private const double MaxZoom = 4.0;
+      private const double ZoomStep = 1.25;
+
       private readonly IModelDataProvider _dataProvider;
       private readonly ISkiaTableFactory _tableFactory;
       private readonly ISkiaConnectorFactory _connectorFactory;
@@ -63,6 +67,15 @@ namespace ModelConsole.Controls
 
       /// <summary>Set after the ctor body; guards init-time ValueChanged events.</summary>
       private bool _initialized;
+
+      /// <summary>Pan offset (content-space, in surface px); 0 = centered.</summary>
+      private double _panX;
+      private double _panY;
+
+      /// <summary>Last paint's surface size (physical px) and DPI scale (px per DIP).</summary>
+      private double _viewW;
+      private double _viewH;
+      private double _dpiScale = 1.0;
 
       public SkiaPanelControl()
       {
@@ -109,11 +122,18 @@ namespace ModelConsole.Controls
             return; // nothing to draw until the compose finishes
          }
 
-         // Fit/zoom transform: center the content in the viewport at _zoom.
-         // Table and Connector both draw through frame.Canvas in content
-         // coordinates, so a Translate + Scale applies to everything.
-         double viewW = e.Info.Width;
-         double viewH = e.Info.Height;
+         // Fit/zoom transform: center the content in the viewport at _zoom
+         // (plus any pan offset from wheel zooming). Table and Connector
+         // both draw through frame.Canvas in content coordinates, so a
+         // Translate + Scale applies to everything.
+         _viewW = e.Info.Width;
+         _viewH = e.Info.Height;
+         if (SkiaCanvas.ActualWidth > 0)
+         {
+            _dpiScale = e.Info.Width / SkiaCanvas.ActualWidth;
+         }
+         double viewW = _viewW;
+         double viewH = _viewH;
          double minX = 0, minY = 0, contentW = 0, contentH = 0;
          if (_diagram.Layout.Count > 0)
          {
@@ -136,8 +156,8 @@ namespace ModelConsole.Controls
 
          if (contentW > 0 && contentH > 0)
          {
-            double offsetX = (viewW - contentW * _zoom) / 2 - minX * _zoom;
-            double offsetY = (viewH - contentH * _zoom) / 2 - minY * _zoom;
+            double offsetX = _panX + (viewW - contentW * _zoom) / 2 - minX * _zoom;
+            double offsetY = _panY + (viewH - contentH * _zoom) / 2 - minY * _zoom;
             frame.Canvas.Translate((float)offsetX, (float)offsetY);
             frame.Canvas.Scale((float)_zoom);
          }
@@ -214,8 +234,62 @@ namespace ModelConsole.Controls
          });
       }
 
+      /// <summary>
+      /// The mouse wheel zooms the drawing around the cursor instead of
+      /// scrolling. The pan offset keeps the content point under the cursor
+      /// fixed as the zoom changes.
+      /// </summary>
+      private void SkiaCanvas_PointerWheelChanged(
+         object sender, PointerRoutedEventArgs e)
+      {
+         if (_diagram == null || _diagram.Layout.Count == 0)
+         {
+            return;
+         }
+
+         var point = e.GetCurrentPoint(SkiaCanvas);
+         double delta = point.Properties.MouseWheelDelta;
+         if (delta == 0 || _viewW <= 0 || _viewH <= 0)
+         {
+            return;
+         }
+
+         // Content bounds (same as the paint handler).
+         double minX = _diagram.Layout.Values.Min(r => r.X);
+         double minY = _diagram.Layout.Values.Min(r => r.Y);
+         double contentW = _diagram.Layout.Values.Max(r => r.Right) - minX;
+         double contentH = _diagram.Layout.Values.Max(r => r.Bottom) - minY;
+
+         // Cursor in surface px (the transform works in surface px).
+         double cursorX = point.Position.X * _dpiScale;
+         double cursorY = point.Position.Y * _dpiScale;
+
+         double offsetX = _panX + (_viewW - contentW * _zoom) / 2 - minX * _zoom;
+         double offsetY = _panY + (_viewH - contentH * _zoom) / 2 - minY * _zoom;
+
+         // Content point under the cursor.
+         double contentX = (cursorX - offsetX) / _zoom;
+         double contentY = (cursorY - offsetY) / _zoom;
+
+         double factor = delta > 0 ? ZoomStep : 1.0 / ZoomStep;
+         _zoom = Math.Max(MinZoom, Math.Min(MaxZoom, _zoom * factor));
+         _fitMode = false;
+
+         // New offset keeps the content point under the cursor.
+         double newOffsetX = cursorX - contentX * _zoom;
+         double newOffsetY = cursorY - contentY * _zoom;
+         _panX = newOffsetX - (_viewW - contentW * _zoom) / 2 + minX * _zoom;
+         _panY = newOffsetY - (_viewH - contentH * _zoom) / 2 + minY * _zoom;
+
+         SyncZoomUI();
+         SkiaCanvas.Invalidate();
+         e.Handled = true;
+      }
+
       private void FitButton_Click(object sender, RoutedEventArgs e)
       {
+         _panX = 0;
+         _panY = 0;
          _fitMode = true;
          SkiaCanvas.Invalidate();
       }

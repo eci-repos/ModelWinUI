@@ -38,7 +38,11 @@
       </Border>
 
       <Grid Grid.Row="1">
-         <sk:SKXamlCanvas x:Name="SkiaCanvas" PaintSurface="SkiaCanvas_PaintSurface" />
+         <!-- Background="Transparent" keeps the canvas hit-testable so the
+              wheel reaches it; the wheel zooms around the cursor. -->
+         <sk:SKXamlCanvas x:Name="SkiaCanvas" Background="Transparent"
+                          PaintSurface="SkiaCanvas_PaintSurface"
+                          PointerWheelChanged="SkiaCanvas_PointerWheelChanged" />
          <!-- Shown while the diagram is being composed off the UI thread, so
               the first paint shows progress instead of a blank canvas. -->
          <TextBlock x:Name="ComposingText" Text="Composing…"

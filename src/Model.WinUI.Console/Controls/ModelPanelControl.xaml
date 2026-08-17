@@ -49,8 +49,12 @@
          <!-- Background="Transparent" is required: a Panel with a null
               Background is not hit-testable in its empty areas, so presses
               on empty canvas space would never reach the pan gesture
-              (backlog 011). -->
-         <gl:GlCanvas x:Name="ModelCanvas" Background="Transparent" />
+              (backlog 011). PointerWheelChanged is handled here (not on the
+              ScrollViewer) so the wheel zooms instead of scrolling: the
+              event is marked handled at the canvas and never bubbles to the
+              ScrollViewer's scroll handler. -->
+         <gl:GlCanvas x:Name="ModelCanvas" Background="Transparent"
+                      PointerWheelChanged="ModelCanvas_PointerWheelChanged" />
       </ScrollViewer>
    </Grid>
 </UserControl>
