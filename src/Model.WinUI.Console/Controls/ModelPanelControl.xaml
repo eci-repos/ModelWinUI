@@ -46,7 +46,11 @@
                     MinZoomFactor="0.1"
                     MaxZoomFactor="4.0"
                     ViewChanged="ModelScrollViewer_ViewChanged">
-         <gl:GlCanvas x:Name="ModelCanvas" />
+         <!-- Background="Transparent" is required: a Panel with a null
+              Background is not hit-testable in its empty areas, so presses
+              on empty canvas space would never reach the pan gesture
+              (backlog 011). -->
+         <gl:GlCanvas x:Name="ModelCanvas" Background="Transparent" />
       </ScrollViewer>
    </Grid>
 </UserControl>

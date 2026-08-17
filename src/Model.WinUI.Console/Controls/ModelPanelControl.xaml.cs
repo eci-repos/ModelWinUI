@@ -38,6 +38,15 @@ namespace ModelConsole.Controls
       private const double Gutter = 80;
       private const double ExtentMargin = 80;
 
+      /// <summary>
+      /// Side length of the drawing "paper". The canvas is this large (with
+      /// the content centered in it) so panning has room in all directions and
+      /// only stops far from the drawing - the paper feels unlimited. The
+      /// router region stays tight around the content, so the A* grid does
+      /// not grow with the paper.
+      /// </summary>
+      private const double CanvasSize = 20000;
+
       private readonly GlContext _context;
       private readonly IModelDataProvider _dataProvider;
       private readonly ITableFactory _tableFactory;
@@ -66,6 +75,12 @@ namespace ModelConsole.Controls
          new List<(FkRelation Edge, IReadOnlyList<Point2> Points)>();
 
       /// <summary>
+      /// Bounding box of all drawn tables (content space). Drives the fit
+      /// button and the router region; recomputed on every render.
+      /// </summary>
+      private Rect2 _contentBounds;
+
+      /// <summary>
       /// Raised when the user clicks a graphic entity. The payload is the
       /// entity's <see cref="TableInfo"/> or <see cref="FkRelation"/>.
       /// </summary>
@@ -92,6 +107,18 @@ namespace ModelConsole.Controls
          Render();
          SyncZoomUI();
          WriteMessage("GL Context Ready.");
+
+         // The canvas is a large "paper"; start with the content's top-left
+         // visible at 100% zoom (the default offset (0,0) would show empty
+         // canvas space). Deferred to Loaded so the ScrollViewer is laid out.
+         Loaded += (s, e) =>
+         {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+               ModelScrollViewer.ChangeView(
+                  _contentBounds.X, _contentBounds.Y, 1.0f, true);
+            });
+         };
       }
 
       public void WriteMessage(string message)
@@ -198,17 +225,18 @@ namespace ModelConsole.Controls
 
          double vw = ModelScrollViewer.ViewportWidth;
          double vh = ModelScrollViewer.ViewportHeight;
-         double ew = ModelScrollViewer.ExtentWidth;
-         double eh = ModelScrollViewer.ExtentHeight;
-         if (vw <= 0 || vh <= 0 || ew <= 0 || eh <= 0)
+         var b = _contentBounds;
+         if (vw <= 0 || vh <= 0 || b.Width <= 0 || b.Height <= 0)
          {
             return;
          }
 
-         double fit = Math.Min(vw / ew, vh / eh);
+         // Fit to the content (all tables), not the canvas: the canvas is a
+         // large "paper" whose extent would zoom the drawing way out.
+         double fit = Math.Min(vw / b.Width, vh / b.Height);
          fit = Math.Max(MinZoom, Math.Min(1.0, fit));
-         double hOff = Math.Max(0, (ew - vw / fit) / 2.0);
-         double vOff = Math.Max(0, (eh - vh / fit) / 2.0);
+         double hOff = b.X + b.Width / 2.0 - vw / (2.0 * fit);
+         double vOff = b.Y + b.Height / 2.0 - vh / (2.0 * fit);
 
          ModelScrollViewer.ChangeView(hOff, vOff, (float)fit, true);
       }
@@ -294,10 +322,11 @@ namespace ModelConsole.Controls
          {
             return;
          }
+         // null zoom = "keep the current zoom"; only the offsets change.
          ModelScrollViewer.ChangeView(
             ModelScrollViewer.HorizontalOffset - dx,
             ModelScrollViewer.VerticalOffset - dy,
-            (float)ModelScrollViewer.ZoomFactor, true);
+            null, true);
       }
 
       /// <summary>
@@ -324,7 +353,25 @@ namespace ModelConsole.Controls
             Gutter = Gutter
          });
 
-         _layout = new Dictionary<string, Rect2>(layout);
+         // Center the content in the large canvas so panning has room in all
+         // directions (the "paper" is effectively unlimited - the view stops
+         // only at the canvas edge, far from the content).
+         double contentWidth = 0, contentHeight = 0;
+         foreach (var kv in layout)
+         {
+            contentWidth = Math.Max(contentWidth, kv.Value.X + kv.Value.Width);
+            contentHeight = Math.Max(contentHeight, kv.Value.Y + kv.Value.Height);
+         }
+         double offsetX = (CanvasSize - contentWidth) / 2.0;
+         double offsetY = (CanvasSize - contentHeight) / 2.0;
+
+         _layout = new Dictionary<string, Rect2>();
+         foreach (var kv in layout)
+         {
+            _layout[kv.Key] = new Rect2(
+               kv.Value.X + offsetX, kv.Value.Y + offsetY,
+               kv.Value.Width, kv.Value.Height);
+         }
       }
 
       /// <summary>
@@ -354,22 +401,37 @@ namespace ModelConsole.Controls
             model.Add(table);
          }
 
-         // The extents drive the scrollable canvas size.
+         // Content bounds (the bounding box of all drawn tables) drive the
+         // fit button and the router region.
+         double minX = double.MaxValue, minY = double.MaxValue;
          double maxX = 0, maxY = 0;
          foreach (var t in drawn.Values)
          {
+            minX = Math.Min(minX, t.X);
+            minY = Math.Min(minY, t.Y);
             maxX = Math.Max(maxX, t.X + t.ComputedWidth);
             maxY = Math.Max(maxY, t.Y + t.ComputedHeight);
          }
-         ModelCanvas.Width = maxX + ExtentMargin;
-         ModelCanvas.Height = maxY + ExtentMargin;
+         if (drawn.Count == 0)
+         {
+            minX = 0; minY = 0; maxX = 0; maxY = 0;
+         }
+         _contentBounds = new Rect2(minX, minY, maxX - minX, maxY - minY);
+
+         // The canvas is a large "paper" so panning has room in all
+         // directions; the router bounds stay tight around the content so
+         // the A* grid does not grow with the paper.
+         ModelCanvas.Width = CanvasSize;
+         ModelCanvas.Height = CanvasSize;
+         var bounds = new Rect2(
+            minX - ExtentMargin, minY - ExtentMargin,
+            (maxX - minX) + 2 * ExtentMargin, (maxY - minY) + 2 * ExtentMargin);
 
          // Route every FK around the drawn tables, sequentially so no
          // connector crosses another.
          var obstacles = drawn.Values
             .Select(t => new Rect2(t.X, t.Y, t.ComputedWidth, t.ComputedHeight))
             .ToList();
-         var bounds = new Rect2(0, 0, ModelCanvas.Width, ModelCanvas.Height);
          var routerOptions = new RouterOptions
          {
             GridSize = 16,

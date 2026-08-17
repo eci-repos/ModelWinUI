@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 
 using Windows.Foundation;
+using Windows.UI;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Input;
 
 using Model.Data;
@@ -29,6 +31,22 @@ namespace ModelConsole.Graphics.Primitives
 
       private StackPanel _rowsPanel = new StackPanel();
       public List<TableRowPanel> Rows { get; set; } = new List<TableRowPanel>();
+
+      /// <summary>
+      /// Pastel band behind the banner text, colored by the table kind
+      /// (entity vs reference code). Hit-test transparent so presses reach
+      /// the table rectangle.
+      /// </summary>
+      private Border _headerBorder;
+
+      /// <summary>
+      /// Header colors by table kind: light blue for entity tables, light
+      /// green for reference-code lookups.
+      /// </summary>
+      private static readonly Color EntityHeaderColor =
+         Color.FromArgb(255, 220, 233, 247);
+      private static readonly Color ReferenceHeaderColor =
+         Color.FromArgb(255, 226, 239, 218);
 
       /// <summary>
       /// The metadata this table renders. The columns list is shared with the
@@ -77,6 +95,11 @@ namespace ModelConsole.Graphics.Primitives
          base.DeltaMove(delta);
          Canvas.SetLeft(_rowsPanel, X);
          Canvas.SetTop(_rowsPanel, Y + _bannerHeight);
+         if (_headerBorder != null)
+         {
+            Canvas.SetLeft(_headerBorder, X);
+            Canvas.SetTop(_headerBorder, Y);
+         }
       }
 
       /// <summary>
@@ -273,6 +296,27 @@ namespace ModelConsole.Graphics.Primitives
 
          NativeInstance.Tag = this;
          frame.Instance.Children.Add(NativeInstance);
+
+         // Header band: a pastel rectangle behind the banner text, colored by
+         // the table kind (entity vs reference code). Rounded on top to match
+         // the table's corner radius, square on the bottom where the rows
+         // start.
+         var kind = TableKindClassifier.Classify(_table);
+         var headerColor = kind == TableKind.ReferenceCode
+            ? ReferenceHeaderColor : EntityHeaderColor;
+         _headerBorder = new Border
+         {
+            Width = ComputedWidth,
+            Height = _bannerHeight,
+            Background = new SolidColorBrush(headerColor),
+            CornerRadius = new CornerRadius(
+               CornerRadius, CornerRadius, 0, 0),
+            IsHitTestVisible = false
+         };
+         Canvas.SetLeft(_headerBorder, X);
+         Canvas.SetTop(_headerBorder, Y);
+         frame.Instance.Children.Add(_headerBorder);
+
          frame.Instance.Children.Add(_rowsPanel);
 
          // The rows panel and banner are display-only; make them hit-test

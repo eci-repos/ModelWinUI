@@ -320,10 +320,12 @@ namespace ModelConsole.Graphics.GLibrary
 
          // Pan triggers (backlog 011): middle-drag always pans; left-drag on
          // empty canvas space pans; left-drag while space is held pans even
-         // over a shape (space+drag convention). Mouse only - touch/pen pan
-         // natively via the ScrollViewer, so a pan gesture must not capture
-         // the pointer away from it.
-         bool mouse = e.Pointer.PointerDeviceType == PointerDeviceType.Mouse;
+         // over a shape (space+drag convention). Mouse/touchpad only - touch
+         // and pen pan natively via the ScrollViewer, so a pan gesture must
+         // not capture the pointer away from it.
+         var device = e.Pointer.PointerDeviceType;
+         bool mouse = device == PointerDeviceType.Mouse ||
+                      device == PointerDeviceType.Touchpad;
          bool middlePan = mouse && props.IsMiddleButtonPressed;
          bool spacePan = mouse && IsSpaceHeld() && props.IsLeftButtonPressed;
          bool emptyPan = mouse && props.IsLeftButtonPressed && s == null;
