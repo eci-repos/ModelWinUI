@@ -10,11 +10,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage.Pickers;
 
 using Model.Data;
+using ModelConsole.ModelData;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -30,6 +32,20 @@ namespace ModelWinUI
       {
          this.InitializeComponent();
          Title = "EDAM Studio";
+
+         // File → Open Sample (backlog 005): one item per shipped sample,
+         // built from the registry so the menu and the shipped files can
+         // never drift apart.
+         foreach (var sample in SampleModels.All)
+         {
+            var item = new MenuFlyoutItem
+            {
+               Text = sample.Name,
+               Tag = sample.FileName
+            };
+            item.Click += OpenSample_Click;
+            OpenSampleMenu.Items.Add(item);
+         }
       }
 
       /// <summary>
@@ -71,21 +87,61 @@ namespace ModelWinUI
 
          try
          {
-            var tables = ModelFile.Load(file.Path);
-            XamlEditor.SetModel(tables);
-            SkiaEditor.SetModel(tables);
+            LoadModel(ModelFile.Load(file.Path));
          }
          catch (Exception ex)
          {
-            var dialog = new ContentDialog
-            {
-               Title = "Could not open model",
-               Content = ex.Message,
-               CloseButtonText = "OK",
-               XamlRoot = RootGrid.XamlRoot
-            };
-            await dialog.ShowAsync();
+            await ShowLoadErrorAsync(ex);
          }
+      }
+
+      /// <summary>
+      /// File → Open Sample: load one of the shipped sample models (backlog
+      /// 005). The item's <see cref="FrameworkElement.Tag"/> carries the JSON
+      /// file name; the file ships in the app output under Samples/.
+      /// </summary>
+      private async void OpenSample_Click(object sender, RoutedEventArgs e)
+      {
+         string fileName = (sender as MenuFlyoutItem)?.Tag as string;
+         if (String.IsNullOrEmpty(fileName))
+         {
+            return;
+         }
+
+         string path = Path.Combine(
+            AppContext.BaseDirectory, "Samples", fileName);
+         try
+         {
+            LoadModel(ModelFile.Load(path));
+         }
+         catch (Exception ex)
+         {
+            await ShowLoadErrorAsync(ex);
+         }
+      }
+
+      /// <summary>
+      /// Feed a loaded model to both renderers (XAML + Skia).
+      /// </summary>
+      private void LoadModel(IReadOnlyList<TableInfo> tables)
+      {
+         XamlEditor.SetModel(tables);
+         SkiaEditor.SetModel(tables);
+      }
+
+      /// <summary>
+      /// Surface a model-load failure in a dialog.
+      /// </summary>
+      private async Task ShowLoadErrorAsync(Exception ex)
+      {
+         var dialog = new ContentDialog
+         {
+            Title = "Could not open model",
+            Content = ex.Message,
+            CloseButtonText = "OK",
+            XamlRoot = RootGrid.XamlRoot
+         };
+         await dialog.ShowAsync();
       }
    }
 }

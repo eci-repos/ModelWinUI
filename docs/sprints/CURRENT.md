@@ -1,6 +1,6 @@
-# Sprint 2026-08-17 — UI controls for viewing the data model
+# Sprint 2026-08-17 — Non-trivial sample models
 
-> Executed copy of the sprint. Backlog item: `docs/backlog/004-ui-controls-for-viewing-the-data-model.md`.
+> Executed copy of the sprint. Backlog item: `docs/backlog/005-non-trivial-sample-models.md`.
 
 ## Dates
 
@@ -11,23 +11,22 @@
 
 Backlog items in this sprint (reference by number):
 
-- [x] `004` — UI controls for viewing the data model: model explorer panel + File → Open (JSON load)
+- [x] `005` — Non-trivial sample models: ship sample models showing the tool's capabilities
 
 ## Execution Log
 
-- 2026-08-17 — Sprint defined from backlog item `004`. User scope decision: **Explorer + JSON load** — a model explorer panel (tree of tables → columns → constraints, plus an FK list; clicking a table selects it on the canvas) AND a File → Open that loads a model from JSON and renders it.
-- 2026-08-17 — `ModelFile` (ModelGraphLibrary, `Model.Data`): `ToJson`/`LoadJson`/`Load` over a JSON array of `TableInfo` — the POCOs round-trip cleanly through System.Text.Json, including `Constraints` with `ReferencedTableName`/`ReferencedColumnName`. New `ModelFileTests` (round-trip incl. FK constraints, temp-file load, empty model) — 3 tests.
-- 2026-08-17 — `ModelExplorerControl`: a `TreeView` built in code-behind (`TreeViewNode`s) — schema root → one node per table with a child node per column (name, type, PK/FK tags), plus a "Foreign Keys (N)" section via `FkEdgeExtractor.Extract`. `SetModel` rebuilds; `TableSelected` fires on a table-node click. `TreeViewNode` has no `Tag`, so table nodes are mapped via a `Dictionary<TreeViewNode, TableInfo>`.
-- 2026-08-17 — `ModelPanelControl`: `SetModel` (replace model, re-layout, re-render, `ModelChanged` event), `SelectTable` (DodgerBlue accent outline via `IRectangleFactory`, hit-test transparent, plus `EntitySelected` so the inspector shows it), `Tables` accessor. `SkiaPanelControl.SetModel` clears the cached `ErdDiagram` so it re-composes on the next paint.
-- 2026-08-17 — `ModelEditorControl` hosts the explorer as a **collapsible left panel** (mirroring the right panel's backlog-014 toggle): grid gains two columns (explorer + toggle strip), the drawing column shifts to the middle. Wires explorer → canvas selection + inspector, `ModelChanged` → explorer refresh, public `SetModel`.
-- 2026-08-17 — `MainWindow` gains a `MenuBar` ("File → Open Model…") with a `FileOpenPicker` initialized for the unpackaged app via `WinRT.Interop.WindowNative.GetWindowHandle` + `InitializeWithWindow.Initialize`; load errors surface in a `ContentDialog`. Both renderers get the loaded model.
-- 2026-08-17 — Verified: app project builds 0 errors / 0 warnings; `ModelFileTests` 3/3 pass. (Full-solution `--no-incremental` build + full test suite + launch check pending.)
+- 2026-08-17 — Sprint defined from backlog item `005`. User scope decision: **Ship JSON + Open Sample menu** — export the existing 50-table PublicSafety schema to a shipped JSON file, author one new non-trivial sample in a different domain (a ~20-table library schema), ship both as app content, and add a File → Open Sample submenu.
+- 2026-08-17 — `LibrarySchema` (ModelGraphLibrary, `ModelConsole.ModelData`): a 20-table / 30-FK library & books schema mirroring the `PublicSafetySchema` builder pattern — 7 `Ref*` reference tables (code key + `Description`) + 13 entity tables (Address, Publisher, Author, LibraryBranch, Book, BookAuthor, BookCopy, Patron, Loan, Hold, Fine, Staff, Reservation). All FK `ReferencedColumnName`s null → parent-PK default; four FKs to `RefBookStatus` exercise `ConnectorAnchors.FanOut`.
+- 2026-08-17 — `SampleModels` registry (`ModelConsole.ModelData`): `SampleModel` (Name / Description / FileName / Tables) + `SampleModels.All` listing Public Safety + Library — the single source of truth for the menu and the tests.
+- 2026-08-17 — Shipped JSON files: `ModelGraphLibrary/Samples/PublicSafety.json` + `Library.json`, generated from the fixtures via `ModelFile.ToJson` (a one-off generator test wrote them, then was deleted). Both the app and the test project include them as content (`Link="Samples\…"`, `CopyToOutputDirectory="PreserveNewest"`).
+- 2026-08-17 — `MainWindow` gains **File → Open Sample**: a `MenuFlyoutSubItem` after "Open Model…" (with a separator); items built in code-behind from `SampleModels.All` (each `Tag` = file name); clicking loads `AppContext.BaseDirectory/Samples/<file>` via `ModelFile.Load` and feeds both renderers. The shared "load → both renderers" logic is extracted into a `LoadModel` helper used by both `OpenModel_Click` and `OpenSample_Click`; load errors surface in a shared `ShowLoadErrorAsync` dialog.
+- 2026-08-17 — `SampleModelTests` (6): shipped samples load + are valid (non-empty, every table has a PK, `FkEdgeExtractor.Extract` reports no issues), shipped JSON matches the fixture (sync guard, line endings normalized), PublicSafety is 50 tables / 74 FKs, Library is ≥ 15 tables / ≥ 15 FKs.
+- 2026-08-17 — Verified: app project builds 0 errors / 0 warnings; `SampleModelTests` 6/6 pass; the shipped JSON files land in the app output `Samples/`. (Full-solution `--no-incremental` build + full test suite + launch check pending.)
 
 ## Results
 
-- **Completed:** `004`
+- **Completed:** `005`
 - **Notes:**
-  - The explorer is the primary "view a model" surface: browse structure, click a table → it highlights on the canvas and shows in the inspector.
-  - The model file is a JSON array of `TableInfo`; `ModelFile.ToJson` exists for tests but there is no Save UI (004 is view-only).
-  - Canvas → explorer selection sync is a small follow-up (explorer → canvas is wired).
-  - The Skia render stays a flat canvas (no selection); it only tracks the loaded model.
+  - The samples are **generated from code fixtures**, not hand-maintained JSON — `SampleModelTests.ShippedJsonMatchesFixture` keeps the checked-in files in sync with the fixtures.
+  - Adding a sample to `SampleModels.All` automatically adds it to the File → Open Sample menu (the menu is built from the registry).
+  - The roadmap is now complete: all four roadmap items (base library, UI controls, sample models, assess next steps) are done.

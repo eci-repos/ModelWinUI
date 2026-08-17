@@ -12,6 +12,16 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-17 — Non-trivial sample models (backlog item 005)
+
+- **New sample schema** (`LibrarySchema`, ModelGraphLibrary, `ModelConsole.ModelData`): a 20-table / 30-FK library & books schema mirroring the `PublicSafetySchema` builder pattern — 7 `Ref*` reference tables (code key + `Description`) + 13 entity tables (Address, Publisher, Author, LibraryBranch, Book, BookAuthor, BookCopy, Patron, Loan, Hold, Fine, Staff, Reservation). All FK `ReferencedColumnName`s null → parent-PK default; four FKs to `RefBookStatus` exercise `ConnectorAnchors.FanOut`.
+- **Sample registry** (`SampleModels`, `ModelConsole.ModelData`): `SampleModel` (Name / Description / FileName / Tables) + `SampleModels.All` listing Public Safety + Library — the single source of truth for the menu and the tests.
+- **Shipped JSON files:** `ModelGraphLibrary/Samples/PublicSafety.json` + `Library.json`, **generated from the fixtures** via `ModelFile.ToJson` (a one-off generator test wrote them, then was deleted). Both the app and the test project include them as content (`Link="Samples\…"`, `CopyToOutputDirectory="PreserveNewest"`), so they land in the app output `Samples/` and the test output.
+- **File → Open Sample:** `MainWindow` gains a `MenuFlyoutSubItem` after "Open Model…" (with a separator); items built in code-behind from `SampleModels.All` (each `Tag` = file name); clicking loads `AppContext.BaseDirectory/Samples/<file>` via `ModelFile.Load` and feeds both renderers. The shared "load → both renderers" logic is extracted into a `LoadModel` helper used by both `OpenModel_Click` and `OpenSample_Click`; load errors surface in a shared `ShowLoadErrorAsync` dialog.
+- **Tests:** `SampleModelTests` (6 — shipped samples load + are valid, shipped JSON matches the fixture as a sync guard, PublicSafety 50/74, Library ≥15/≥15). **72/72 tests pass** (was 66).
+- **Verified:** app project builds 0 errors / 0 warnings; the shipped JSON files land in the app output `Samples/`. (Full-solution `--no-incremental` build + full test suite + launch check pending.)
+- Backlog item: `docs/backlog/005-non-trivial-sample-models.md`. Sprint record: `docs/sprints/CURRENT.md` (2026-08-17); the 004 sprint was promoted to `docs/sprints/archive/sprint-2026-08-17-ui-controls-for-viewing-the-data-model.md`.
+
 ### 2026-08-17 — UI controls for viewing the data model (backlog item 004)
 
 - **Model explorer panel** (`ModelExplorerControl`): a `TreeView` built in code-behind (`TreeViewNode`s) — schema root → one node per table with a child node per column (name, type, PK/FK tags), plus a "Foreign Keys (N)" section listing every FK via `FkEdgeExtractor.Extract`. `SetModel` rebuilds the tree; `TableSelected` fires on a table-node click. `TreeViewNode` has no `Tag`, so table nodes are mapped via a `Dictionary<TreeViewNode, TableInfo>`.
@@ -191,9 +201,7 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ### Next tasks (in priority order)
 
-1. **Backlog items 001–014, 003, and 004 are complete** — sprints 2026-08-16 (items 008–012), 2026-08-17 (items 014, 003, 004) are done: records at `docs/sprints/archive/sprint-2026-08-16-connector-routing.md`, `docs/sprints/archive/sprint-2026-08-17-closeable-right-panel.md`, `docs/sprints/archive/sprint-2026-08-17-erd-graphics-primitives-base-library.md`, and `docs/sprints/CURRENT.md`; archived items `docs/backlog/archive/001`–`014` (bug-fix item 013 archived with per-edge timing diagnostics deferred). The roadmap item below is the only open work.
-2. **Backlog item 005 — Non-trivial sample models** (roadmap)
-   - Ship sample models showing the tool's capabilities.
+1. **All backlog items 001–014, 003, 004, and 005 are complete** — the README roadmap is fully delivered: base library (001–003, 006–013), UI controls (004, 014), and sample models (005). Sprints 2026-08-16 (items 008–012) and 2026-08-17 (items 014, 003, 004, 005) are done: records at `docs/sprints/archive/sprint-2026-08-16-connector-routing.md`, `docs/sprints/archive/sprint-2026-08-17-closeable-right-panel.md`, `docs/sprints/archive/sprint-2026-08-17-erd-graphics-primitives-base-library.md`, `docs/sprints/archive/sprint-2026-08-17-ui-controls-for-viewing-the-data-model.md`, and `docs/sprints/CURRENT.md`; archived items `docs/backlog/archive/001`–`014` (bug-fix item 013 archived with per-edge timing diagnostics deferred). The roadmap's "assess next steps" (item 4) is the natural next conversation — candidates below.
 
 ### Known gaps / issues (candidates for backlog items)
 

@@ -17,4 +17,12 @@
     <ProjectReference Include="..\..\src\ModelGraphLibrary\ModelGraphLibrary.csproj" />
   </ItemGroup>
 
+  <!-- Shipped sample models (backlog 005): copied into the test output so
+       SampleModelTests can load and validate the exact shipped artifacts. -->
+  <ItemGroup>
+    <Content Include="..\..\src\ModelGraphLibrary\Samples\*.json"
+             Link="Samples\%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

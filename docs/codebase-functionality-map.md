@@ -22,7 +22,7 @@
 | `ModelGraphLibrary/Skia/Primitives` | `ModelConsole.Skia.Primitives` | Portable domain primitives — `Table`, `Connector`, `ErdComposer` | Active (Skia render path) |
 | `ModelGraphLibrary/Services` | `ModelConsole.Services` | `ISkiaTableFactory` / `SkiaTableFactory` + `ISkiaConnectorFactory` / `SkiaConnectorFactory` — the library's public factory contracts | Active |
 | `ModelGraphLibrary/Graph` | `ModelConsole.Graph` | Pure geometry + FK edge extraction + grid layout + A* orthogonal routing + sequential routing + connector anchors (unit-tested) | Active |
-| `ModelGraphLibrary/ModelData` | `ModelConsole.ModelData` | `PublicSafetySchema` — 50-table / 74-FK public-safety fixture | Active |
+| `ModelGraphLibrary/ModelData` | `ModelConsole.ModelData` | Schema fixtures + sample registry: `PublicSafetySchema` (50-table / 74-FK public-safety fixture), `LibrarySchema` (20-table / 30-FK library fixture, backlog 005), `SampleModels` (the shipped samples — Name/Description/FileName/Tables; single source of truth for the Open Sample menu and the tests) | Active |
 | `tests/ModelGraphLibrary.Tests` | `ModelConsole.Tests` | xUnit unit tests over ModelGraphLibrary's pure modules | Active |
 | `Model/Diagnostics` | `ModelConsole.Model.Diagnostics` | Diagnostics & logging infrastructure | Active |
 | `Model/ModelData` | `ModelConsole.Model.Test` | Sample data fixtures | Active |
@@ -81,11 +81,11 @@ Portable, deterministic geometry + routing that the app uses to lay out tables a
 
 ### Schema fixture — `ModelGraphLibrary/ModelData` (namespace `ModelConsole.ModelData`, Active)
 
-`PublicSafetySchema.Tables` — exactly 50 tables, 74 FK edges across 8 domain areas (Identity, Reference data, Agencies & personnel, Geography & facilities, Incidents & dispatch, Enforcement, Offenses & case, Courts & sentencing). One FK (SentenceCondition→Sentence) deliberately omits `ReferencedColumnName` to exercise the PK-default rule. Reached through `IModelDataProvider.GetPublicSafetyTables()` (DI).
+`PublicSafetySchema.Tables` — exactly 50 tables, 74 FK edges across 8 domain areas (Identity, Reference data, Agencies & personnel, Geography & facilities, Incidents & dispatch, Enforcement, Offenses & case, Courts & sentencing). One FK (SentenceCondition→Sentence) deliberately omits `ReferencedColumnName` to exercise the PK-default rule. Reached through `IModelDataProvider.GetPublicSafetyTables()` (DI). `LibrarySchema.Tables` — 20 tables, 30 FK edges (7 `Ref*` reference tables + 13 entity tables; all FK `ReferencedColumnName`s null → parent-PK default; four FKs to `RefBookStatus` exercise `ConnectorAnchors.FanOut`). `SampleModels.All` — the shipped samples (Public Safety + Library), each with Name / Description / FileName / Tables; the JSON files under `ModelGraphLibrary/Samples/` are generated from these fixtures via `ModelFile.ToJson` and kept in sync by `SampleModelTests`.
 
 ### Unit tests — `tests/ModelGraphLibrary.Tests` (namespace `ModelConsole.Tests`, Active)
 
-The repo's first test project (xUnit, net10.0, references ModelGraphLibrary only — no WinUI). 49 tests across `SchemaIntegrityTests`, `FkEdgeExtractorTests`, `TableLayoutEngineTests`, `OrthogonalRouterTests`, `ConnectorAnchorsTests`, `SequentialRouterTests`, `NoCrossingInvariantTests` (backlog 012 — asserts no routed segment crosses any table rect across the 50-table schema and tight/adversarial layouts). Run: `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug`.
+The repo's first test project (xUnit, net10.0, references ModelGraphLibrary only — no WinUI). 72 tests across `SchemaIntegrityTests`, `FkEdgeExtractorTests`, `TableLayoutEngineTests`, `OrthogonalRouterTests`, `ConnectorAnchorsTests`, `SequentialRouterTests`, `NoCrossingInvariantTests` (backlog 012 — asserts no routed segment crosses any table rect across the 50-table schema and tight/adversarial layouts), `ModelFileTests`, and `SampleModelTests` (backlog 005 — the shipped JSON files load, are valid, and stay in sync with the fixtures). Run: `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug`.
 
 ### Sample data fixtures — `Model/ModelData` (Active)
 
@@ -178,4 +178,4 @@ Introduced by backlog item `002`. All registered in `App.ConfigureServices`. The
 ### Application shell — `App` / `MainWindow` (Active)
 
 - `App.xaml.cs` — **DI composition root**: `ConfigureServices()` builds the container and registers all services; `Ioc.Default.ConfigureServices(Services)` bridges resolution for XAML-instantiated controls.
-- `MainWindow` — the "EDAM Studio" window: a `MenuBar` ("File → Open Model…", backlog 004 — `FileOpenPicker` initialized for the unpackaged app via `WinRT.Interop.InitializeWithWindow`, loads a JSON model into both renderers) + the renderer bar (backlog 003) hosting `ModelEditorControl` / `SkiaPanelControl`.
+- `MainWindow` — the "EDAM Studio" window: a `MenuBar` ("File → Open Model…", backlog 004 — `FileOpenPicker` initialized for the unpackaged app via `WinRT.Interop.InitializeWithWindow`, loads a JSON model into both renderers; "File → Open Sample", backlog 005 — a submenu built from `SampleModels.All` that loads the shipped JSON files from the app output `Samples/`; both share a `LoadModel` helper) + the renderer bar (backlog 003) hosting `ModelEditorControl` / `SkiaPanelControl`.

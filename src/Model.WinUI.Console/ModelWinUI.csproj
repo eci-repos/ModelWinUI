@@ -29,6 +29,12 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <!-- Shipped sample models (backlog 005): the JSON files live in
+         ModelGraphLibrary/Samples and are copied into the app output under
+         Samples/ so File → Open Sample can load them. -->
+    <Content Include="..\ModelGraphLibrary\Samples\*.json"
+             Link="Samples\%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
