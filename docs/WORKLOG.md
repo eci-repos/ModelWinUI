@@ -12,6 +12,19 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-17 — ERD graphics primitives base library (backlog item 003)
+
+- **Skia connector primitive** (`ModelConsole.Skia.Primitives.Connector`): strokes a routed `Point2` polyline via `SKPathBuilder` + filled endpoint circles onto `GlFrame.Canvas` — the portable Skia stack's first connector primitive (parity with the XAML `GlOrthoPath.DrawRouted` + `GlEllipse` markers). Null/empty points are a no-op. DodgerBlue colors in `GlPastelPalette`.
+- **Skia Table parity:** `ComputedWidth`/`ComputedHeight` (valid right after `SetTable`, no draw needed) + `GetRowCenterY(columnName)` (matched row center, table-midpoint fallback) — mirrors the XAML `Table` so tables can be measured and anchored before drawing.
+- **Reusable composition API:** `ErdComposer.Compose(tables, frame, options)` → `ErdDiagram` (Layout/Edges/Routes/Issues) — the "define and draw an ERD by writing code" API on the Skia stack: measure probes → `TableLayoutEngine.Layout` (7 cols) → `FkEdgeExtractor.Extract` → `ConnectorAnchors.Resolve`+`FanOut` (grouped per `table::column`) → `SequentialRouter.RouteAll` with the app's router options (`GridSize 16`, `ObstacleMargin 14`, `StubLength 20`). Row Y = `probe.GetRowCenterY(col) + slot.Y`.
+- **DI:** `ISkiaConnectorFactory`/`SkiaConnectorFactory` (singleton) registered in `App.ConfigureServices` next to `ISkiaTableFactory`.
+- **SkiaPanelControl renders the full ERD:** 50 tables + 74 FKs, composed once on first paint and cached (routing takes seconds — it must not run per paint); logs counts + FK issues.
+- **MainWindow renderer bar:** "XAML model" / "Skia render" toggle buttons swap `ModelEditorControl` and `SkiaPanelControl` visibility in a shared grid; both XAML-instantiated (Ioc.Default is configured before MainWindow). The XAML path (zoom/pan/drag/inspector/014 toggle) is untouched.
+- **XAML-stack cleanup:** deleted the dead `Graphics/Primitives/Connector.cs` (unreferenced stub referencing the Skia stack — superseded by the new Skia `Connector`); documented the two `GlOrthoPath` modes (`Draw`/`GetPath` = shaped + grips vs `DrawRouted` = static router polyline).
+- **Tests:** `SkiaConnectorTests` (2), `SkiaTableTests` (3), `ErdComposerTests` (4 — 50 tables/74 edges, routes cross no table interior, render-to-bitmap without throwing). Also migrated the pre-existing `RoutingDiagnosticTests.cs` from obsolete `SKPath.MoveTo/LineTo` to `SKPathBuilder` so a clean rebuild stays warning-free. **63/63 tests pass** (was 54).
+- **Verified:** full solution `--no-incremental` `-p:Platform=x64` → **0 errors, 0 warnings**; **63/63 tests pass**; app launches unpackaged and stays running. (Renderer-bar toggle + the Skia paint need a manual pass — a CLI launch runs on the agent's non-interactive desktop.)
+- Backlog item: `docs/backlog/003-erd-graphics-primitives-base-library.md`. Sprint record: `docs/sprints/CURRENT.md` (2026-08-17); the 014 sprint was promoted to `docs/sprints/archive/sprint-2026-08-17-closeable-right-panel.md`.
+
 ### 2026-08-17 — Docs housekeeping: archived 011/012/013, promoted 2026-08-16 sprint
 
 - Backlog items **011** (drawing panning), **012** (connectors never cross tables), and **013** (drag-table hang fix) were completed earlier but still sat in `docs/backlog/`; moved them to `docs/backlog/archive/`. Item 013's status updated to **Complete** (per-edge timing diagnostics remain deferred, tracked in WORKLOG).
@@ -168,21 +181,18 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ### Next tasks (in priority order)
 
-1. **All backlog items through 014 are complete** — sprints 2026-08-16 (items 008–012) and 2026-08-17 (item 014) are done: records at `docs/sprints/archive/sprint-2026-08-16-connector-routing.md` and `docs/sprints/CURRENT.md`; archived items `docs/backlog/archive/008`–`014` (bug-fix item 013 archived with per-edge timing diagnostics deferred). The roadmap items below are the only open work.
-2. **Backlog item 003 — ERD graphics primitives base library** (from project README roadmap)
-   - Define and draw Table and constraint connectors (lines/symbols) as a reusable library.
-   - Current state: `Table` primitive and `GlOrthoPath` connectors exist but are early-stage; `GlModel` collection is now functional behind `IGlModel`.
-3. **Backlog item 004 — UI controls for viewing the data model** (roadmap)
+1. **Backlog items 001–014 and 003 are complete** — sprints 2026-08-16 (items 008–012), 2026-08-17 (item 014), and 2026-08-17 (item 003) are done: records at `docs/sprints/archive/sprint-2026-08-16-connector-routing.md`, `docs/sprints/archive/sprint-2026-08-17-closeable-right-panel.md`, and `docs/sprints/CURRENT.md`; archived items `docs/backlog/archive/001`–`014` (bug-fix item 013 archived with per-edge timing diagnostics deferred). The roadmap items below are the only open work.
+2. **Backlog item 004 — UI controls for viewing the data model** (roadmap)
    - Develop the controls needed to view a model (beyond the current sample drawing).
-4. **Backlog item 005 — Non-trivial sample models** (roadmap)
+3. **Backlog item 005 — Non-trivial sample models** (roadmap)
    - Ship sample models showing the tool's capabilities.
 
 ### Known gaps / issues (candidates for backlog items)
 
-- Deferred from backlog 002 scope: `Graphics/Primitives/Connector.cs` (unreferenced, mixes the two stacks); public API typos `IDiagnosticWritter` / `RoundCorderRadious`; no shared drawing-surface abstraction over the two graphics stacks.
+- Deferred from backlog 002 scope: public API typos `IDiagnosticWritter` / `RoundCorderRadious`; no shared drawing-surface abstraction over the two graphics stacks.
 - Only the **Skia stack** is extracted into ModelGraphLibrary; the XAML `Graphics` stack still lives inside the app project (WinUI-bound). Splitting it out is possible but buys no portability.
 - ModelGraphLibrary keeps the app's namespaces (`ModelConsole.*`, `Model.Data`) — namespace reorganization to the library's own identity is a candidate follow-up.
-- `SkiaPanelControl` (Skia stack) is DI-converted but not wired into `MainWindow`; the Skia stack is the one intended for the Uno/WebAssembly sibling.
+- `SkiaPanelControl` renders the Skia ERD in the app via the MainWindow renderer bar (backlog 003), but the Skia render is a **flat canvas** — no zoom/pan/drag/inspector (those stay on the XAML path). A shared composition/anchoring helper for `ModelPanelControl` too is a deferred follow-up.
 - Test project exists (backlog 007) but only covers ModelGraphLibrary's pure modules; the XAML `Graphics` stack and the WinUI app have no automated tests.
 - Routed connectors have no corner rounding (deferred from backlog 007) — rounding can re-intersect obstacles in tight gaps.
 - Deferred from backlog 010: editing table text; add/remove whole tables and columns (inspector edit comes first); undo/redo (the model/view separation keeps it possible); live re-route during drag (re-route on release first; optimize to only re-route edges touching the changed table later).
@@ -199,7 +209,7 @@ Running record of work done and next pending tasks. **Read this first** when sta
 - When starting a new piece of work: create a backlog item from `docs/backlog/_TEMPLATE.md`, then update this file when done.
 - **DI (from backlog 002):** the composition root is `App.ConfigureServices()` in `App.xaml.cs`; `Ioc.Default.ConfigureServices(Services)` runs **before** `MainWindow` is created — keep that order or `Ioc.Default.GetRequiredService<T>()` throws at startup. Container is frozen after `BuildServiceProvider()`; `App.Services` and `Ioc.Default` are the same provider.
 - **DI pattern:** `Ioc.Default` is the only sanctioned service-locator, for **XAML-instantiated controls only**; code-created objects use constructor injection. New services register in `App.ConfigureServices`.
-- **Lifetime rules:** `DiagnosticsLogViewModel` and `LogService` **must be singletons** (transients double-wire the static log event and leak subscriptions); `IGlModel` must be **transient** (a singleton accumulates items across draws). `SkiaPanelControl` stays compiled-but-unwired.
+- **Lifetime rules:** `DiagnosticsLogViewModel` and `LogService` **must be singletons** (transients double-wire the static log event and leak subscriptions); `IGlModel` must be **transient** (a singleton accumulates items across draws). `SkiaPanelControl` is wired into MainWindow via the renderer bar (backlog 003); it composes once on first paint and caches the `ErdDiagram` — routing must never run per paint.
 - **XAML instantiation order matters:** `ModelEditorControl.xaml` declares `DiagnosticsLogControl` before `ModelPanelControl` so the log VM subscribes before "GL Context Ready." is written — keep that order.
 - **Container package:** `Microsoft.Extensions.DependencyInjection` 10.0.10 (restored and building). Functionality map lives at `docs/codebase-functionality-map.md`.
 - **ModelGraphLibrary (backlog 006):** the portable Skia stack + `Model.Data` now live in `src/ModelGraphLibrary` (plain `net10.0`, `SkiaSharp` core, `RootNamespace=ModelConsole`, namespaces unchanged). Build it alone with `dotnet build src/ModelGraphLibrary/ModelGraphLibrary.csproj`; the app references it. `SkiaPanelControl` and the `ISkiaTableFactory` DI registration still use `ModelConsole.Services` — unchanged.

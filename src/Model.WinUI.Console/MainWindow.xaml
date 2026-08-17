@@ -10,6 +10,26 @@
     mc:Ignorable="d">
 
    <Grid>
-      <ct:ModelEditorControl />
+      <Grid.RowDefinitions>
+         <RowDefinition Height="Auto" />
+         <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+
+      <!-- Slim renderer bar (backlog 003): switch the main view between the
+           XAML ERD (ModelEditorControl) and the Skia ERD (SkiaPanelControl).
+           Only one control is visible at a time. -->
+      <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8"
+                  Margin="10,8">
+         <TextBlock Text="Renderer:" VerticalAlignment="Center" />
+         <ToggleButton x:Name="XamlToggle" Content="XAML model"
+                       IsChecked="True" Click="RendererToggle_Click" />
+         <ToggleButton x:Name="SkiaToggle" Content="Skia render"
+                       Click="RendererToggle_Click" />
+      </StackPanel>
+
+      <Grid Grid.Row="1">
+         <ct:ModelEditorControl x:Name="XamlEditor" />
+         <ct:SkiaPanelControl x:Name="SkiaEditor" Visibility="Collapsed" />
+      </Grid>
    </Grid>
 </Window>

@@ -19,7 +19,20 @@ namespace ModelConsole.Graphics.GLibrary.GlOrtho
 {
 
    /// <summary>
-   /// Helper class to draw orthogonal lines with rounded edges.
+   /// Helper class to draw orthogonal connector lines with rounded edges.
+   /// Two distinct modes coexist:
+   /// <list type="bullet">
+   /// <item><description><see cref="Draw(GlContext, double, double, double, double, GlSide)"/>
+   /// / <see cref="GetPath(double, double, double, double, GlSide)"/> — a shaped,
+   /// grip-reshapable connector: rounded corners, three grip nodes (start,
+   /// end, middle) for interactive reshaping, positioned relative to a local
+   /// origin.</description></item>
+   /// <item><description><see cref="DrawRouted(GlContext, IReadOnlyList{Point2})"/> —
+   /// a static connector from a pre-computed absolute polyline (the output of
+   /// <see cref="ModelConsole.Graph.OrthogonalRouter"/>). No grips and no
+   /// corner rounding; the points are used as-is. This is the mode the ERD
+   /// renderer uses.</description></item>
+   /// </list>
    /// </summary>
    public class GlOrthoPath : GlObject, IGlGrip
    {

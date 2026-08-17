@@ -155,6 +155,45 @@ namespace ModelConsole.Skia.Primitives
         }
 
         /// <summary>
+        /// Measured table width, valid right after <see cref="SetTable"/> —
+        /// no draw is required (used to lay tables out before drawing).
+        /// </summary>
+        public float ComputedWidth
+        {
+            get { return _panel.width; }
+        }
+
+        /// <summary>
+        /// Measured table height, valid right after <see cref="SetTable"/> —
+        /// no draw is required (used to lay tables out before drawing).
+        /// </summary>
+        public float ComputedHeight
+        {
+            get { return _panel.height; }
+        }
+
+        /// <summary>
+        /// Absolute Y of the vertical center of the row that renders the given
+        /// column, used to anchor FK connectors at the column row. Falls back
+        /// to the table's vertical midpoint (parity with the XAML Table).
+        /// </summary>
+        /// <param name="columnName">column to locate</param>
+        /// <returns>the Y coordinate of the row center</returns>
+        public float GetRowCenterY(string columnName)
+        {
+            foreach (var p in _panels)
+            {
+                if (p.Column != null &&
+                   string.Equals(p.Column.ColumnName, columnName,
+                      StringComparison.Ordinal))
+                {
+                    return p.y + p.height / 2.0f;
+                }
+            }
+            return _panel.y + _panel.height / 2.0f;
+        }
+
+        /// <summary>
         /// Table class initialization with frame and geometry information.
         /// </summary>
         /// <param name="frame">frame</param>

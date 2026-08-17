@@ -76,6 +76,7 @@ namespace ModelWinUI
          services.AddSingleton<IModelDataProvider, ModelDataProvider>();
          services.AddSingleton<ITableFactory, TableFactory>();
          services.AddSingleton<ISkiaTableFactory, SkiaTableFactory>();
+         services.AddSingleton<ISkiaConnectorFactory, SkiaConnectorFactory>();
          services.AddSingleton<IConnectorFactory, ConnectorFactory>();
          services.AddSingleton<IRectangleFactory, RectangleFactory>();
 

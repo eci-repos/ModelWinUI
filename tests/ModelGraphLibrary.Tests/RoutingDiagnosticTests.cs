@@ -189,12 +189,13 @@ namespace ModelConsole.Tests
 
          foreach (var pts in routes)
          {
-            using var path = new SKPath();
-            path.MoveTo((float)pts[0].X, (float)pts[0].Y);
+            using var builder = new SKPathBuilder();
+            builder.MoveTo(new SKPoint((float)pts[0].X, (float)pts[0].Y));
             for (int i = 1; i < pts.Count; i++)
             {
-               path.LineTo((float)pts[i].X, (float)pts[i].Y);
+               builder.LineTo(new SKPoint((float)pts[i].X, (float)pts[i].Y));
             }
+            using var path = builder.Detach();
             canvas.DrawPath(path, routePaint);
          }
 

@@ -16,11 +16,11 @@
 
 | Library / component | Namespace | Functionality label | Status |
 |---|---|---|---|
-| **ModelGraphLibrary project** | — | Portable graph library (Skia stack + data model + factory contract) | Experimental / unwired |
-| `ModelGraphLibrary/Model/Data` | `Model.Data` | Relational metadata model (POCOs, JSON round-trip) — moved out of the app (backlog 006) | Active |
-| `ModelGraphLibrary/Skia/GLibrary` | `ModelConsole.Skia.GLibrary` | Portable 2D vector graphics engine (Skia stack) — moved out of the app | Experimental / unwired |
-| `ModelGraphLibrary/Skia/Primitives` | `ModelConsole.Skia.Primitives` | Portable domain primitives | Experimental / unwired |
-| `ModelGraphLibrary/Services` | `ModelConsole.Services` | `ISkiaTableFactory` / `SkiaTableFactory` — the library's public factory contract | Active |
+| **ModelGraphLibrary project** | — | Portable graph library (Skia stack + data model + factory contracts) | Active |
+| `ModelGraphLibrary/Model/Data` | `Model.Data` | Relational metadata model (POCOs, JSON round-trip) + `TableKind`/`TableKindClassifier` (entity vs reference-code) — moved out of the app (backlog 006) | Active |
+| `ModelGraphLibrary/Skia/GLibrary` | `ModelConsole.Skia.GLibrary` | Portable 2D vector graphics engine (Skia stack) — moved out of the app | Active (Skia render path) |
+| `ModelGraphLibrary/Skia/Primitives` | `ModelConsole.Skia.Primitives` | Portable domain primitives — `Table`, `Connector`, `ErdComposer` | Active (Skia render path) |
+| `ModelGraphLibrary/Services` | `ModelConsole.Services` | `ISkiaTableFactory` / `SkiaTableFactory` + `ISkiaConnectorFactory` / `SkiaConnectorFactory` — the library's public factory contracts | Active |
 | `ModelGraphLibrary/Graph` | `ModelConsole.Graph` | Pure geometry + FK edge extraction + grid layout + A* orthogonal routing + sequential routing + connector anchors (unit-tested) | Active |
 | `ModelGraphLibrary/ModelData` | `ModelConsole.ModelData` | `PublicSafetySchema` — 50-table / 74-FK public-safety fixture | Active |
 | `tests/ModelGraphLibrary.Tests` | `ModelConsole.Tests` | xUnit unit tests over ModelGraphLibrary's pure modules | Active |
@@ -30,7 +30,7 @@
 | `Model/Helpers` | `ModelConsole.Model.Helpers` | MVVM base infrastructure | Active |
 | `Graphics/GLibrary` | `ModelConsole.Graphics.GLibrary` | 2D vector graphics engine (XAML stack, stays in the app) | Active |
 | `Graphics/GLibrary/GlOrtho` | `ModelConsole.Graphics.GLibrary.GlOrtho` | Orthogonal connector routing | Active |
-| `Graphics/Primitives` | `ModelConsole.Graphics.Primitives` | Domain-specific primitives (Table, rows) | Active (partly deferred) |
+| `Graphics/Primitives` | `ModelConsole.Graphics.Primitives` | Domain-specific primitives (Table, rows) | Active |
 | `Services` | `ModelConsole.Services` | DI service contracts + implementations (XAML-stack factories, log, data provider) | Active |
 | `Controls` | `ModelConsole.Controls` | Presentation layer (UserControls) | Active |
 | `ViewModels` | `ModelConsole.ViewModels` | Presentation logic (MVVM) | Active |
@@ -63,6 +63,7 @@ POCOs describing a relational schema; `TableInfo` supports JSON round-tripping. 
 | `ColumnInfo` | Column metadata (name, type, constraints) |
 | `ColumnList` | Ordered column collection |
 | `ConstraintInfo` | Constraint metadata (PK/FK/unique, etc.) — now carries nullable FK parent refs `ReferencedTableName` / `ReferencedColumnName` |
+| `TableKind`, `TableKindClassifier` | Entity vs reference-code classification — `Ref*` name prefix, or a small lookup (code/ID key + `Description` column + ≤ 3 columns); drives the pastel table-header colors |
 
 ### Pure graph modules — `ModelGraphLibrary/Graph` (namespace `ModelConsole.Graph`, Active)
 
@@ -124,11 +125,11 @@ WinUI XAML `Shape`-based rendering onto a `Canvas`. The active rendering path.
 
 | Type | Role |
 |---|---|
-| `Table` | Renders a `TableInfo` as rounded rectangle + banner + one `TableRowPanel` per column; exposes `ComputedWidth`/`ComputedHeight` (valid pre-layout, unlike `ActualWidth`), `GetRowCenterY(columnName)` for connector anchoring, and `TableInfo` (the metadata it renders); rows panel + banner are hit-test-transparent so the whole table drags |
+| `Table` | Renders a `TableInfo` as rounded rectangle + banner + one `TableRowPanel` per column; exposes `ComputedWidth`/`ComputedHeight` (valid pre-layout, unlike `ActualWidth`), `GetRowCenterY(columnName)` for connector anchoring, and `TableInfo` (the metadata it renders); rows panel + banner are hit-test-transparent so the whole table drags. The banner sits on a pastel header band colored by `TableKindClassifier` (light blue `#DCE9F7` for entities, light green `#E2EFDA` for reference codes) |
 | `TableRowPanel` | Single-column row rendering |
-| `Connector` | **Deferred** — mixes the two stacks and is unreferenced |
+| `Connector` | **Deleted** (backlog 003) — unreferenced stub referencing the Skia stack; superseded by the Skia `Connector` primitive |
 
-### Portable 2D vector graphics engine (Skia stack) — `ModelGraphLibrary/Skia/GLibrary` (Experimental, unwired)
+### Portable 2D vector graphics engine (Skia stack) — `ModelGraphLibrary/Skia/GLibrary` (Active — the Skia render path)
 
 SkiaSharp rendering onto an `SKSurface`. Lives in the ModelGraphLibrary project (plain `net10.0`). The stack intended for the Uno/WebAssembly sibling — keep it free of WinUI-specific dependencies.
 
@@ -140,9 +141,9 @@ SkiaSharp rendering onto an `SKSurface`. Lives in the ModelGraphLibrary project 
 | `GlText` | Text drawing (SkiaSharp 4.x: `SKFont` + `DefaultTextPaint`) |
 | `GlBoxInfo`, `GlMatrix`, `GlObjectGeometryInfo`, `GlObjectInfo`, `GlPalette` | Geometry/state support types |
 
-### Portable domain primitives — `ModelGraphLibrary/Skia/Primitives` (Experimental, unwired)
+### Portable domain primitives — `ModelGraphLibrary/Skia/Primitives` (Active — the Skia render path)
 
-`Table` (Skia counterpart of the XAML `Table`), `RectangleHalf` — both WinUI-free.
+`Table` (Skia counterpart of the XAML `Table`; backlog 003 added `ComputedWidth`/`ComputedHeight`/`GetRowCenterY` so tables can be measured and anchored before drawing), `Connector` (strokes a routed `Point2` polyline + filled endpoint markers via `GlFrame.Canvas` — the stack's first connector primitive, backlog 003), `RectangleHalf` — all WinUI-free. `ErdComposer` composes a full ERD as pure data (`ErdDiagram` — Layout/Edges/Routes/Issues): measure probes → `TableLayoutEngine` → `FkEdgeExtractor` → `ConnectorAnchors.Resolve`/`FanOut` → `SequentialRouter.RouteAll`. The "define and draw an ERD by writing code" API (backlog 003).
 
 ### DI service contracts + implementations — `Services` (Active, split across two projects)
 
@@ -154,6 +155,7 @@ Introduced by backlog item `002`. All registered in `App.ConfigureServices`. The
 | `IModelDataProvider` / `ModelDataProvider` | app | Sample fixtures — `GetPersonTable`, `GetPersonNameTable`, `GetPublicSafetyTables` (50-table schema) |
 | `ITableFactory` / `TableFactory` | app | XAML `Table` creation over a `GlContext` |
 | `ISkiaTableFactory` / `SkiaTableFactory` | **ModelGraphLibrary** | Skia `Table` creation over a `GlFrame` |
+| `ISkiaConnectorFactory` / `SkiaConnectorFactory` | **ModelGraphLibrary** | Skia `Connector` creation over a `GlFrame` (backlog 003) |
 | `IConnectorFactory` / `ConnectorFactory` | app | `GlOrthoPath` connector creation — `Create` (fixed path) and `CreateRouted` (pre-computed polyline) |
 | `IRectangleFactory` / `RectangleFactory` | app | `GlRectangle` create/draw/banner |
 
@@ -162,10 +164,10 @@ Introduced by backlog item `002`. All registered in `App.ConfigureServices`. The
 | Control | Role |
 |---|---|
 | `ModelEditorControl` | Layout shell: `ModelPanelControl` (left) + right column with `DiagnosticsLogControl` (top) and `EntityInspectorControl` (bottom); wires canvas clicks → inspector and inspector edit/delete → re-render |
-| `ModelPanelControl` | Hosts the drawing `GlCanvas` (in a zoomable ScrollViewer) + a zoom toolbar (fit button + slider + % box); constructs `GlContext`; state-driven `Render()` pipeline — `_tables` (model) + `_layout` (positions) are the source of truth, the drawing is always derived from them. Draws the 50-table public-safety schema and routes every FK around the tables — anchors via `ConnectorAnchors.Resolve` + `FanOut`, sequential routing via `SequentialRouter.RouteAll`, 8 px `GlEllipse` endpoint markers. Drag a table → re-route on release; click an entity → `EntitySelected`; `DeleteConnector` removes the FK constraint and re-renders. Zoom via ScrollViewer native zoom (`ChangeView`), Ctrl+0/1/Plus/Minus accelerators. Pan via `GlContext.PanRequested` → `ChangeView(offset - delta, ZoomFactor)` (left-drag on empty space, middle-drag, space+drag) |
+| `ModelPanelControl` | Hosts the drawing `GlCanvas` (in a zoomable ScrollViewer) + a zoom toolbar (fit button + slider + % box); constructs `GlContext`; state-driven `Render()` pipeline — `_tables` (model) + `_layout` (positions) are the source of truth, the drawing is always derived from them. Draws the 50-table public-safety schema and routes every FK around the tables — anchors via `ConnectorAnchors.Resolve` + `FanOut`, sequential routing via `SequentialRouter.RouteAll`, 8 px `GlEllipse` endpoint markers. Drag a table → re-route on release; click an entity → `EntitySelected`; `DeleteConnector` removes the FK constraint and re-renders. Zoom via ScrollViewer native zoom (`ChangeView`), Ctrl+0/1/Plus/Minus accelerators. Pan via `GlContext.PanRequested` → `ChangeView(offset - delta, null, true)` (left-drag on empty space, middle-drag, space+drag; the `GlCanvas` has `Background="Transparent"` so empty-space presses hit-test). The canvas is a large fixed "paper" (`CanvasSize = 20000`) with the content centered in it, so panning has room in all directions; the router region stays tight around the content (`_contentBounds` ± `ExtentMargin`) so the A* grid does not grow with the paper. `FitToWindow` fits to `_contentBounds` (all tables), not the canvas extent; the app starts at 100% zoom showing the content's top-left |
 | `EntityInspectorControl` | Entity inspector: clicking a table lists its columns with editable data types (commit → `ModelEdited`); clicking a connector shows the FK relationship with a Delete button (`DeleteRequested`) |
 | `DiagnosticsLogControl` | Log list view bound to `DiagnosticsLogViewModel.Items` |
-| `SkiaPanelControl` | **Unwired** alternative rendering path using the Skia stack (not referenced by `MainWindow`) |
+| `SkiaPanelControl` | Skia render of the full public-safety ERD (50 tables, 74 FKs): composes once on first paint (routing is seconds — never per paint), caches the `ErdDiagram`, replays tables + connectors per paint; logs counts + FK issues. Wired into `MainWindow`'s renderer bar (backlog 003) — "XAML model" / "Skia render" toggle swaps it with `ModelEditorControl` |
 
 ### Presentation logic — `ViewModels` (Active)
 

@@ -28,5 +28,22 @@ namespace ModelWinUI
          this.InitializeComponent();
          Title = "EDAM Studio";
       }
+
+      /// <summary>
+      /// Switch the main view between the XAML ERD and the Skia ERD (backlog
+      /// 003). The two toggle buttons are mutually exclusive; the other
+      /// control's <see cref="Visibility"/> is collapsed so it keeps its
+      /// state (zoom/pan for the XAML path, the cached diagram for the Skia
+      /// path) across switches.
+      /// </summary>
+      private void RendererToggle_Click(object sender, RoutedEventArgs e)
+      {
+         bool skia = ReferenceEquals(sender, SkiaToggle);
+
+         XamlToggle.IsChecked = !skia;
+         SkiaToggle.IsChecked = skia;
+         XamlEditor.Visibility = skia ? Visibility.Collapsed : Visibility.Visible;
+         SkiaEditor.Visibility = skia ? Visibility.Visible : Visibility.Collapsed;
+      }
    }
 }

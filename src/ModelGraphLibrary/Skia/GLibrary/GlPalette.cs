@@ -22,7 +22,15 @@ namespace ModelConsole.Skia.GLibrary
 
         public const string LIGHT_BLUE = "#C7DBDA";
 
+        // Connector colors — DodgerBlue, matching the app's XAML connectors
+        // (endpoint markers are DodgerBlue there; the routed lines render in
+        // DodgerBlue in the routing diagnostics too).
+        public const string CONNECTOR_BLUE = "#1E90FF";
+
         public static SKColor LightGreen = SKColor.Parse(LIGHT_GREEN);
+
+        public static SKColor ConnectorStroke = SKColor.Parse(CONNECTOR_BLUE);
+        public static SKColor ConnectorFill = SKColor.Parse(CONNECTOR_BLUE);
     }
 
 }
