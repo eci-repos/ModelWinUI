@@ -44,6 +44,12 @@ namespace ModelConsole.Controls
       private const double MaxZoom = 4.0;
       private const double ZoomStep = 1.25;
 
+      /// <summary>
+      /// Per-notch wheel zoom factor (1.1 = a gentle 10% step, proportional
+      /// to the actual wheel delta so trackpads get even smaller steps).
+      /// </summary>
+      private const double WheelZoomStep = 1.1;
+
       private readonly IModelDataProvider _dataProvider;
       private readonly ISkiaTableFactory _tableFactory;
       private readonly ISkiaConnectorFactory _connectorFactory;
@@ -236,8 +242,9 @@ namespace ModelConsole.Controls
 
       /// <summary>
       /// The mouse wheel zooms the drawing around the cursor instead of
-      /// scrolling. The pan offset keeps the content point under the cursor
-      /// fixed as the zoom changes.
+      /// scrolling. Wheel up zooms out, wheel down zooms in (the user's
+      /// requested direction); the pan offset keeps the content point under
+      /// the cursor fixed as the zoom changes.
       /// </summary>
       private void SkiaCanvas_PointerWheelChanged(
          object sender, PointerRoutedEventArgs e)
@@ -271,7 +278,10 @@ namespace ModelConsole.Controls
          double contentX = (cursorX - offsetX) / _zoom;
          double contentY = (cursorY - offsetY) / _zoom;
 
-         double factor = delta > 0 ? ZoomStep : 1.0 / ZoomStep;
+         // Smooth, delta-proportional step (backlog 018): one notch
+         // (delta=120) = x/1.1 or x1.1; fractional deltas from trackpads
+         // scale proportionally. Direction kept: up zooms out, down zooms in.
+         double factor = Math.Pow(WheelZoomStep, -delta / 120.0);
          _zoom = Math.Max(MinZoom, Math.Min(MaxZoom, _zoom * factor));
          _fitMode = false;
 

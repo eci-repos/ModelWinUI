@@ -162,6 +162,13 @@ namespace ModelConsole.Controls
       private const double ZoomStep = 1.25;
 
       /// <summary>
+      /// Per-notch wheel zoom factor (1.1 = a gentle 10% step, proportional
+      /// to the actual wheel delta so trackpads get even smaller steps).
+      /// The keyboard accelerators use the coarser ZoomStep instead.
+      /// </summary>
+      private const double WheelZoomStep = 1.1;
+
+      /// <summary>
       /// Guards the slider against feedback: SyncZoomUI writes the slider
       /// value, which would otherwise re-enter ZoomSlider_ValueChanged.
       /// </summary>
@@ -208,9 +215,16 @@ namespace ModelConsole.Controls
       /// <summary>
       /// Zoom to the given factor, keeping the content point under the
       /// given anchor fixed (default: the viewport center). Clamped to the
-      /// ScrollViewer's zoom range. The anchor is a content-space point —
-      /// the wheel handler passes the cursor position so the drawing zooms
+      /// ScrollViewer's zoom range. The anchor is a viewport-px point — the
+      /// wheel handler passes the cursor position so the drawing zooms
       /// around the mouse.
+      ///
+      /// ScrollViewer offsets are measured in viewport px (zoom-applied):
+      /// a content point c sits at viewport px c*zoom - offset. So the
+      /// content point under the anchor is (anchorPx + offset)/oldZoom and
+      /// the offset that keeps it at the same viewport px is
+      /// content*zoom - anchorPx (backlog 018 - the previous content-units
+      /// model made the wheel zoom drift and the Fit button show blank).
       /// </summary>
       private void ApplyZoom(double zoom, double? anchorX = null, double? anchorY = null)
       {
@@ -226,19 +240,12 @@ namespace ModelConsole.Controls
             return;
          }
 
-         // Offsets are in content units; the viewport shows
-         // ViewportWidth / zoom content units, so the content point under
-         // the anchor is offset + viewport / (2 * zoom) for the center.
-         double cx = anchorX ?? (ModelScrollViewer.HorizontalOffset +
-            ModelScrollViewer.ViewportWidth / (2.0 * oldZoom));
-         double cy = anchorY ?? (ModelScrollViewer.VerticalOffset +
-            ModelScrollViewer.ViewportHeight / (2.0 * oldZoom));
-         // The anchor sits at this viewport position (in viewport px); keep
-         // it there after the zoom: newH = cx - viewportX / zoom.
-         double viewportX = (cx - ModelScrollViewer.HorizontalOffset) * oldZoom;
-         double viewportY = (cy - ModelScrollViewer.VerticalOffset) * oldZoom;
-         double newH = cx - viewportX / zoom;
-         double newV = cy - viewportY / zoom;
+         double ax = anchorX ?? ModelScrollViewer.ViewportWidth / 2.0;
+         double ay = anchorY ?? ModelScrollViewer.ViewportHeight / 2.0;
+         double cx = (ax + ModelScrollViewer.HorizontalOffset) / oldZoom;
+         double cy = (ay + ModelScrollViewer.VerticalOffset) / oldZoom;
+         double newH = cx * zoom - ax;
+         double newV = cy * zoom - ay;
 
          ModelScrollViewer.ChangeView(newH, newV, (float)zoom, true);
       }
@@ -247,17 +254,22 @@ namespace ModelConsole.Controls
       /// The mouse wheel zooms the drawing around the cursor instead of
       /// scrolling (the user's requested behavior). Handled on the canvas so
       /// the event never bubbles to the ScrollViewer's scroll handler.
+      /// Wheel up zooms out, wheel down zooms in (the user's requested
+      /// direction), keeping the content point under the cursor fixed.
+      /// The cursor is read relative to the ScrollViewer (viewport px), the
+      /// unambiguous anchor space for ApplyZoom (backlog 018); the step is
+      /// smooth and proportional to the wheel delta.
       /// </summary>
       private void ModelCanvas_PointerWheelChanged(
          object sender, PointerRoutedEventArgs e)
       {
-         var point = e.GetCurrentPoint(ModelCanvas);
+         var point = e.GetCurrentPoint(ModelScrollViewer);
          double delta = point.Properties.MouseWheelDelta;
          if (delta == 0)
          {
             return;
          }
-         double factor = delta > 0 ? ZoomStep : 1.0 / ZoomStep;
+         double factor = Math.Pow(WheelZoomStep, -delta / 120.0);
          ApplyZoom(ModelScrollViewer.ZoomFactor * factor,
             point.Position.X, point.Position.Y);
          e.Handled = true;
@@ -284,12 +296,15 @@ namespace ModelConsole.Controls
 
          // Fit to the content (all tables), not the canvas: the canvas is a
          // large "paper" whose extent would zoom the drawing way out. Leave
-         // a ~5 px margin around the model.
+         // a ~5 px margin around the model. Center the content at the fit
+         // zoom: offsets are viewport px, so the content center must land on
+         // the viewport center - hOff = center*fit - vw/2 (backlog 018; the
+         // previous content-units formula clamped to ~0 and showed blank).
          double fit = Math.Min((vw - 2 * FitMargin) / b.Width,
                                (vh - 2 * FitMargin) / b.Height);
          fit = Math.Max(MinZoom, Math.Min(1.0, fit));
-         double hOff = b.X + b.Width / 2.0 - vw / (2.0 * fit);
-         double vOff = b.Y + b.Height / 2.0 - vh / (2.0 * fit);
+         double hOff = (b.X + b.Width / 2.0) * fit - vw / 2.0;
+         double vOff = (b.Y + b.Height / 2.0) * fit - vh / 2.0;
 
          ModelScrollViewer.ChangeView(hOff, vOff, (float)fit, true);
       }
@@ -364,10 +379,12 @@ namespace ModelConsole.Controls
       }
 
       /// <summary>
-      /// A pan gesture moved the drawing. Feed the delta (content units) to
-      /// the ScrollViewer, preserving the current zoom so panning never resets
-      /// it (backlog 011). The delta is measured from the pan start point in
-      /// Canvas-local (content) space, so it is already zoom-independent.
+      /// A pan gesture moved the drawing. The delta is measured from the pan
+      /// start point in Canvas-local (content) coordinates, but ScrollViewer
+      /// offsets are viewport px, so a content delta dx shifts the viewport
+      /// by dx * zoom - multiply to keep the pan 1:1 with the pointer at any
+      /// zoom (backlog 018). Preserves the current zoom (null zoom in
+      /// ChangeView = keep it).
       /// </summary>
       private void OnPanRequested(double dx, double dy)
       {
@@ -375,10 +392,10 @@ namespace ModelConsole.Controls
          {
             return;
          }
-         // null zoom = "keep the current zoom"; only the offsets change.
+         double zoom = ModelScrollViewer.ZoomFactor;
          ModelScrollViewer.ChangeView(
-            ModelScrollViewer.HorizontalOffset - dx,
-            ModelScrollViewer.VerticalOffset - dy,
+            ModelScrollViewer.HorizontalOffset - dx * zoom,
+            ModelScrollViewer.VerticalOffset - dy * zoom,
             null, true);
       }
 

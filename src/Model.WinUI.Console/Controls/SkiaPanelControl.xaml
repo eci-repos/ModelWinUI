@@ -27,7 +27,10 @@
             <Button x:Name="FitButton" Click="FitButton_Click"
                     ToolTipService.ToolTip="Fit to window"
                     Padding="6">
-               <FontIcon Glyph="&#xE81C;" FontSize="14" />
+               <StackPanel Orientation="Horizontal" Spacing="4">
+                  <FontIcon Glyph="&#xE81C;" FontSize="14" />
+                  <TextBlock Text="Fit" VerticalAlignment="Center" />
+               </StackPanel>
             </Button>
             <Slider x:Name="ZoomSlider" Minimum="10" Maximum="400"
                     StepFrequency="5" SnapsTo="StepValues" Width="160"

@@ -25,7 +25,10 @@
             <Button x:Name="FitButton" Click="FitButton_Click"
                     ToolTipService.ToolTip="Fit to window (Ctrl+1)"
                     Padding="6">
-               <FontIcon Glyph="&#xE81C;" FontSize="14" />
+               <StackPanel Orientation="Horizontal" Spacing="4">
+                  <FontIcon Glyph="&#xE81C;" FontSize="14" />
+                  <TextBlock Text="Fit" VerticalAlignment="Center" />
+               </StackPanel>
             </Button>
             <Slider x:Name="ZoomSlider" Minimum="10" Maximum="400"
                     StepFrequency="5" SnapsTo="StepValues" Width="160"
@@ -39,9 +42,18 @@
          </StackPanel>
       </Border>
 
+      <!-- Scroll bars are Hidden (not Auto): the user finds them confusing.
+           Panning and zoom still work programmatically via ChangeView, so
+           hiding the bars only removes the visual clutter. ScrollMode is
+           Disabled so the mouse wheel can never scroll the paper (the WinUI 3
+           ScrollViewer scrolls on wheel even when the canvas marks the event
+           handled); all zoom/pan goes through ChangeView, which is unaffected
+           by ScrollMode. -->
       <ScrollViewer x:Name="ModelScrollViewer" Grid.Row="1"
-                    HorizontalScrollBarVisibility="Auto"
-                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Hidden"
+                    VerticalScrollBarVisibility="Hidden"
+                    HorizontalScrollMode="Disabled"
+                    VerticalScrollMode="Disabled"
                     ZoomMode="Enabled"
                     MinZoomFactor="0.1"
                     MaxZoomFactor="4.0"

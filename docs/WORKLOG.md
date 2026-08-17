@@ -12,6 +12,35 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-17 — XAML wheel/fit/pan used the wrong ScrollViewer coordinate model; fixed (backlog 018)
+
+- **User report:** "You are not using the current mouse pointer position as the transformation reference point it looks like you are using the origin (0,0) instead. also the increments of the wheeling up/down are too big and just jump to fast."
+- **Root cause (found this session):** WinUI 3 ScrollViewer offsets (`HorizontalOffset`/`VerticalOffset`) and `ExtentWidth` are measured in **viewport px (zoom-applied)** — `ExtentWidth` grows with `ZoomFactor` — not content units. The XAML path's `ApplyZoom`, `FitToWindow`, and `OnPanRequested` all treated offsets as content units. Consequences: `ApplyZoom` mixed units (`viewportX = (cx − H)·oldZoom` with content `cx` and viewport-px `H`), so wheel zoom drifted wildly — reading as "anchored at origin"; `FitToWindow` computed `hOff ≈ 6900` while the valid offset range at fit zoom is ~[0, 1800] (`ExtentWidth` = 20000·fit ≈ 2600 − viewport 800), so `ChangeView` clamped it and showed the empty paper top-left → **blank page**; pan was 1/zoom too slow when zoomed out.
+- **Fix:** correct mapping is `content = (viewportPx + offset)/zoom` and `newOffset = content·zoom − anchorPx`. `ApplyZoom` re-derived with a viewport-px anchor (default viewport center); the wheel anchor is read from `GetCurrentPoint(ModelScrollViewer)` (viewport px — unambiguous under zoom); `FitToWindow` centers via `(b.X + b.Width/2)·fit − vw/2`; `OnPanRequested` multiplies the content delta by zoom. **Wheel step (both renderers):** replaced the fixed ×1.25 notch with `factor = Math.Pow(1.1, −delta/120.0)` — ≈1.1× per notch, proportional to the actual delta so trackpads get finer steps; direction preserved (up = out, down = in). Keyboard accelerators keep the coarser ×1.25.
+- **Verified:** full-solution `--no-incremental` build → **0 errors, 0 warnings**; **72/72 tests pass** (unchanged — no pure-logic change); app launches unpackaged and stays running. (Interactive wheel/fit/pan behavior needs a manual pass.)
+- Backlog item: `docs/backlog/018-wheel-zoom-anchor-and-step.md`; sprint record: `docs/sprints/CURRENT.md` (2026-08-17).
+
+### 2026-08-17 — Wheel-zoom and fit split into two backlog items (016, 017)
+
+- Per the user's request, the wheel-zoom and fit behaviors are separated into two tracked backlog items so each visible-drawing concern is owned separately: **`016` Mouse-wheel zoom around the pointer** (wheel zooms around the cursor, up = out / down = in, plus the blank-page fix — the WinUI 3 ScrollViewer scrolling on wheel despite `e.Handled = true`, fixed via `ScrollMode="Disabled"`) and **`017` Fit the whole model into the visible area** (labeled "Fit" button, ~5 px margin, no upscale, Skia defaults to fit + re-fits on resize). Both document the already-implemented (uncommitted) follow-up work and reference each other across the scope boundary.
+
+### 2026-08-17 — Blank-page bug fixed: the WinUI 3 ScrollViewer scrolls on wheel despite `e.Handled = true`
+
+- **User report (after the wheel-zoom follow-up):** "The fit button don't fit anything I get a blank page. when I move the pointer in top of a table and scroll down and up it should show the table point under the mouse as the origing… when I wheel down or up the page turns blank and since the fit button is not working I don't get the to see the table any more."
+- **Root cause:** the WinUI 3 `ScrollViewer` scrolls on the mouse wheel **even when the canvas marks `PointerWheelChanged` as `e.Handled = true`** (known issue microsoft/microsoft-ui-xaml#2947). The wheel handler zooms around the cursor, but the ScrollViewer *also* scrolls — and at low zoom the wheel scroll amount (48 px screen ÷ zoom) is huge in content units, so the viewport drifts to empty paper → blank page. The Fit button *was* working; the viewport was just so far from the content that the user never saw it restore.
+- **Fix:** `HorizontalScrollMode="Disabled"` + `VerticalScrollMode="Disabled"` on `ModelScrollViewer`. Verified from the Microsoft Learn docs that `ScrollableWidth = ExtentWidth − ViewportWidth` is independent of `ScrollMode`, so `ChangeView` (programmatic zoom/fit/pan) still works while user-initiated wheel scrolling is disabled. All zoom/pan/fit now goes through `ChangeView` only.
+- **Verified:** app project builds **0 errors, 0 warnings**; **72/72 tests pass** (unchanged — no pure-logic change); app launches unpackaged and stays running. (Interactive wheel/fit behavior needs a manual pass — CLI launch runs on the agent's non-interactive desktop.)
+- No new backlog item (a follow-up to the wheel-zoom work); sprint record: `docs/sprints/CURRENT.md` (2026-08-17).
+
+### 2026-08-17 — Wheel-zoom follow-up: labeled Fit button, no scroll bars, wheel up = zoom out
+
+- **User feedback (after the wheel-zoom commit):** "where is the fit button? it must always shown, don't use scroll bars at all they are confusing to users, when you wheel up it should zoom-out and down should zoom-in based on a point of reference of the position of the mouse pointer."
+- **Fit button is now labeled "Fit"** (icon E81C + text) in both renderers' toolbars — the icon-only button was not discoverable. It was already always visible in the toolbar row; the label makes it obvious.
+- **Scroll bars removed (XAML path):** `ModelScrollViewer`'s `HorizontalScrollBarVisibility`/`VerticalScrollBarVisibility` changed from `Auto` to `Hidden`. Panning and zoom still work programmatically via `ChangeView` (drag-pan + wheel-zoom), so hiding the bars only removes the visual clutter. (The Skia path has no ScrollViewer — nothing to hide.)
+- **Wheel direction flipped in both renderers:** wheel **up zooms out**, wheel **down zooms in** (the user's requested direction — the opposite of the initial implementation), still around the cursor: `factor = delta > 0 ? 1.0 / ZoomStep : ZoomStep` in `ModelCanvas_PointerWheelChanged` and `SkiaCanvas_PointerWheelChanged`.
+- **Verified:** full-solution `--no-incremental` build → **0 errors, 0 warnings**; app launches unpackaged and stays running. (Interactive wheel/fit behavior needs a manual pass — CLI launch runs on the agent's non-interactive desktop.)
+- No new backlog item (a follow-up to the wheel-zoom work); sprint record: `docs/sprints/CURRENT.md` (2026-08-17).
+
 ### 2026-08-17 — Mouse wheel zooms (both renderers); fit button shows the whole model with a margin
 
 - **User request (follow-up to 015):** "when you move the mouse scroll up or down it should scale the drawing instead of scroling up and down… put a button to fit the whole model… also the Skia render will be useful if it could be scaled (zoom in and out) and also fit the window." The slider-based scaling was "too hard" and scrollbars unhelpful — the wheel must zoom and the fit button must show the whole model with a margin.
