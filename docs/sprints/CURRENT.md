@@ -12,6 +12,7 @@
 Backlog items in this sprint (reference by number):
 
 - [x] `005` — Non-trivial sample models: ship sample models showing the tool's capabilities
+- [x] `015` — Skia renderer: fit-to-window + zoom, and compose off the UI thread (follow-up added to this sprint)
 
 ## Execution Log
 
@@ -22,10 +23,16 @@ Backlog items in this sprint (reference by number):
 - 2026-08-17 — `MainWindow` gains **File → Open Sample**: a `MenuFlyoutSubItem` after "Open Model…" (with a separator); items built in code-behind from `SampleModels.All` (each `Tag` = file name); clicking loads `AppContext.BaseDirectory/Samples/<file>` via `ModelFile.Load` and feeds both renderers. The shared "load → both renderers" logic is extracted into a `LoadModel` helper used by both `OpenModel_Click` and `OpenSample_Click`; load errors surface in a shared `ShowLoadErrorAsync` dialog.
 - 2026-08-17 — `SampleModelTests` (6): shipped samples load + are valid (non-empty, every table has a PK, `FkEdgeExtractor.Extract` reports no issues), shipped JSON matches the fixture (sync guard, line endings normalized), PublicSafety is 50 tables / 74 FKs, Library is ≥ 15 tables / ≥ 15 FKs.
 - 2026-08-17 — Verified: app project builds 0 errors / 0 warnings; `SampleModelTests` 6/6 pass; the shipped JSON files land in the app output `Samples/`. (Full-solution `--no-incremental` build + full test suite + launch check pending.)
+- 2026-08-17 — Sprint extended with backlog item `015` (Skia renderer fit-to-window + zoom, and compose off the UI thread). User scope decision: **Fit button + zoom slider** — a small toolbar like the XAML path's, defaulting to fit-to-window with a ~5 px margin, recomputed on resize.
+- 2026-08-17 — `SkiaPanelControl.xaml` gains a zoom toolbar row (Fit button E81C + zoom slider 10–400 + % readout) mirroring `ModelPanelControl`'s, plus a "Composing…" overlay `TextBlock`.
+- 2026-08-17 — `SkiaPanelControl.xaml.cs` gains fit/zoom state (`_fitMode` default true, `_zoom`, `_syncingSlider`/`_initialized` guards): on paint, content bounds come from `_diagram.Layout`; fit scale = `min((viewW−10)/contentW, (viewH−10)/contentH)` capped at 1.0 (never upscale, matches the XAML path), floored at 0.01; `Translate`+`Scale` on `frame.Canvas` centers the content. Fit recomputes on every paint → resize re-fits automatically. Fit button → `_fitMode = true`; slider → `_fitMode = false`, `_zoom = value/100`.
+- 2026-08-17 — **Library fix:** `Table.DrawBorders` (ModelGraphLibrary) now uses `Save`/`Concat`/`Restore` around the 180° rotation instead of `SetMatrix(rotation)`/`SetMatrix(Identity)` — the old code wiped any canvas transform (e.g. the fit/zoom transform) for the rest of the draw. Identical behavior with an identity current matrix.
+- 2026-08-17 — **Compose off the UI thread:** the first paint starts `Task.Run` → `ErdComposer.Compose` over a 1×1 offscreen `SKSurface` (measuring only needs the font), then `DispatcherQueue.TryEnqueue` sets `_diagram`, logs counts + FK issues, hides "Composing…", invalidates. Stale-compose guard (`ReferenceEquals(captured, _tables)`) discards a compose that finished after a `SetModel` and re-paints; `try/catch` logs the error and resets `_composing` on the UI thread. This fixes the first-paint freeze the user hit.
+- 2026-08-17 — Verified: full-solution `--no-incremental` build → **0 errors, 0 warnings**; **72/72 tests pass** (unchanged — no pure-logic change). (Launch + visual pass pending — CLI launch runs on the agent's non-interactive desktop.)
 
 ## Results
 
-- **Completed:** `005`
+- **Completed:** `005`, `015`
 - **Notes:**
   - The samples are **generated from code fixtures**, not hand-maintained JSON — `SampleModelTests.ShippedJsonMatchesFixture` keeps the checked-in files in sync with the fixtures.
   - Adding a sample to `SampleModels.All` automatically adds it to the File → Open Sample menu (the menu is built from the registry).

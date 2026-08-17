@@ -244,7 +244,13 @@ namespace ModelConsole.Skia.Primitives
             var cx = _panel.x + _panel.width / 2;
             var cy = _panel.y + _panel.height / 2;
 
-            _frame.Canvas.SetMatrix(GlFrame.GetOriginTransformMatrix(cx, cy));
+            // Compose the 180° rotation with the current canvas transform
+            // (e.g. the fit/zoom transform) and restore afterward, instead
+            // of replacing the matrix — otherwise the transform is wiped for
+            // the rest of the draw (backlog 015). With an identity current
+            // matrix this is identical to the old SetMatrix behavior.
+            _frame.Canvas.Save();
+            _frame.Canvas.Concat(GlFrame.GetOriginTransformMatrix(cx, cy));
 
             //spHalfRec.DrawBottom(
             //   _panel.x, _panel.y, _panel.width, dy, _cornerRadious);
@@ -258,7 +264,7 @@ namespace ModelConsole.Skia.Primitives
 
             //_frame.Canvas.DrawCircle(cx, cy, 5, _frame.DefaultStroke);
 
-            _frame.Canvas.SetMatrix(SKMatrix.Identity);
+            _frame.Canvas.Restore();
         }
 
         /// <summary>
