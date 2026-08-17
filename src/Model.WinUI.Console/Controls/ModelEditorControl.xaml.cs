@@ -44,5 +44,25 @@ namespace ModelConsole.Controls
          InspectorPanel.ModelEdited += (s, e) => ModelPanel.Refresh();
          InspectorPanel.DeleteRequested += (s, edge) => ModelPanel.DeleteConnector(edge);
       }
+
+      /// <summary>Whether the right panel (log + inspector) is currently shown.</summary>
+      private bool m_rightPanelOpen = true;
+
+      /// <summary>
+      /// Collapse/expand toggle for the right panel (backlog 014). Collapsing
+      /// hides the panel so the star-sized drawing column reflows into the
+      /// freed space; the chevron flips to point back at the reopen button.
+      /// No ChangeView/FitToWindow is triggered, so zoom and pan are preserved.
+      /// </summary>
+      private void ToggleRightPanel_Click(object sender, RoutedEventArgs e)
+      {
+         m_rightPanelOpen = !m_rightPanelOpen;
+
+         RightPanel.Visibility = m_rightPanelOpen ? Visibility.Visible : Visibility.Collapsed;
+         // ChevronRight (E76B) while open, ChevronLeft (E76C) while collapsed.
+         ToggleGlyph.Glyph = m_rightPanelOpen ? "\uE76B" : "\uE76C";
+         ToolTipService.SetToolTip(RightPanelToggle,
+            m_rightPanelOpen ? "Collapse right panel" : "Expand right panel");
+      }
    }
 }

@@ -14,13 +14,14 @@
       </Grid.RowDefinitions>
       <Grid.ColumnDefinitions>
          <ColumnDefinition Width="*" />
-         <ColumnDefinition Width="Auto"/>
+         <ColumnDefinition Width="Auto" />
+         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
 
-      <!-- Right column: log on top, entity inspector below. The log is
-           declared first so its view model subscribes to the log before
-           ModelPanelControl writes its startup message. -->
-      <Grid Grid.Column="1" Grid.Row="0" MinWidth="250">
+      <!-- Right panel: log on top, entity inspector below. Declared first
+           so its view model subscribes to the log before ModelPanelControl
+           writes its startup message (backlog 014). -->
+      <Grid x:Name="RightPanel" Grid.Column="2" Grid.Row="0" MinWidth="250">
          <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -30,6 +31,22 @@
          <local:EntityInspectorControl x:Name="InspectorPanel" Margin="0"
             Grid.Column="0" Grid.Row="1" VerticalAlignment="Stretch"/>
       </Grid>
+
+      <!-- Toggle strip: collapses/expands the right panel so the drawing
+           reflows into the freed space. It lives in its own column so the
+           button stays reachable while the panel is collapsed. -->
+      <Border Grid.Column="1" Grid.Row="0"
+              Background="#fbfbfb"
+              BorderBrush="LightGray"
+              BorderThickness="1,0,0,0">
+         <Button x:Name="RightPanelToggle" Click="ToggleRightPanel_Click"
+                 VerticalAlignment="Center"
+                 Background="Transparent" BorderThickness="0"
+                 Padding="4,8"
+                 ToolTipService.ToolTip="Collapse right panel">
+            <FontIcon x:Name="ToggleGlyph" Glyph="&#xE76B;" FontSize="12" />
+         </Button>
+      </Border>
 
       <local:ModelPanelControl x:Name="ModelPanel" Grid.Column="0" />
    </Grid>

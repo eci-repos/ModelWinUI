@@ -75,6 +75,6 @@ The 20000 px case reproduces the user's "more than a few minutes" exactly. **Ove
 
 ## Status
 
-- **State:** In progress (fix implemented; timing diagnostics deferred)
+- **State:** Complete (fix implemented; per-edge timing diagnostics deferred — tracked in WORKLOG)
 - **Sprint:** (TBD)
-- **Completed:** (date, once moved to `archive/`)
+- **Completed:** 2026-08-16 (moved to `archive/` 2026-08-17)

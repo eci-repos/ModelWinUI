@@ -12,6 +12,37 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-17 — Docs housekeeping: archived 011/012/013, promoted 2026-08-16 sprint
+
+- Backlog items **011** (drawing panning), **012** (connectors never cross tables), and **013** (drag-table hang fix) were completed earlier but still sat in `docs/backlog/`; moved them to `docs/backlog/archive/`. Item 013's status updated to **Complete** (per-edge timing diagnostics remain deferred, tracked in WORKLOG).
+- Promoted the completed sprint: `docs/sprints/CURRENT.md` → `docs/sprints/archive/sprint-2026-08-16-connector-routing.md`; opened `docs/sprints/CURRENT.md` for the 2026-08-17 sprint (item 014, closeable right panel).
+- Tidied the WORKLOG pending list: done items 010–014 collapsed into a one-line summary; remaining roadmap items 003/004/005 are the only open work.
+
+### 2026-08-17 — Right panel (log + inspector) can be collapsed (backlog item 014)
+
+- **Toggle strip:** `ModelEditorControl.xaml` gained a third column — a slim toggle strip (`Auto`) between the drawing (`*`) and the right panel (`Auto`, `MinWidth=250`). It lives in its **own column** so the button stays reachable while the panel is collapsed (a header row inside the panel would collapse away with it). The strip is a light `#fbfbfb` Border with a 1 px left divider, holding a transparent `Button` with a 12 px chevron `FontIcon` and a tooltip.
+- **Behavior:** `ToggleRightPanel_Click` flips `RightPanel.Visibility` between `Visible` / `Collapsed`; the chevron toggles between ChevronRight (E76B, "collapse") and ChevronLeft (E76C, "expand"), and the tooltip flips to match. Collapsing hides the panel so the star-sized drawing column reflows automatically — no manual resize math. No `ChangeView` / `FitToWindow` is triggered by the toggle, so the ScrollViewer just gets a wider viewport and zoom/pan are preserved.
+- **Log ordering intact:** `DiagnosticsLogControl` is still declared before `ModelPanelControl` in the XAML, so the log VM subscribes before "GL Context Ready." is written.
+- **Out of scope (per item):** resizable splitter, persisted collapsed state across sessions, and independent log/inspector toggles — all deferred.
+- **Verified:** full solution `-c Debug -p:Platform=x64` → **0 errors, 0 warnings**; **54/54 tests pass**; app launches unpackaged and stays running. (The window host is created; a CLI launch runs on the agent's non-interactive desktop, so the toggle click itself needs a manual pass.)
+- Backlog item archived: `docs/backlog/archive/014-closeable-right-panel.md`.
+
+### 2026-08-16 — Pastel table headers by table kind
+
+- **User request:** color each table's header by the kind of table it is — entity tables (the "top items") vs reference-code lookups (a code/ID + a description).
+- **Classification (portable, unit-tested):** new `TableKind` enum + `TableKindClassifier.Classify(TableInfo)` in `ModelGraphLibrary/Model/Data/TableKind.cs` (namespace `Model.Data`). A table is a **reference-code** table when its name starts with `Ref` (the strongest signal in the sample schema) **or** it is a small lookup — a code/ID key + a `Description` column + ≤ 3 columns. Everything else is an **entity**. The shape check generalizes beyond the `Ref*` naming convention; the ≤ 3 column cap keeps wide tables that happen to have a Description column (Incident, ArrestCharge, Offense, …) classified as entities.
+- **Rendering:** `Table.DrawTable` now adds a pastel `Border` band behind the banner text — light blue `#DCE9F7` for entities, light green `#E2EFDA` for reference codes — rounded on top to match the table's corner radius, square on the bottom where the rows start. It is hit-test transparent (presses still reach the table rectangle) and `DeltaMove` keeps it glued to the table while dragging.
+- **Tests:** new `TableKindClassifierTests` (5): all 6 `Ref*` tables → ReferenceCode, all 44 non-Ref tables → Entity, a small code+description table → Reference, a wide table with a Description column → Entity, null → Entity.
+- **Verified:** full solution `-c Debug -p:Platform=x64` → **0 errors, 0 warnings**; **54/54 tests pass** (was 49); app launches unpackaged and stays running. Visual pass on the pastel colors needs a manual look.
+
+### 2026-08-16 — Fixed: panning didn't work; made the "paper" effectively unlimited
+
+- **Panning bug (reported after 011):** the pan gesture never started because the `GlCanvas` had **no `Background`** — a WinUI `Panel` with a null `Background` is not hit-testable in its empty areas, so presses on empty canvas space never reached `Canvas_PointerPressed`. Shape presses worked (shapes have `Fill` and the event bubbles to the canvas), which is why table-drag worked but empty-space pan didn't. **Fix:** `Background="Transparent"` on the `GlCanvas` in `ModelPanelControl.xaml`. Also widened the pan device check to accept `PointerDeviceType.Touchpad` (some touchpads report as `Touchpad` rather than `Mouse`), and `OnPanRequested` now passes `null` for the zoom in `ChangeView` (semantically "keep current zoom").
+- **Unlimited paper (user request):** the canvas was sized to the content (`maxX + margin`), so the ScrollViewer clamped the offset at the content edge and panning dead-ended. Now the canvas is a large fixed "paper" (`CanvasSize = 20000`) with the content **centered** in it (`InitializeLayout` offsets the grid by `(CanvasSize - content)/2`), so panning has room in all directions and only stops far from the drawing. The router region stays **tight around the content** (`_contentBounds` ± `ExtentMargin`) so the A* grid does not grow with the paper.
+- **Fit button now fits the content:** `FitToWindow` fits to `_contentBounds` (all tables), not the canvas extent — otherwise it would zoom way out to show the empty paper. It centers the content in the viewport at the fit zoom.
+- **Initial view:** the app starts at 100% zoom showing the content's top-left (deferred to `Loaded` + `DispatcherQueue.TryEnqueue` so the ScrollViewer is laid out; the default offset (0,0) would show empty paper).
+- **Verified:** full solution `-c Debug -p:Platform=x64` → **0 errors, 0 warnings**; **49/49 tests pass**; app launches unpackaged and stays running. Interactive panning + fit need a manual pass.
+
 ### 2026-08-16 — Drawing panning (backlog item 011)
 
 - **Pan gesture in `GlContext`:** a press that hits no shape starts a pan (left-drag on empty canvas space); middle-mouse drag pans regardless of what's under the pointer; left-drag while **space** is held pans even over a shape (space+drag convention). Space state is queried via `InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Space)` — no focus tracking needed. **Mouse only** (`PointerDeviceType.Mouse`) so touch/pen keep panning natively via the ScrollViewer.
@@ -137,8 +168,7 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ### Next tasks (in priority order)
 
-1. **Sprint 2026-08-16 (connector routing) is complete** — backlog items **008**, **009**, **010** all done. Sprint record: `docs/sprints/CURRENT.md`. Archived: `docs/backlog/archive/008-connector-routing-order.md`, `009-zoom-and-fit.md`, `010-editable-canvas.md`.
-   - **010 — Editable canvas** ✅ **Done 2026-08-16** — drag tables (re-route on release), click an entity to inspect its `Model.Data` POCO in the new `EntityInspectorControl`, edit a column data type → re-render, delete a connector → remaining paths regenerate as simplest non-crossing routes by default. The drawing is always *derived* from the model state (`_tables` + `_layout`), never a frozen artifact.
+1. **All backlog items through 014 are complete** — sprints 2026-08-16 (items 008–012) and 2026-08-17 (item 014) are done: records at `docs/sprints/archive/sprint-2026-08-16-connector-routing.md` and `docs/sprints/CURRENT.md`; archived items `docs/backlog/archive/008`–`014` (bug-fix item 013 archived with per-edge timing diagnostics deferred). The roadmap items below are the only open work.
 2. **Backlog item 003 — ERD graphics primitives base library** (from project README roadmap)
    - Define and draw Table and constraint connectors (lines/symbols) as a reusable library.
    - Current state: `Table` primitive and `GlOrthoPath` connectors exist but are early-stage; `GlModel` collection is now functional behind `IGlModel`.
@@ -146,14 +176,6 @@ Running record of work done and next pending tasks. **Read this first** when sta
    - Develop the controls needed to view a model (beyond the current sample drawing).
 4. **Backlog item 005 — Non-trivial sample models** (roadmap)
    - Ship sample models showing the tool's capabilities.
-5. **Backlog item 011 — Drawing panning** ✅ **Done 2026-08-16**
-   - Mouse-driven panning of the drawing: left-drag on empty canvas, middle-mouse drag, space+drag; preserves zoom; table-drag (010) stays intact. `GlContext` raises `PanRequested(dx, dy)` (content-space delta from the pan start); `ModelPanelControl` feeds `ChangeView(offset - delta, ZoomFactor)`. Cursor feedback via a new `GlCanvas` subclass (hand over empty space, move cursor while panning). File: `docs/backlog/011-drawing-panning.md`.
-6. **Backlog item 012 — Connectors never cross tables** ✅ **Done 2026-08-16**
-   - "No connector segment crosses a table interior" is now a hard invariant. `OrthogonalRouter.Route` retries A* without thin obstacles when they form a barrier, `SnapStub` finds clear cells, and the Z fallback tries HV/VH variants that avoid tables. 0 crossings across the 50-table schema (was 143). File: `docs/backlog/012-connectors-never-cross-tables.md`.
-7. **Backlog item 013 — Dragging a table hangs the app** (bug report, **fixed 2026-08-16**)
-   - **Root cause:** (1) `GetCurrentPoint(null)` is window-relative → drag delta wrong at non-100% zoom → table flung `zoom×` too far. (2) A* re-route cost grows quadratically with canvas size → minutes. **Fix:** `GetCurrentPoint(_canvas)`; partial re-route (only the moved table's edges); `RouterOptions.MaxExpansions` node budget. Measured: 4.2 s → 2.2 s drag release; 20000 px case capped. 45/45 tests pass. Remaining: per-edge timing diagnostics (deferred). File: `docs/backlog/013-drag-table-hangs-app.md`.
-8. **Backlog item 014 — Right panel (log + inspector) can't be closed** (planned 2026-08-16)
-   - The right column of `ModelEditorControl` (diagnostics log on top, entity inspector below) is always visible with no way to collapse it. Add a collapse/expand toggle so the drawing canvas reflows into the freed space; zoom/pan preserved. File: `docs/backlog/014-closeable-right-panel.md`.
 
 ### Known gaps / issues (candidates for backlog items)
 
