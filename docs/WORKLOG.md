@@ -359,7 +359,9 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ### Next tasks (in priority order)
 
-1. **Node enrichment series (backlog `023`–`026`, `025`) is complete** — containerized structure (023), descriptions (024), per-node provenance (026), and JSON Schemas + load-time validation (025) all **done** (2026-08-18; 132/132 tests). The backlog is empty and no sprint is in execution. Candidate next series: the v2 roadmap (generalization, uniqueness, referential-integrity, stereotypes), designed-for but not built.
+1. **Object-oriented drawing series (backlog `027`–`029`, prepared 2026-08-18 from user design feedback)** — make the XAML drawing truly object-oriented: `027` pointer-hover metadata readout (tooltips over tables/FK connectors, reusing `ReadoutFormatter`), `028` graph node objects (every drawable is a typed node — identity, live model ref, hover summary, edit verbs; portable to the Skia/WASM sibling), `029` editable entities (rename/add/remove entities + columns, edit FK targets/cardinality/roles/metadata from the inspector; edits flow model → validate (025) → re-render + partial re-route (013)). **Planned, not started** — no sprint defined.
+
+2. **Node-enrichment series (backlog `023`–`026`, `025`) is complete** — containerized structure (023), descriptions (024), per-node provenance (026), and JSON Schemas + load-time validation (025) all **done** (2026-08-18; 132/132 tests, committed `2735661`). The v2 roadmap (generalization, uniqueness, referential-integrity, stereotypes) remains designed-for, not built — a candidate later series.
 
 ### Known gaps / issues (candidates for backlog items)
 
