@@ -12,6 +12,14 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-18 — Model explorer populated on startup (default model)
+
+- **User request:** "when loading the default or last document upon app initialization make sure to populate the left side panel with the 'Model'."
+- **Root cause:** `ModelPanelControl`'s ctor loads the default PublicSafety model and renders it, but never raises `ModelChanged` (that event fires only in `SetModel`, the File → Open path). `ModelEditorControl` populated the explorer only via the `ModelChanged` subscription, so the left panel stayed empty on startup even though the canvas showed the model.
+- **Fix:** `ModelEditorControl`'s ctor now calls `ExplorerPanel.SetModel(ModelPanel.Tables)` after wiring the events — the panel's ctor has already loaded the default tables by then (XAML instantiation order: `ExplorerPanel` then `ModelPanel`), so the tree shows the model immediately. The `ModelChanged` subscription still handles File → Open.
+- **Note:** there is no "last document" persistence yet — the app always loads the default sample on startup. Remembering the last-opened file (MRU) is a separate follow-up if wanted.
+- **Verified:** app project builds **0 errors, 0 warnings**; **72/72 tests pass** (unchanged — no pure-logic change). (Visual pass needs a manual look — CLI launch runs on the agent's non-interactive desktop.)
+
 ### 2026-08-18 — Backlog closed: all items archived, backlog is empty (user sign-off)
 
 - **User sign-off:** the user tested the app (both renderers, wheel zoom/fit/pan) and confirmed it works as expected — "all the backlog has been completed."

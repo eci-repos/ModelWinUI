@@ -54,6 +54,13 @@ namespace ModelConsole.Controls
          // Model replaced (File → Open) → refresh the explorer tree.
          ModelPanel.ModelChanged += (s, e) =>
             ExplorerPanel.SetModel(ModelPanel.Tables);
+
+         // Populate the explorer with the model loaded at startup (the
+         // default sample). ModelPanelControl's ctor loads the default model
+         // but does not raise ModelChanged (that fires only on SetModel /
+         // File → Open), so without this the left panel would stay empty
+         // until the user opens a file.
+         ExplorerPanel.SetModel(ModelPanel.Tables);
       }
 
       /// <summary>
