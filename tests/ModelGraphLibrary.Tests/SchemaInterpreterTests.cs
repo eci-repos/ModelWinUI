@@ -82,6 +82,94 @@ namespace ModelConsole.Tests
          Assert.Null(fk.ReferencedColumnName); // resolve to the parent's identity
       }
 
+      // -------- Containerized grouped form (backlog 023) --------------------
+
+      [Fact]
+      public void GroupedContainerizedSchemasInterpretToTables()
+      {
+         const string json = """
+            {
+               "repository": "Clinic",
+               "schemas": {
+                  "clinic": {
+                     "entities": {
+                        "Patient": {
+                           "Elements": [
+                              { "name": "id", "type": "int" },
+                              { "name": "name", "type": "string" }
+                           ]
+                        },
+                        "Visit": {
+                           "Elements": [
+                              { "name": "id", "type": "int", "primaryKey": true },
+                              { "name": "patient", "type": "int", "Depends On": "Patient" }
+                           ]
+                        }
+                     }
+                  },
+                  "audit": {
+                     "entities": {
+                        "AuditLog": {
+                           "Elements": [ { "name": "id", "type": "int", "primaryKey": true } ]
+                        }
+                     }
+                  }
+               }
+            }
+            """;
+
+         var result = SchemaInterpreter.Interpret(json, BuiltInProfiles.Grouped);
+
+         Assert.Empty(result.Issues);
+         Assert.NotNull(result.Catalog);
+         Assert.Equal("Clinic", result.Catalog.CatalogName);
+
+         Assert.Equal(3, result.Tables.Count);
+         Assert.All(result.Tables.Where(t => t.TableName is "Patient" or "Visit"),
+            t => Assert.Equal("clinic", t.SchemaName));
+         Assert.Equal("audit", result.Tables.Single(t => t.TableName == "AuditLog").SchemaName);
+
+         var visit = result.Tables.Single(t => t.TableName == "Visit");
+         Assert.True(visit.Columns.Single(c => c.ColumnName == "patient").IsForeignKey);
+      }
+
+      [Fact]
+      public void ArrayContainerizedFormInterpretsToTables()
+      {
+         const string json = """
+            {
+               "dataSource": "Northwind",
+               "schemas": [
+                  {
+                     "name": "dbo",
+                     "tables": [
+                        {
+                           "TableName": "Parent",
+                           "Columns": [ { "ColumnName": "ID", "Type": "int", "IsKey": true, "Constraints": [ { "Type": "PK" } ] } ]
+                        },
+                        {
+                           "TableName": "Child",
+                           "Columns": [ { "ColumnName": "ParentID", "Type": "int", "IsForeignKey": true, "Constraints": [ { "Type": "FK", "ReferencedTableName": "Parent" } ] } ]
+                        }
+                     ]
+                  }
+               ]
+            }
+            """;
+
+         var result = SchemaInterpreter.Interpret(json, BuiltInProfiles.Array);
+
+         Assert.Empty(result.Issues);
+         Assert.NotNull(result.Catalog);
+         Assert.Equal("Northwind", result.Catalog.CatalogName);
+
+         Assert.Equal(2, result.Tables.Count);
+         Assert.All(result.Tables, t => Assert.Equal("dbo", t.SchemaName));
+
+         var child = result.Tables.Single(t => t.TableName == "Child");
+         Assert.True(child.Columns.Single(c => c.ColumnName == "ParentID").IsForeignKey);
+      }
+
       // -------- Profile: the grouped $.entities shape (array + bare elements)
 
       [Fact]
@@ -171,6 +259,78 @@ namespace ModelConsole.Tests
             .Constraints.Single(c => c.IsForeignKey);
          Assert.Equal("Vendor", dependency.ReferencedTableName);
          Assert.Equal("vendorCode", dependency.ReferencedColumnName);
+      }
+
+      // -------- 024: descriptions on entities and elements -----------------
+
+      [Fact]
+      public void EntityAndElementDescriptionsAreCaptured()
+      {
+         const string json = """
+            {
+               "entities": {
+                  "Patient": {
+                     "description": "A person receiving care at the clinic.",
+                     "Elements": [
+                        { "name": "id", "type": "int", "primaryKey": true },
+                        { "name": "name", "type": "string", "description": "Full legal name." }
+                     ]
+                  },
+                  "Provider": {
+                     "Elements": [ { "name": "id", "type": "int", "primaryKey": true } ]
+                  }
+               }
+            }
+            """;
+
+         var result = SchemaInterpreter.Interpret(json, BuiltInProfiles.Grouped);
+
+         Assert.Empty(result.Issues);
+         var patient = result.Tables.First(t => t.TableName == "Patient");
+         Assert.Equal("A person receiving care at the clinic.", patient.Description);
+         Assert.Equal(
+            "Full legal name.",
+            patient.Columns.Single(c => c.ColumnName == "name").Description);
+         Assert.Null(patient.Columns.Single(c => c.ColumnName == "id").Description);
+
+         // An entity without a description stays silent — never invented.
+         Assert.Null(result.Tables.First(t => t.TableName == "Provider").Description);
+      }
+
+      [Fact]
+      public void ArrayContainerCapturesDescriptionsFromPascalCaseFields()
+      {
+         const string json = """
+            {
+               "dataSource": "Clinic",
+               "schemas": [
+                  {
+                     "name": "clinic",
+                     "tables": [
+                        {
+                           "TableName": "Patient",
+                           "Description": "A person receiving care at the clinic.",
+                           "Columns": [
+                              { "ColumnName": "ID", "Type": "int", "IsKey": true,
+                                "Constraints": [ { "Type": "PK" } ] },
+                              { "ColumnName": "name", "Type": "string",
+                                "Description": "Full legal name." }
+                           ]
+                        }
+                     ]
+                  }
+               ]
+            }
+            """;
+
+         var result = SchemaInterpreter.Interpret(json, BuiltInProfiles.Array);
+
+         Assert.Empty(result.Issues);
+         var patient = result.Tables.Single();
+         Assert.Equal("A person receiving care at the clinic.", patient.Description);
+         Assert.Equal(
+            "Full legal name.",
+            patient.Columns.Single(c => c.ColumnName == "name").Description);
       }
 
       // -------- R7: declared beats inferred --------------------------------

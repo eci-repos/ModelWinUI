@@ -60,6 +60,22 @@ namespace Model.Interpretation
       public string MetadataPath { get; set; }
 
       /// <summary>
+      /// Optional JSON path to the Repository / Data Source name (a scalar, e.g.
+      /// "$.repository" or "$.dataSource"). Captured into
+      /// <see cref="Model.Data.CatalogInfo"/> during interpretation (backlog 023).
+      /// </summary>
+      public string RepositoryPath { get; set; }
+
+      /// <summary>
+      /// Optional schema container (the containerized form, backlog 023): the
+      /// schema is declared once and every entity under it inherits it. When
+      /// this path resolves, entities are read from each schema's entities
+      /// field instead of the flat <see cref="Entities"/> path; documents
+      /// without the container fall back to the flat form (backward compatible).
+      /// </summary>
+      public SchemasSpec Schemas { get; set; }
+
+      /// <summary>
       /// Deserialize a spec from JSON. The reader is tolerant: unknown
       /// properties and unknown spec versions are preserved or ignored, never
       /// fatal.
@@ -104,6 +120,14 @@ namespace Model.Interpretation
       /// <summary>Optional field on each entity carrying its schema/group name.</summary>
       public string SchemaField { get; set; }
 
+      /// <summary>
+      /// Optional field carrying the entity's description (backlog 024). An
+      /// entity and an element are not different from a table and a column —
+      /// both are complemented by a description. Absent means no description
+      /// is captured.
+      /// </summary>
+      public string DescriptionField { get; set; } = "description";
+
       /// <summary>Field on each entity that holds its elements.</summary>
       public string ElementsField { get; set; } = "elements";
 
@@ -118,6 +142,27 @@ namespace Model.Interpretation
    }
 
    /// <summary>
+   /// How the schema container is located and how schemas are named (backlog
+   /// 023 — the containerized form). The container may be an object keyed by
+   /// schema name (grouped form) or an array of schema objects named by
+   /// <see cref="NameField"/> (array form); the interpreter reads whichever
+   /// kind it finds, mirroring the entity-container auto-detection. Each schema
+   /// holds its entities under <see cref="EntitiesField"/>, so the schema name
+   /// is declared once instead of on every entity.
+   /// </summary>
+   public class SchemasSpec
+   {
+      /// <summary>JSON path to the schema container (e.g. "$.schemas").</summary>
+      public string Path { get; set; } = "$.schemas";
+
+      /// <summary>Field naming a schema (array-form only; object-form names by key).</summary>
+      public string NameField { get; set; } = "name";
+
+      /// <summary>Field on each schema holding its entities/tables.</summary>
+      public string EntitiesField { get; set; } = "entities";
+   }
+
+   /// <summary>
    /// How an entity's elements are mapped. Canonical concept aliases: an
    /// Element is a Column, an Identity is a key, a Dependency is a foreign
    /// key — whatever the source calls them.
@@ -129,6 +174,12 @@ namespace Model.Interpretation
 
       /// <summary>Field carrying the element's type expression (run through the type map).</summary>
       public string TypeField { get; set; } = "type";
+
+      /// <summary>
+      /// Optional field carrying the element's description (backlog 024).
+      /// Absent means no description is captured.
+      /// </summary>
+      public string DescriptionField { get; set; } = "description";
 
       /// <summary>Boolean field marking the element as the entity's identity (primary key).</summary>
       public string KeyField { get; set; } = "primaryKey";

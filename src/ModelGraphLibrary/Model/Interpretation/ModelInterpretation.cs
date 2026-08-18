@@ -21,6 +21,14 @@ namespace Model.Interpretation
       /// <summary>Model-level provenance, when the document declared one (backlog 022).</summary>
       public Provenance Provenance { get; set; }
 
+      /// <summary>
+      /// The Repository / Data Source level, when the document declared one
+      /// (backlog 023). The interpreter flattens the container into the canonical
+      /// table list, so the catalog is the surviving record of the container's
+      /// top-level name.
+      /// </summary>
+      public CatalogInfo Catalog { get; set; }
+
       /// <summary>Model-level metadata annotations, when the document declared one.</summary>
       public Dictionary<string, string> Metadata { get; set; }
 

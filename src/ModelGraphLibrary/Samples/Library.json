@@ -1,2016 +1,2003 @@
-[
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "RefBookStatus",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BookStatusCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "RefBookStatus",
-            "ColumnName": "BookStatusCode",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Description",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 60,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "RefLoanStatus",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "LoanStatusCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "RefLoanStatus",
-            "ColumnName": "LoanStatusCode",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Description",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 60,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "RefPatronType",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PatronTypeCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "RefPatronType",
-            "ColumnName": "PatronTypeCode",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Description",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 60,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "RefFineType",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "FineTypeCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "RefFineType",
-            "ColumnName": "FineTypeCode",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Description",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 60,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "RefGenre",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "GenreCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "RefGenre",
-            "ColumnName": "GenreCode",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Description",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 60,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "RefLanguage",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "LanguageCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "RefLanguage",
-            "ColumnName": "LanguageCode",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Description",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 60,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "RefBranchType",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BranchTypeCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "RefBranchType",
-            "ColumnName": "BranchTypeCode",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Description",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 60,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "Address",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "AddressID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Address",
-            "ColumnName": "AddressID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Street1",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 80,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Street2",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 80,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "City",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 60,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "StateCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PostalCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "CountryCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "Publisher",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PublisherID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Publisher",
-            "ColumnName": "PublisherID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PublisherName",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 80,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "AddressID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Publisher",
-            "ColumnName": "AddressID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Address",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Phone",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 40,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "Author",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "AuthorID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Author",
-            "ColumnName": "AuthorID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "NameGiven",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 40,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "NameSurname",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 40,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BirthDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "NationalityCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "Book",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BookID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Book",
-            "ColumnName": "BookID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Title",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 128,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Subtitle",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 128,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "ISBN",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PublisherID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Book",
-            "ColumnName": "PublisherID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Publisher",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "GenreCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Book",
-            "ColumnName": "GenreCode",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "RefGenre",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "LanguageCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Book",
-            "ColumnName": "LanguageCode",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "RefLanguage",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PublicationYear",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PageCount",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BookStatusCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Book",
-            "ColumnName": "BookStatusCode",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "RefBookStatus",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "BookAuthor",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BookAuthorID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "BookAuthor",
-            "ColumnName": "BookAuthorID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BookID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "BookAuthor",
-            "ColumnName": "BookID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Book",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "AuthorID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "BookAuthor",
-            "ColumnName": "AuthorID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Author",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "AuthorOrder",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "BookCopy",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "CopyID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "BookCopy",
-            "ColumnName": "CopyID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BookID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "BookCopy",
-            "ColumnName": "BookID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Book",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BranchID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "BookCopy",
-            "ColumnName": "BranchID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "LibraryBranch",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "AcquisitionDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "CopyStatusCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "BookCopy",
-            "ColumnName": "CopyStatusCode",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "RefBookStatus",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Price",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "Patron",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PatronID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Patron",
-            "ColumnName": "PatronID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "NameGiven",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 40,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "NameSurname",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 40,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PatronTypeCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Patron",
-            "ColumnName": "PatronTypeCode",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "RefPatronType",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "AddressID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Patron",
-            "ColumnName": "AddressID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Address",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Email",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 80,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Phone",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 40,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "MembershipDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "Loan",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "LoanID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Loan",
-            "ColumnName": "LoanID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "CopyID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Loan",
-            "ColumnName": "CopyID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "BookCopy",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PatronID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Loan",
-            "ColumnName": "PatronID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Patron",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BranchID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Loan",
-            "ColumnName": "BranchID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "LibraryBranch",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "LoanDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "DueDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "ReturnDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "LoanStatusCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Loan",
-            "ColumnName": "LoanStatusCode",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "RefLoanStatus",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "Hold",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "HoldID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Hold",
-            "ColumnName": "HoldID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BookID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Hold",
-            "ColumnName": "BookID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Book",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PatronID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Hold",
-            "ColumnName": "PatronID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Patron",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BranchID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Hold",
-            "ColumnName": "BranchID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "LibraryBranch",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "HoldDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "ExpiryDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "HoldStatusCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Hold",
-            "ColumnName": "HoldStatusCode",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "RefBookStatus",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "Fine",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "FineID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Fine",
-            "ColumnName": "FineID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "LoanID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Fine",
-            "ColumnName": "LoanID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Loan",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PatronID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Fine",
-            "ColumnName": "PatronID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Patron",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "FineTypeCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Fine",
-            "ColumnName": "FineTypeCode",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "RefFineType",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Amount",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "AssessedDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PaidDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "Reservation",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "ReservationID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Reservation",
-            "ColumnName": "ReservationID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BookID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Reservation",
-            "ColumnName": "BookID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Book",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PatronID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Reservation",
-            "ColumnName": "PatronID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Patron",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BranchID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Reservation",
-            "ColumnName": "BranchID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "LibraryBranch",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "ReservationDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "PickupDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "ReservationStatusCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Reservation",
-            "ColumnName": "ReservationStatusCode",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "RefBookStatus",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "LibraryBranch",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BranchID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "LibraryBranch",
-            "ColumnName": "BranchID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BranchName",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 80,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "AddressID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "LibraryBranch",
-            "ColumnName": "AddressID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "Address",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BranchTypeCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "LibraryBranch",
-            "ColumnName": "BranchTypeCode",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "RefBranchType",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "Phone",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 40,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  },
-  {
-    "CatalogName": null,
-    "SchemaName": "Library",
-    "TableName": "Staff",
-    "Columns": [
-      {
-        "SchemaName": "Library",
-        "ColumnName": "StaffID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": true,
-        "IsForeignKey": false,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Staff",
-            "ColumnName": "StaffID",
-            "Description": null,
-            "Type": "PK",
-            "ReferencedTableName": null,
-            "ReferencedColumnName": null,
-            "IsKey": true,
-            "IsForeignKey": false
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "BranchID",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": true,
-        "Constraints": [
-          {
-            "SchemaName": "Library",
-            "TableName": "Staff",
-            "ColumnName": "BranchID",
-            "Description": null,
-            "Type": "FK",
-            "ReferencedTableName": "LibraryBranch",
-            "ReferencedColumnName": null,
-            "IsKey": false,
-            "IsForeignKey": true
-          }
-        ]
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "NameGiven",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 40,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "NameSurname",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 40,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "RoleCode",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "VARCHAR",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      },
-      {
-        "SchemaName": "Library",
-        "ColumnName": "HireDate",
-        "Description": null,
-        "OrdinalPosition": 0,
-        "Type": "DATETIMEOFFSET",
-        "Size": 20,
-        "IsNullable": true,
-        "IsIdentity": false,
-        "IsKey": false,
-        "IsForeignKey": false,
-        "Constraints": []
-      }
-    ]
-  }
-]
+{
+  "schemas": [
+    {
+      "name": "Library",
+      "tables": [
+        {
+          "TableName": "RefBookStatus",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BookStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "RefBookStatus",
+                  "ColumnName": "BookStatusCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefLoanStatus",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "LoanStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "RefLoanStatus",
+                  "ColumnName": "LoanStatusCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefPatronType",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PatronTypeCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "RefPatronType",
+                  "ColumnName": "PatronTypeCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefFineType",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "FineTypeCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "RefFineType",
+                  "ColumnName": "FineTypeCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefGenre",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "GenreCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "RefGenre",
+                  "ColumnName": "GenreCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefLanguage",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "LanguageCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "RefLanguage",
+                  "ColumnName": "LanguageCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefBranchType",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BranchTypeCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "RefBranchType",
+                  "ColumnName": "BranchTypeCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Address",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "AddressID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Address",
+                  "ColumnName": "AddressID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Street1",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Street2",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "City",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "StateCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PostalCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "CountryCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Publisher",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PublisherID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Publisher",
+                  "ColumnName": "PublisherID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PublisherName",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "AddressID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Publisher",
+                  "ColumnName": "AddressID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Address",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Phone",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Author",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "AuthorID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Author",
+                  "ColumnName": "AuthorID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "NameGiven",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "NameSurname",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BirthDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "NationalityCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Book",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BookID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Book",
+                  "ColumnName": "BookID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Title",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 128,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Subtitle",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 128,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "ISBN",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PublisherID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Book",
+                  "ColumnName": "PublisherID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Publisher",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "GenreCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Book",
+                  "ColumnName": "GenreCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefGenre",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "LanguageCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Book",
+                  "ColumnName": "LanguageCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefLanguage",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PublicationYear",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PageCount",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BookStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Book",
+                  "ColumnName": "BookStatusCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefBookStatus",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "BookAuthor",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BookAuthorID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "BookAuthor",
+                  "ColumnName": "BookAuthorID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BookID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "BookAuthor",
+                  "ColumnName": "BookID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Book",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "AuthorID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "BookAuthor",
+                  "ColumnName": "AuthorID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Author",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "AuthorOrder",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "BookCopy",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "CopyID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "BookCopy",
+                  "ColumnName": "CopyID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BookID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "BookCopy",
+                  "ColumnName": "BookID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Book",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BranchID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "BookCopy",
+                  "ColumnName": "BranchID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "LibraryBranch",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "AcquisitionDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "CopyStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "BookCopy",
+                  "ColumnName": "CopyStatusCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefBookStatus",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Price",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Patron",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PatronID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Patron",
+                  "ColumnName": "PatronID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "NameGiven",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "NameSurname",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PatronTypeCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Patron",
+                  "ColumnName": "PatronTypeCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefPatronType",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "AddressID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Patron",
+                  "ColumnName": "AddressID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Address",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Email",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Phone",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "MembershipDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Loan",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "LoanID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Loan",
+                  "ColumnName": "LoanID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "CopyID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Loan",
+                  "ColumnName": "CopyID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "BookCopy",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PatronID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Loan",
+                  "ColumnName": "PatronID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Patron",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BranchID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Loan",
+                  "ColumnName": "BranchID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "LibraryBranch",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "LoanDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "DueDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "ReturnDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "LoanStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Loan",
+                  "ColumnName": "LoanStatusCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefLoanStatus",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "Hold",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "HoldID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Hold",
+                  "ColumnName": "HoldID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BookID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Hold",
+                  "ColumnName": "BookID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Book",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PatronID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Hold",
+                  "ColumnName": "PatronID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Patron",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BranchID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Hold",
+                  "ColumnName": "BranchID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "LibraryBranch",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "HoldDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "ExpiryDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "HoldStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Hold",
+                  "ColumnName": "HoldStatusCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefBookStatus",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "Fine",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "FineID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Fine",
+                  "ColumnName": "FineID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "LoanID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Fine",
+                  "ColumnName": "LoanID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Loan",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PatronID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Fine",
+                  "ColumnName": "PatronID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Patron",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "FineTypeCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Fine",
+                  "ColumnName": "FineTypeCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefFineType",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Amount",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "AssessedDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PaidDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Reservation",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "ReservationID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Reservation",
+                  "ColumnName": "ReservationID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BookID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Reservation",
+                  "ColumnName": "BookID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Book",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PatronID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Reservation",
+                  "ColumnName": "PatronID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Patron",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BranchID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Reservation",
+                  "ColumnName": "BranchID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "LibraryBranch",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "ReservationDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "PickupDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "ReservationStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Reservation",
+                  "ColumnName": "ReservationStatusCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefBookStatus",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "LibraryBranch",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BranchID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "LibraryBranch",
+                  "ColumnName": "BranchID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BranchName",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "AddressID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "LibraryBranch",
+                  "ColumnName": "AddressID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Address",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BranchTypeCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "LibraryBranch",
+                  "ColumnName": "BranchTypeCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefBranchType",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "Phone",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Staff",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Library",
+              "ColumnName": "StaffID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Staff",
+                  "ColumnName": "StaffID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "BranchID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Library",
+                  "TableName": "Staff",
+                  "ColumnName": "BranchID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "LibraryBranch",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "NameGiven",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "NameSurname",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "RoleCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Library",
+              "ColumnName": "HireDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

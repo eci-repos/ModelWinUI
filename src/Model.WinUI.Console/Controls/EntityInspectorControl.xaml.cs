@@ -39,10 +39,12 @@ namespace ModelConsole.Controls
       }
 
       /// <summary>
-      /// Show a table's metadata: schema::table header plus one row per
-      /// column (name, editable data type, constraints). A column that
-      /// resolves to an enumeration (backlog 021) gets a read-only value-set
-      /// line beneath it when the model's enumerations are supplied.
+      /// Show a table's metadata: schema::table header, the entity's
+      /// description when the model carried one (backlog 024), plus one row
+      /// per column (name, editable data type, constraints). A column with a
+      /// description gets a read-only prose line beneath it (backlog 024), and
+      /// a column that resolves to an enumeration (backlog 021) gets a
+      /// read-only value-set line when the model's enumerations are supplied.
       /// </summary>
       public void ShowTable(
          TableInfo table,
@@ -50,6 +52,19 @@ namespace ModelConsole.Controls
       {
          HeaderText.Text = table.SchemaName + "::" + table.TableName;
          ContentPanel.Children.Clear();
+
+         // Backlog 024: the entity's description, when the model carried one.
+         if (!string.IsNullOrEmpty(table.Description))
+         {
+            ContentPanel.Children.Add(new TextBlock
+            {
+               Text = table.Description,
+               FontSize = 12,
+               Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+               TextWrapping = TextWrapping.WrapWholeWords,
+               Margin = new Thickness(0, 0, 0, 6)
+            });
+         }
 
          ContentPanel.Children.Add(new TextBlock
          {
@@ -62,6 +77,11 @@ namespace ModelConsole.Controls
          foreach (var column in table.Columns)
          {
             ContentPanel.Children.Add(BuildColumnRow(column));
+            var description = BuildDescriptionReadout(column);
+            if (description != null)
+            {
+               ContentPanel.Children.Add(description);
+            }
             var enumReadout = BuildEnumReadout(column, enumerations);
             if (enumReadout != null)
             {
@@ -272,6 +292,23 @@ namespace ModelConsole.Controls
          row.Children.Add(constraintText);
 
          return row;
+      }
+
+      /// <summary>
+      /// A read-only description line for a column (backlog 024): the column's
+      /// prose, when the model carried one. Null when the column has none.
+      /// </summary>
+      private static UIElement BuildDescriptionReadout(ColumnInfo column)
+      {
+         if (string.IsNullOrEmpty(column.Description)) return null;
+         return new TextBlock
+         {
+            Text = column.Description,
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+            Margin = new Thickness(12, 0, 0, 4),
+            TextWrapping = TextWrapping.WrapWholeWords
+         };
       }
 
       /// <summary>

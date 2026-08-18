@@ -65,6 +65,7 @@ namespace Model.Interpretation
          {
             var root = doc.RootElement;
             ReadModelFields(root, spec, result);
+            ReadCatalog(root, spec, result);
 
             var slots = ReadEntitySlots(root, spec, result);
             if (slots == null) return result;
@@ -120,12 +121,51 @@ namespace Model.Interpretation
       }
 
       /// <summary>
-      /// First pass (R1): locate the entity container and collect (name, element)
-      /// slots so dependency resolution (R4) can run against every known name.
-      /// Returns null when the container cannot be resolved.
+      /// Read the Repository / Data Source level (backlog 023): the scalar named
+      /// by the spec's <c>RepositoryPath</c> becomes the catalog. Optional and
+      /// read tolerantly — a document without it has no catalog, and a
+      /// present-but-non-scalar value is an issue, never a failure.
+      /// </summary>
+      private static void ReadCatalog(JsonElement root, MappingSpec spec, ModelInterpretation result)
+      {
+         if (string.IsNullOrEmpty(spec.RepositoryPath)) return;
+
+         var el = ResolvePath(root, spec.RepositoryPath);
+         if (el == null) return;
+
+         var text = ScalarText(el.Value);
+         if (text == null)
+         {
+            result.Issues.Add($"repository/data source at '{spec.RepositoryPath}' is not a scalar value.");
+            return;
+         }
+         result.Catalog = new CatalogInfo { CatalogName = text };
+      }
+
+      /// <summary>
+      /// First pass (R1): locate the entity container and collect (name, schema,
+      /// element) slots so dependency resolution (R4) can run against every known
+      /// name. Two forms are read, auto-detected by root shape (backlog 023):
+      /// <list type="bullet">
+      /// <item><b>Containerized</b> — the spec's <c>Schemas.Path</c> resolves; each
+      /// schema names its entities under <c>Schemas.EntitiesField</c>, so the
+      /// schema is declared once (the slot carries it).</item>
+      /// <item><b>Flat</b> — the pre-container <c>Entities.Path</c>, the fallback
+      /// for documents that never adopted the container.</item>
+      /// </list>
+      /// Returns null when the (resolved) container is malformed.
       /// </summary>
       private static List<EntitySlot> ReadEntitySlots(JsonElement root, MappingSpec spec, ModelInterpretation result)
       {
+         // Containerized form first: when the schemas container resolves it is
+         // authoritative; its absence falls through to the flat form.
+         if (spec.Schemas != null && !string.IsNullOrEmpty(spec.Schemas.Path))
+         {
+            var schemas = ResolvePath(root, spec.Schemas.Path);
+            if (schemas != null)
+               return ReadSchemaSlots(schemas.Value, spec, result);
+         }
+
          var containerSpec = spec.Entities ?? new EntityContainerSpec();
          var container = ResolvePath(root, containerSpec.Path);
          if (container == null)
@@ -135,17 +175,89 @@ namespace Model.Interpretation
          }
 
          var slots = new List<EntitySlot>();
-         switch (container.Value.ValueKind)
+         if (!ReadEntityContainer(container.Value, schema: null, spec, result, slots))
+            return null;
+         return slots;
+      }
+
+      /// <summary>
+      /// Read the containerized form (backlog 023): each schema object holds its
+      /// entities under the spec's entities field. The container may be an object
+      /// keyed by schema name or an array of schema objects named by the spec's
+      /// name field — the reader auto-detects, like the entity container.
+      /// </summary>
+      private static List<EntitySlot> ReadSchemaSlots(
+         JsonElement schemasContainer, MappingSpec spec, ModelInterpretation result)
+      {
+         var schemasSpec = spec.Schemas ?? new SchemasSpec();
+         var slots = new List<EntitySlot>();
+
+         switch (schemasContainer.ValueKind)
          {
             case JsonValueKind.Object:
-               // Keyed form: one entity per property, named by its key.
-               foreach (var prop in container.Value.EnumerateObject())
-                  slots.Add(new EntitySlot { Name = prop.Name, Element = prop.Value });
+               // Keyed form: one schema per property, named by its key.
+               foreach (var prop in schemasContainer.EnumerateObject())
+                  ReadSchemaEntities(prop.Value, prop.Name, schemasSpec, spec, result, slots);
                break;
 
             case JsonValueKind.Array:
                // List form: each item is named by the spec's name field.
-               foreach (var item in container.Value.EnumerateArray())
+               foreach (var schemaElement in schemasContainer.EnumerateArray())
+               {
+                  if (schemaElement.ValueKind != JsonValueKind.Object)
+                  {
+                     result.Issues.Add("a schema in the container is not an object; skipped.");
+                     continue;
+                  }
+                  ReadSchemaEntities(schemaElement, ReadField(schemaElement, schemasSpec.NameField),
+                     schemasSpec, spec, result, slots);
+               }
+               break;
+
+            default:
+               result.Issues.Add($"schemas container at '{schemasSpec.Path}' is neither an object nor an array.");
+               return null;
+         }
+
+         return slots;
+      }
+
+      /// <summary>
+      /// Read one schema's entities into <paramref name="slots"/>, carrying the
+      /// schema name onto every slot. An empty schema (no entities field) is
+      /// valid — nothing to read.
+      /// </summary>
+      private static void ReadSchemaEntities(
+         JsonElement schemaElement, string schemaName, SchemasSpec schemasSpec,
+         MappingSpec spec, ModelInterpretation result, List<EntitySlot> slots)
+      {
+         if (schemaElement.ValueKind != JsonValueKind.Object) return;
+         var entities = FindField(schemaElement, schemasSpec.EntitiesField);
+         if (entities == null) return;
+         ReadEntityContainer(entities.Value, schemaName, spec, result, slots);
+      }
+
+      /// <summary>
+      /// Read one entity container (object keyed by name, or array named by the
+      /// spec's name field) into <paramref name="slots"/>, tagging each slot with
+      /// <paramref name="schema"/>. Returns false when the container is neither
+      /// object nor array.
+      /// </summary>
+      private static bool ReadEntityContainer(
+         JsonElement container, string schema, MappingSpec spec, ModelInterpretation result, List<EntitySlot> slots)
+      {
+         var containerSpec = spec.Entities ?? new EntityContainerSpec();
+         switch (container.ValueKind)
+         {
+            case JsonValueKind.Object:
+               // Keyed form: one entity per property, named by its key.
+               foreach (var prop in container.EnumerateObject())
+                  slots.Add(new EntitySlot { Name = prop.Name, Schema = schema, Element = prop.Value });
+               return true;
+
+            case JsonValueKind.Array:
+               // List form: each item is named by the spec's name field.
+               foreach (var item in container.EnumerateArray())
                {
                   var name = ReadField(item, containerSpec.NameField);
                   if (string.IsNullOrEmpty(name))
@@ -153,16 +265,14 @@ namespace Model.Interpretation
                      result.Issues.Add("an entity in the container has no resolvable name; skipped.");
                      continue;
                   }
-                  slots.Add(new EntitySlot { Name = name, Element = item });
+                  slots.Add(new EntitySlot { Name = name, Schema = schema, Element = item });
                }
-               break;
+               return true;
 
             default:
                result.Issues.Add($"entities container at '{containerSpec.Path}' is neither an object nor an array.");
-               return null;
+               return false;
          }
-
-         return slots;
       }
 
       /// <summary>
@@ -193,8 +303,16 @@ namespace Model.Interpretation
          }
 
          var table = new TableInfo { TableName = slot.Name, Columns = new ColumnList() };
-         if (!string.IsNullOrEmpty(containerSpec.SchemaField))
-            table.SchemaName = ReadField(slot.Element, containerSpec.SchemaField);
+         // The schema comes from the container (backlog 023: declared once) with
+         // the flat form's per-entity schema field as the more-specific fallback
+         // (R7 — a declared per-entity value beats the inherited one).
+         var schemaFromField = !string.IsNullOrEmpty(containerSpec.SchemaField)
+            ? ReadField(slot.Element, containerSpec.SchemaField) : null;
+         table.SchemaName = schemaFromField ?? slot.Schema;
+
+         // Backlog 024: an entity's description, when the source declares one.
+         if (!string.IsNullOrEmpty(containerSpec.DescriptionField))
+            table.Description = ReadField(slot.Element, containerSpec.DescriptionField);
 
          var elementsEl = FindField(slot.Element, containerSpec.ElementsField);
          if (elementsEl != null)
@@ -293,6 +411,10 @@ namespace Model.Interpretation
             }
 
             column.EnumerationName = ReadField(element, elementSpec.EnumField);
+
+            // Backlog 024: an element's description, when the source declares one.
+            if (!string.IsNullOrEmpty(elementSpec.DescriptionField))
+               column.Description = ReadField(element, elementSpec.DescriptionField);
          }
          else
          {
@@ -625,6 +747,7 @@ namespace Model.Interpretation
       private struct EntitySlot
       {
          public string Name;
+         public string Schema;
          public JsonElement Element;
       }
 

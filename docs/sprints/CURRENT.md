@@ -1,7 +1,18 @@
-# Current Sprint
+# Sprint 2026-08-18 — Per-node provenance
 
-**No sprint is currently in execution.**
+> Copy of the sprint in execution. Definitions live in `docs/backlog/`.
 
-The last sprint (2026-08-18, model readout — backlog item `022`) was promoted to `docs/sprints/archive/sprint-2026-08-18-model-readout-inspector.md`. `022` surfaced dependency cardinality/roles, metadata, and provenance in the inspector + a load-time log line.
+## Dates
 
-**The schema-driven interpretation series (019–022) is complete and the backlog is empty.** v2 (generalization, uniqueness, referential-integrity, stereotypes) is designed-for, not built — a candidate next series. When the next sprint is defined, copy `docs/sprints/_TEMPLATE.md` here and start executing.
+- **Start:** 2026-08-18
+- **End:** (TBD)
+
+## Scope
+
+Backlog items in this sprint:
+
+- [ ] `026` — Per-node provenance (source/version on each table/column, not just the model)
+
+## Execution Log
+
+- 2026-08-18 — Sprint defined from backlog item 026 (the node-enrichment follow-up series continues: `024` descriptions is done, `026` per-node provenance is next, then `025` JSON Schemas). `024` is promoted. Not started.

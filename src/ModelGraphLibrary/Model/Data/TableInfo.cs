@@ -14,6 +14,7 @@ namespace Model.Data
       public string CatalogName { get; set; }
       public string SchemaName { get; set; }
       public string TableName { get; set; }
+      public string Description { get; set; }
       public List<ColumnInfo> Columns { get; set; }
 
       /// <summary>
@@ -37,6 +38,7 @@ namespace Model.Data
          CatalogName = table.CatalogName;
          SchemaName = table.SchemaName;
          TableName = table.TableName;
+         Description = table.Description;
          Columns = table.Columns;
       }
 

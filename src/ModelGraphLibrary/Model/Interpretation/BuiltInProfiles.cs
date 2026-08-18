@@ -53,12 +53,24 @@ namespace Model.Interpretation
                Kind = "array",
                NameField = "TableName",
                SchemaField = "SchemaName",
+               DescriptionField = "Description",
                ElementsField = "Columns",
+            },
+            // The containerized database representation (backlog 023):
+            // dataSource → schemas → tables. When the schemas container is
+            // present it is authoritative; the flat $ path stays the fallback.
+            RepositoryPath = "$.dataSource",
+            Schemas = new SchemasSpec
+            {
+               Path = "$.schemas",
+               NameField = "name",
+               EntitiesField = "tables",
             },
             Elements = new ElementSpec
             {
                NameField = "ColumnName",
                TypeField = "Type",
+               DescriptionField = "Description",
                NullableField = "IsNullable",
                // Keys are read from the IsKey boolean and/or the nested
                // Constraints list (a declared PK constraint), whichever the
@@ -103,13 +115,26 @@ namespace Model.Interpretation
                Kind = "object",
                NameField = "name",
                SchemaField = "schema",
+               DescriptionField = "description",
                ElementsField = "Elements",
                MetadataField = "metadata",
+            },
+            // The containerized entity–element representation (backlog 023):
+            // repository → schemas → entities. When the schemas container is
+            // present it is authoritative; the flat $.entities path stays the
+            // fallback for pre-container documents.
+            RepositoryPath = "$.repository",
+            Schemas = new SchemasSpec
+            {
+               Path = "$.schemas",
+               NameField = "name",
+               EntitiesField = "entities",
             },
             Elements = new ElementSpec
             {
                NameField = "name",
                TypeField = "type",
+               DescriptionField = "description",
                KeyField = "primaryKey",
                NullableField = "nullable",
                // The grouped vocabulary's dependency synonym is "Depends On"

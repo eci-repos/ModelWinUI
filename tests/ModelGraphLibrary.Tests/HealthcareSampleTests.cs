@@ -228,6 +228,34 @@ namespace ModelConsole.Tests
       }
 
       [Fact]
+      public void DescriptionsAreCapturedFromTheSample()
+      {
+         // Backlog 024: the shipped Healthcare sample carries descriptions on
+         // Patient (table + name element) and on Visit/Claim/Appointment; the
+         // inspector reads them straight off the interpreted tables.
+         var result = Interpret();
+
+         var patient = result.Tables.First(t => t.TableName == "Patient");
+         Assert.Equal("A person receiving care at the clinic.", patient.Description);
+         Assert.Equal(
+            "Full legal name.",
+            patient.Columns.Single(c => c.ColumnName == "name").Description);
+
+         Assert.Equal(
+            "A patient's encounter at the clinic.",
+            result.Tables.First(t => t.TableName == "Visit").Description);
+         Assert.Equal(
+            "An insurance claim submitted for a visit.",
+            result.Tables.First(t => t.TableName == "Claim").Description);
+         Assert.Equal(
+            "A scheduled patient-provider appointment.",
+            result.Tables.First(t => t.TableName == "Appointment").Description);
+
+         // An entity without a description stays null — optionality.
+         Assert.Null(result.Tables.First(t => t.TableName == "Provider").Description);
+      }
+
+      [Fact]
       public void TypeMapResolvesCommonTypesAndPassesOthersThrough()
       {
          var tables = Interpret().Tables;

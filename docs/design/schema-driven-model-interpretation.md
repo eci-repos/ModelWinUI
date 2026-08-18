@@ -43,12 +43,12 @@ The internal model is fixed; external schemas use their own words. Entity / Elem
 
 Terms are free; **roles are ruled**. The rules are how a schema author's freedom stays recognizable to the interpreter.
 
-- **R1 — Container.** Entities live at a *declared path* (`$`, `$.entities`, a keyed object). One path declaration; the container may be an array or an object of named entities.
+- **R1 — Container.** Entities live at a *declared path* (`$`, `$.entities`, a keyed object). One path declaration; the container may be an array or an object of named entities. Two forms are auto-detected (backlog 023): the **flat** form (`Entities.Path`) and the **containerized** form (`Schemas.Path` — `repository`/`dataSource` → `schemas` → `entities`/`tables`), where each schema is declared once and every entity under it inherits the name. The containerized form is authoritative when its path resolves; flat is the backward-compatible fallback.
 - **R2 — Identity.** Every entity and element has a name, resolved from a *declared field* or a conventional key (`name` / `id` / `title` / `key`).
 - **R3 — Key.** An entity's identity is its key: a *declared flag* or a convention (a single element named `Id`). Composite-ready: a declared list of key elements.
 - **R4 — Reference.** A dependency is **resolved by name, not by keyword**: any field whose value resolves to a known entity (+ optional element) is a dependency. This is what makes "FK" and "Depends On" the same rule.
 - **R5 — Cardinality & optionality.** Declared on the dependency (explicit `min`/`max`/required), or inferred by convention (an element that is a list ⇒ 1:N / M:N).
-- **R6 — Annotation.** Anything not caught by R1–R5 is *metadata*; a declared provenance block (any name) is captured as provenance. Neither ever blocks interpretation.
+- **R6 — Annotation.** Anything not caught by R1–R5 is *metadata*; a declared provenance block (any name) is captured as provenance. Neither ever blocks interpretation. Descriptions (backlog 024) ride the first-class canonical members instead of the bag: a `description` on an entity/element flows into `TableInfo.Description` / `ColumnInfo.Description` (round-tripped in the array format), with the metadata bag reserved for everything else.
 - **R7 — Precedence.** Explicitly declared roles **always beat** inferred ones. Name-resolution is powerful but sharp (an element literally named `Type` whose value matches an entity name must not become a dependency). Declared references win; convention only when nothing is declared.
 - **R8 — Grace.** Unknown fields are ignored. A schema is **valid iff R1–R5 resolve every required concept unambiguously**; ambiguity → a resolution issue at load, never a silent guess. (Extends the existing FK-issue diagnostics.)
 
