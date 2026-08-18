@@ -68,10 +68,36 @@ namespace ModelConsole.Controls
                ContentPanel.Children.Add(enumReadout);
             }
          }
+
+         // Backlog 022: the entity's metadata annotations, when the model
+         // carried any.
+         var metadataLines = ReadoutFormatter.MetadataLines(table.Metadata);
+         if (metadataLines.Count > 0)
+         {
+            ContentPanel.Children.Add(new TextBlock
+            {
+               Text = "Metadata",
+               FontWeight = FontWeights.SemiBold,
+               FontSize = 12,
+               Margin = new Thickness(0, 8, 0, 2)
+            });
+            foreach (var line in metadataLines)
+            {
+               ContentPanel.Children.Add(new TextBlock
+               {
+                  Text = line,
+                  FontSize = 11,
+                  Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+                  Margin = new Thickness(12, 0, 0, 0)
+               });
+            }
+         }
       }
 
       /// <summary>
-      /// Show a connector's FK relationship with a delete action.
+      /// Show a connector's FK relationship with a delete action. When the
+      /// edge carries its source constraint (backlog 022), the dependency's
+      /// per-side cardinality/optionality and role names are shown beneath.
       /// </summary>
       public void ShowConnector(FkRelation edge)
       {
@@ -86,6 +112,33 @@ namespace ModelConsole.Controls
             TextWrapping = TextWrapping.WrapWholeWords
          });
 
+         var constraint = edge.Constraint;
+         if (constraint != null)
+         {
+            string cardinality = ReadoutFormatter.Cardinality(constraint);
+            if (cardinality != null)
+            {
+               ContentPanel.Children.Add(new TextBlock
+               {
+                  Text = "Cardinality: " + cardinality,
+                  FontSize = 12,
+                  Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+                  Margin = new Thickness(0, 4, 0, 0)
+               });
+            }
+            string roles = ReadoutFormatter.Roles(constraint);
+            if (roles != null)
+            {
+               ContentPanel.Children.Add(new TextBlock
+               {
+                  Text = "Roles: " + roles,
+                  FontSize = 12,
+                  Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+                  Margin = new Thickness(0, 2, 0, 0)
+               });
+            }
+         }
+
          var deleteButton = new Button
          {
             Content = "Delete connector",
@@ -94,6 +147,73 @@ namespace ModelConsole.Controls
          };
          deleteButton.Click += (s, e) => DeleteRequested?.Invoke(this, edge);
          ContentPanel.Children.Add(deleteButton);
+      }
+
+      /// <summary>
+      /// Show the model-level readout (provenance + model metadata) — the
+      /// inspector's idle state, shown when a model is loaded (backlog 022).
+      /// Reads the live <see cref="Provenance"/> and metadata dictionary, so
+      /// the readout can never drift from the model.
+      /// </summary>
+      public void ShowModel(
+         Provenance provenance, IReadOnlyDictionary<string, string> metadata)
+      {
+         HeaderText.Text = "Model";
+         ContentPanel.Children.Clear();
+
+         string provenanceText = ReadoutFormatter.Provenance(provenance);
+         if (provenanceText != null)
+         {
+            ContentPanel.Children.Add(new TextBlock
+            {
+               Text = provenanceText,
+               FontSize = 12,
+               TextWrapping = TextWrapping.WrapWholeWords
+            });
+            if (!string.IsNullOrEmpty(provenance.Notes))
+            {
+               ContentPanel.Children.Add(new TextBlock
+               {
+                  Text = "notes: " + provenance.Notes,
+                  FontSize = 11,
+                  Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+                  Margin = new Thickness(0, 2, 0, 0),
+                  TextWrapping = TextWrapping.WrapWholeWords
+               });
+            }
+         }
+
+         var metadataLines = ReadoutFormatter.MetadataLines(metadata);
+         if (metadataLines.Count > 0)
+         {
+            ContentPanel.Children.Add(new TextBlock
+            {
+               Text = "Model metadata",
+               FontWeight = FontWeights.SemiBold,
+               FontSize = 12,
+               Margin = new Thickness(0, 8, 0, 2)
+            });
+            foreach (var line in metadataLines)
+            {
+               ContentPanel.Children.Add(new TextBlock
+               {
+                  Text = line,
+                  FontSize = 11,
+                  Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+                  Margin = new Thickness(12, 0, 0, 0)
+               });
+            }
+         }
+
+         if (provenanceText == null && metadataLines.Count == 0)
+         {
+            ContentPanel.Children.Add(new TextBlock
+            {
+               Text = "No model-level metadata or provenance.",
+               FontSize = 12,
+               Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray)
+            });
+         }
       }
 
       private UIElement BuildColumnRow(ColumnInfo column)

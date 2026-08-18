@@ -2,6 +2,6 @@
 
 **No sprint is currently in execution.**
 
-The last sprint (2026-08-18, type + enumeration wiring — backlog item `021`) was promoted to `docs/sprints/archive/sprint-2026-08-18-type-and-enumeration-wiring.md`. `021` surfaced the resolved canonical type + enum value-sets in the inspector/explorer (read-only).
+The last sprint (2026-08-18, model readout — backlog item `022`) was promoted to `docs/sprints/archive/sprint-2026-08-18-model-readout-inspector.md`. `022` surfaced dependency cardinality/roles, metadata, and provenance in the inspector + a load-time log line.
 
-The next sprint is seeded from backlog item `022` (model readout — cardinality/optionality/metadata/provenance in the inspector). When it is defined, copy `docs/sprints/_TEMPLATE.md` here and start executing.
+**The schema-driven interpretation series (019–022) is complete and the backlog is empty.** v2 (generalization, uniqueness, referential-integrity, stereotypes) is designed-for, not built — a candidate next series. When the next sprint is defined, copy `docs/sprints/_TEMPLATE.md` here and start executing.

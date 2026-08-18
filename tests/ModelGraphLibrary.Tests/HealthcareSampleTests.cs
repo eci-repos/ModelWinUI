@@ -166,6 +166,68 @@ namespace ModelConsole.Tests
       }
 
       [Fact]
+      public void DependencyReadoutReadsTheExtendedModel()
+      {
+         // Backlog 022: the inspector's dependency readout reads the live
+         // constraint — cardinality/optionality and role names — never a
+         // frozen projection.
+         var visit = Interpret().Tables.First(t => t.TableName == "Visit");
+
+         var patient = visit.Columns.Single(c => c.ColumnName == "patient")
+            .Constraints.Single(c => c.IsForeignKey);
+         Assert.Equal(1, patient.MinCardinality);
+         Assert.Equal(1, patient.MaxCardinality);
+         Assert.Equal("1..1 (required)", ReadoutFormatter.Cardinality(patient));
+
+         var department = visit.Columns.Single(c => c.ColumnName == "department")
+            .Constraints.Single(c => c.IsForeignKey);
+         Assert.Equal(0, department.MinCardinality);
+         Assert.Equal(1, department.MaxCardinality);
+         Assert.Equal("0..1 (optional)", ReadoutFormatter.Cardinality(department));
+
+         var admitting = visit.Columns.Single(c => c.ColumnName == "admittingProvider")
+            .Constraints.Single(c => c.IsForeignKey);
+         Assert.Equal("admitting", admitting.ChildRole);
+         Assert.Equal("admits", admitting.ParentRole);
+         Assert.Equal("admitting → admits", ReadoutFormatter.Roles(admitting));
+      }
+
+      [Fact]
+      public void ExtractedEdgesCarryTheirConstraint()
+      {
+         // Backlog 022: the connector the user clicks is the FkRelation the
+         // extractor produced — it must carry the source constraint so the
+         // inspector can show the dependency details.
+         var tables = Interpret().Tables;
+         var (edges, _) = FkEdgeExtractor.Extract(tables);
+
+         var admitting = edges.Single(e =>
+            e.ChildTable == "Visit" && e.ChildColumn == "admittingProvider");
+
+         Assert.NotNull(admitting.Constraint);
+         Assert.Equal("admitting", admitting.Constraint.ChildRole);
+         Assert.Equal("admits", admitting.Constraint.ParentRole);
+      }
+
+      [Fact]
+      public void ProvenanceAndModelMetadataFormatForReadout()
+      {
+         // Backlog 022: the model-level readout (inspector idle state + the
+         // load-time log line) is built from the formatter's output.
+         var result = Interpret();
+
+         Assert.Equal(
+            "source: clinic-schema.json · version: 1.0 · loaded: 2026-08-18",
+            ReadoutFormatter.Provenance(result.Provenance));
+
+         var lines = ReadoutFormatter.MetadataLines(result.Metadata);
+         Assert.Equal(3, lines.Count);
+         Assert.Equal("domain: healthcare", lines[0]);
+         Assert.Equal("owner: clinic-it", lines[1]);
+         Assert.Equal("standard: HL7-ish", lines[2]);
+      }
+
+      [Fact]
       public void TypeMapResolvesCommonTypesAndPassesOthersThrough()
       {
          var tables = Interpret().Tables;

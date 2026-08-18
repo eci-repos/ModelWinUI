@@ -6,10 +6,10 @@ Make the v1 canonical richness **visible**: the inspector/log surface the depend
 
 ## Goals
 
-- [ ] Inspector shows a dependency's cardinality (`min`/`max` per side), optionality, and role names.
-- [ ] Inspector (or log) shows an entity's/element's metadata annotations.
-- [ ] Model-level provenance (source, version, loaded-at) is visible somewhere stable (inspector header or log).
-- [ ] Tests: readout reads the extended model, not a frozen projection.
+- [x] Inspector shows a dependency's cardinality (`min`/`max` per side), optionality, and role names.
+- [x] Inspector (or log) shows an entity's/element's metadata annotations.
+- [x] Model-level provenance (source, version, loaded-at) is visible somewhere stable (inspector header or log).
+- [x] Tests: readout reads the extended model, not a frozen projection.
 
 ## Scope
 
@@ -31,12 +31,12 @@ Make the v1 canonical richness **visible**: the inspector/log surface the depend
 
 ## Definition of Done
 
-- [ ] `dotnet build ModelWinUI.sln -p:Platform=x64 --no-incremental` → **0 errors, 0 warnings**.
-- [ ] `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug` → all pass.
-- [ ] Inspecting a dependency in the proof sample (`020`) shows per-side cardinality/optionality/roles; metadata and provenance are visible; a log line records provenance + resolution issues at load.
+- [x] `dotnet build ModelWinUI.sln -p:Platform=x64 --no-incremental` → **0 errors, 0 warnings**.
+- [x] `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug` → all pass.
+- [x] Inspecting a dependency in the proof sample (`020`) shows per-side cardinality/optionality/roles; metadata and provenance are visible; a log line records provenance + resolution issues at load.
 
 ## Status
 
-- **State:** Planned
-- **Sprint:** (TBD)
-- **Completed:** (TBD)
+- **State:** Completed
+- **Sprint:** 2026-08-18 (model readout: cardinality, metadata, provenance)
+- **Completed:** 2026-08-18

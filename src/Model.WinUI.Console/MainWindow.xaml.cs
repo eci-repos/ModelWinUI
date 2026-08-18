@@ -15,9 +15,12 @@ using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage.Pickers;
 
+using CommunityToolkit.Mvvm.DependencyInjection;
+
 using Model.Data;
 using Model.Interpretation;
 using ModelConsole.ModelData;
+using ModelConsole.Services;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -126,7 +129,8 @@ namespace ModelWinUI
             {
                var interpretation = SchemaInterpreter.Interpret(
                   File.ReadAllText(path), BuiltInProfiles.FromName(sample.Profile));
-               LoadModel(interpretation.Tables, interpretation.Enumerations);
+               LoadModel(interpretation.Tables, interpretation.Enumerations,
+                  interpretation.Provenance, interpretation.Metadata, interpretation.Issues);
             }
             else
             {
@@ -142,14 +146,44 @@ namespace ModelWinUI
       /// <summary>
       /// Feed a loaded model to both renderers (XAML + Skia). The optional
       /// enumerations (backlog 021) come from the schema-driven interpreter
-      /// and feed the XAML inspector's value-set readout.
+      /// and feed the XAML inspector's value-set readout; the optional
+      /// provenance + model metadata + resolution issues (backlog 022) seed
+      /// the inspector's model-level readout and the load-time log line.
       /// </summary>
       private void LoadModel(
          IReadOnlyList<TableInfo> tables,
-         IReadOnlyDictionary<string, Enumeration> enumerations = null)
+         IReadOnlyDictionary<string, Enumeration> enumerations = null,
+         Provenance provenance = null,
+         IReadOnlyDictionary<string, string> metadata = null,
+         IReadOnlyList<string> issues = null)
       {
-         XamlEditor.SetModel(tables, enumerations);
+         XamlEditor.SetModel(tables, enumerations, provenance, metadata);
          SkiaEditor.SetModel(tables);
+         LogModelLoad(provenance, tables, issues);
+      }
+
+      /// <summary>
+      /// Record a load-time log line: provenance + resolution issues (backlog
+      /// 022). The log panel is the stable home for model-level provenance.
+      /// </summary>
+      private void LogModelLoad(
+         Provenance provenance, IReadOnlyList<TableInfo> tables, IReadOnlyList<string> issues)
+      {
+         var log = Ioc.Default.GetRequiredService<ILogService>();
+         string source = provenance != null && !string.IsNullOrEmpty(provenance.Source)
+            ? provenance.Source : "array JSON";
+         string version = provenance != null && !string.IsNullOrEmpty(provenance.Version)
+            ? " (version " + provenance.Version + ")" : "";
+         int issueCount = issues?.Count ?? 0;
+         log.WriteMessage("Loaded " + tables.Count + " tables from " + source + version +
+            (issueCount > 0 ? "; " + issueCount + " resolution issue(s)." : "."));
+         if (issues != null)
+         {
+            foreach (var issue in issues)
+            {
+               log.WriteMessage("  issue: " + issue);
+            }
+         }
       }
 
       /// <summary>

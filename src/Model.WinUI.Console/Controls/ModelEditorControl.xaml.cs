@@ -66,14 +66,18 @@ namespace ModelConsole.Controls
       /// <summary>
       /// Replace the model in the drawing and the explorer (File → Open).
       /// The optional enumerations (backlog 021) flow to the panel so the
-      /// inspector can show value-sets.
+      /// inspector can show value-sets; the optional provenance + model
+      /// metadata (backlog 022) seed the inspector's model-level readout.
       /// </summary>
       public void SetModel(
          IReadOnlyList<TableInfo> tables,
-         IReadOnlyDictionary<string, Enumeration> enumerations = null)
+         IReadOnlyDictionary<string, Enumeration> enumerations = null,
+         Provenance provenance = null,
+         IReadOnlyDictionary<string, string> metadata = null)
       {
          ModelPanel.SetModel(tables, enumerations);
          ExplorerPanel.SetModel(tables);
+         InspectorPanel.ShowModel(provenance, metadata);
       }
 
       /// <summary>Whether the left panel (model explorer) is currently shown.</summary>

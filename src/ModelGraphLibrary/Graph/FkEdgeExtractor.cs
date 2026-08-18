@@ -97,7 +97,8 @@ namespace ModelConsole.Graph
                   }
 
                   edges.Add(new FkRelation(
-                     table.TableName, column.ColumnName, parentName, parentColumn));
+                     table.TableName, column.ColumnName, parentName, parentColumn,
+                     constraint));
                }
             }
          }
