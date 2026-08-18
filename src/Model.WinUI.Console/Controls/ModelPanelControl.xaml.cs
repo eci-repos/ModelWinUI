@@ -64,6 +64,13 @@ namespace ModelConsole.Controls
       private IReadOnlyList<TableInfo> _tables;
 
       /// <summary>
+      /// The model's enumerations (named value-sets), when the model was
+      /// loaded through the schema-driven interpreter (backlog 021). Null for
+      /// array-format models, which carry no enumerations.
+      /// </summary>
+      private IReadOnlyDictionary<string, Enumeration> _enumerations;
+
+      /// <summary>
       /// Current table positions, keyed by table name. Initialized by the
       /// layout engine and updated when a table is dragged.
       /// </summary>
@@ -149,6 +156,15 @@ namespace ModelConsole.Controls
       public IReadOnlyList<TableInfo> Tables
       {
          get { return _tables; }
+      }
+
+      /// <summary>
+      /// The current model's enumerations (backlog 021), for the inspector's
+      /// value-set readout. Null when the model carries none.
+      /// </summary>
+      public IReadOnlyDictionary<string, Enumeration> Enumerations
+      {
+         get { return _enumerations; }
       }
 
       // ------------------------------------------------------------------
@@ -709,10 +725,15 @@ namespace ModelConsole.Controls
 
       /// <summary>
       /// Replace the model and re-render from scratch (used by File → Open).
+      /// The optional enumerations (backlog 021) come from the schema-driven
+      /// interpreter and feed the inspector's value-set readout.
       /// </summary>
-      public void SetModel(IReadOnlyList<TableInfo> tables)
+      public void SetModel(
+         IReadOnlyList<TableInfo> tables,
+         IReadOnlyDictionary<string, Enumeration> enumerations = null)
       {
          _tables = tables;
+         _enumerations = enumerations;
          _selectedTable = null;
          InitializeLayout();
          Render();

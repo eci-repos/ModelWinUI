@@ -122,18 +122,16 @@ namespace ModelWinUI
             AppContext.BaseDirectory, "Samples", fileName);
          try
          {
-            IReadOnlyList<TableInfo> tables;
             if (sample.Profile != null)
             {
                var interpretation = SchemaInterpreter.Interpret(
                   File.ReadAllText(path), BuiltInProfiles.FromName(sample.Profile));
-               tables = interpretation.Tables;
+               LoadModel(interpretation.Tables, interpretation.Enumerations);
             }
             else
             {
-               tables = ModelFile.Load(path);
+               LoadModel(ModelFile.Load(path));
             }
-            LoadModel(tables);
          }
          catch (Exception ex)
          {
@@ -142,11 +140,15 @@ namespace ModelWinUI
       }
 
       /// <summary>
-      /// Feed a loaded model to both renderers (XAML + Skia).
+      /// Feed a loaded model to both renderers (XAML + Skia). The optional
+      /// enumerations (backlog 021) come from the schema-driven interpreter
+      /// and feed the XAML inspector's value-set readout.
       /// </summary>
-      private void LoadModel(IReadOnlyList<TableInfo> tables)
+      private void LoadModel(
+         IReadOnlyList<TableInfo> tables,
+         IReadOnlyDictionary<string, Enumeration> enumerations = null)
       {
-         XamlEditor.SetModel(tables);
+         XamlEditor.SetModel(tables, enumerations);
          SkiaEditor.SetModel(tables);
       }
 

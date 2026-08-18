@@ -12,6 +12,16 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-18 — Type + enumeration wiring (backlog item 021)
+
+- **User request:** "work on 021 now" — wire the canonical type system and enumerations end-to-end in the app. The interpreter's type map was already data-driven (gear 4 — `MappingSpec.TypeMap` dictionary, `ApplyTypeMap` iterates it, no switch) and enumerations were already modeled (`Enumeration`/`EnumerationValue`, `ColumnInfo.EnumerationName`); the work was plumbing the `Enumerations` dictionary from the load path into the inspector and adding the readout.
+- **Plumbing (the load path now carries enumerations):** `Enumeration.ValueList` (comma-separated value codes, for readout); `ModelPanelControl` gains an `Enumerations` property + optional `enumerations` param on `SetModel`; `ModelEditorControl.SetModel` and both `ShowTable` call sites pass `ModelPanel.Enumerations`; `MainWindow.LoadModel` takes optional enumerations and `OpenSample_Click`'s grouped branch passes `interpretation.Enumerations`. The array-format path (`ModelFile.Load`) passes null — no enumerations, no readout, no behavior change.
+- **Inspector readout (read-only, display only):** `EntityInspectorControl.ShowTable` takes the enumerations and, under each enum-typed column, adds a gray 11 px value-set line — `"enum Gender: M, F, OTHER"` — built from `Enumeration.ValueList` (`BuildEnumReadout` returns null when the column isn't enum-typed or the dictionary is missing the key). The editable type TextBox already showed the resolved canonical type.
+- **Explorer tag:** `ModelExplorerControl.FormatColumn` appends an `enum:<name>` tag to a column's tag list (next to PK/FK), so the tree shows `gender : VARCHAR [enum:Gender]`.
+- **Tests (+2, 100 total):** `EnumTypedColumnsResolveToRealValueSets` (all 4 enum-declaring columns in the healthcare sample resolve to real value-sets in the interpretation — the dictionary lookup the readout depends on) and `ValueListFormatsCommaSeparatedCodes` (`"M, F, OTHER"`, `"SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED"`, `"SUBMITTED, PAID, DENIED"`).
+- **Verified:** full-solution `--no-incremental` `-p:Platform=x64` build → **0 errors, 0 warnings**; `dotnet test` → **100/100 pass** (was 98). (Visual pass on the readout needs a manual look — CLI launch runs on the agent's non-interactive desktop.)
+- **Promoted:** `021` → `docs/backlog/archive/`; sprint → `docs/sprints/archive/sprint-2026-08-18-type-and-enumeration-wiring.md`; `CURRENT.md` is a placeholder seeded with `022`.
+
 ### 2026-08-18 — Proof sample model — the gate (backlog item 020)
 
 - **User request:** "work on 020 now" — author a third-party-style model in a new domain with the grouped `$.entities` shape and the `Entity`/`Elements`/`Depends On` vocabulary, ship it as a sample, and load it through `019` with no code updates to the renderers/explorer.
@@ -294,7 +304,7 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ### Next tasks (in priority order)
 
-1. **Schema-driven model interpretation (backlog `021`–`022`)** — `019` (interpreter core) and `020` (proof sample model — the gate) are **done** (2026-08-18, archived; sprints promoted). The `020` gate **passed**: the ambiguous-name case resolved by R7 (declared beats inferred — `Claim.PatientId` → Visit, not Patient), and the grouped sample loads through `019` with no renderer/explorer changes. Next is **`021` (type + enumeration wiring)**: surface the canonical type + enumeration on the renderers (the grouped sample's `EnumerationName`/`Type` are already captured on the columns). Then `022` (cardinality/metadata/provenance readout in the inspector). v2 (generalization, uniqueness, referential-integrity, stereotypes) is designed-for, not built. `docs/sprints/CURRENT.md` is a placeholder seeded with `021`.
+1. **Schema-driven model interpretation (backlog `022`)** — `019` (interpreter core), `020` (proof sample model — the gate), and `021` (type + enumeration wiring) are **done** (2026-08-18, archived; sprints promoted). The `020` gate **passed** (R7 declared-beats-inferred resolved the ambiguous-name case); `021` surfaced the resolved canonical type + enum value-sets in the inspector/explorer. Next is **`022` (model readout)**: cardinality/optionality/metadata/provenance readout in the inspector (the `ConstraintInfo` cardinality/roles and `TableInfo.Metadata`/`Provenance` are already captured on the model). v2 (generalization, uniqueness, referential-integrity, stereotypes) is designed-for, not built. `docs/sprints/CURRENT.md` is a placeholder seeded with `022`.
 
 ### Known gaps / issues (candidates for backlog items)
 

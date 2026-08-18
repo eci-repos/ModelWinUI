@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Model.Data
 {
@@ -24,6 +25,12 @@ namespace Model.Data
    {
       public string Name { get; set; }
       public List<EnumerationValue> Values { get; set; } = new List<EnumerationValue>();
+
+      /// <summary>
+      /// Comma-separated value codes, for readout (backlog 021). The
+      /// inspector shows this where an element resolves to an enumeration.
+      /// </summary>
+      public string ValueList => string.Join(", ", Values.Select(v => v.Code));
    }
 
 }

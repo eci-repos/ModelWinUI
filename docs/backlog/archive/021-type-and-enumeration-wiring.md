@@ -6,10 +6,10 @@ Wire the canonical type system and enumerations **end-to-end** in the app: the i
 
 ## Goals
 
-- [ ] The interpreter's type map is data-driven (JSON), resolving arbitrary type strings/formats to canonical types.
-- [ ] Enumerations are modeled (`Enumeration` type) and an element can resolve to an enum (value-set) reference.
-- [ ] The app surfaces resolved types and enumeration values in the inspector/explorer (read-only; display only).
-- [ ] Tests: type-map resolution, enum resolution, display.
+- [x] The interpreter's type map is data-driven (JSON), resolving arbitrary type strings/formats to canonical types.
+- [x] Enumerations are modeled (`Enumeration` type) and an element can resolve to an enum (value-set) reference.
+- [x] The app surfaces resolved types and enumeration values in the inspector/explorer (read-only; display only).
+- [x] Tests: type-map resolution, enum resolution, display.
 
 ## Scope
 
@@ -32,13 +32,13 @@ Wire the canonical type system and enumerations **end-to-end** in the app: the i
 
 ## Definition of Done
 
-- [ ] `dotnet build ModelWinUI.sln -p:Platform=x64 --no-incremental` → **0 errors, 0 warnings**.
-- [ ] `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug` → all pass.
-- [ ] Inspecting a column shows its resolved canonical type; inspecting an enum-typed element shows the value-set values.
-- [ ] Type resolution is data-driven (no switch statement on types).
+- [x] `dotnet build ModelWinUI.sln -p:Platform=x64 --no-incremental` → **0 errors, 0 warnings**.
+- [x] `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug` → all pass.
+- [x] Inspecting a column shows its resolved canonical type; inspecting an enum-typed element shows the value-set values.
+- [x] Type resolution is data-driven (no switch statement on types).
 
 ## Status
 
-- **State:** Planned
-- **Sprint:** (TBD)
-- **Completed:** (TBD)
+- **State:** Completed
+- **Sprint:** 2026-08-18 (type + enumeration wiring)
+- **Completed:** 2026-08-18

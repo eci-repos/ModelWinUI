@@ -117,6 +117,10 @@ namespace ModelConsole.Controls
          {
             tags.Add("FK");
          }
+         if (!string.IsNullOrEmpty(column.EnumerationName))
+         {
+            tags.Add("enum:" + column.EnumerationName);
+         }
          string suffix = tags.Count > 0 ? " [" + string.Join(", ", tags) + "]" : "";
          return column.ColumnName + " : " + column.Type + suffix;
       }

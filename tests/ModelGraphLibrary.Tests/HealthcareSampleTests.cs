@@ -126,6 +126,46 @@ namespace ModelConsole.Tests
       }
 
       [Fact]
+      public void EnumTypedColumnsResolveToRealValueSets()
+      {
+         // Backlog 021: every column that declares an enumeration resolves to
+         // a real value-set in the interpretation — the inspector's readout
+         // depends on this dictionary lookup succeeding.
+         var result = Interpret();
+
+         var enumColumns = result.Tables
+            .SelectMany(t => t.Columns)
+            .Where(c => !string.IsNullOrEmpty(c.EnumerationName))
+            .ToList();
+
+         Assert.Equal(4, enumColumns.Count);
+         foreach (var column in enumColumns)
+         {
+            Assert.True(
+               result.Enumerations.ContainsKey(column.EnumerationName),
+               column.EnumerationName + " is not in the interpretation's enumerations.");
+         }
+
+         var visit = result.Tables.First(t => t.TableName == "Visit");
+         Assert.Equal("VisitStatus", visit.Columns.Single(c => c.ColumnName == "status").EnumerationName);
+         Assert.Equal(4, result.Enumerations["VisitStatus"].Values.Count);
+      }
+
+      [Fact]
+      public void ValueListFormatsCommaSeparatedCodes()
+      {
+         // Backlog 021: the inspector's readout line is built from
+         // Enumeration.ValueList — "enum Gender: M, F, OTHER".
+         var result = Interpret();
+
+         Assert.Equal("M, F, OTHER", result.Enumerations["Gender"].ValueList);
+         Assert.Equal(
+            "SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED",
+            result.Enumerations["VisitStatus"].ValueList);
+         Assert.Equal("SUBMITTED, PAID, DENIED", result.Enumerations["ClaimStatus"].ValueList);
+      }
+
+      [Fact]
       public void TypeMapResolvesCommonTypesAndPassesOthersThrough()
       {
          var tables = Interpret().Tables;

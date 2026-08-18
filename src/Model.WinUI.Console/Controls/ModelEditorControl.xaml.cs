@@ -33,7 +33,7 @@ namespace ModelConsole.Controls
          {
             if (entity is TableInfo table)
             {
-               InspectorPanel.ShowTable(table);
+               InspectorPanel.ShowTable(table, ModelPanel.Enumerations);
             }
             else if (entity is FkRelation edge)
             {
@@ -48,7 +48,7 @@ namespace ModelConsole.Controls
          ExplorerPanel.TableSelected += (s, table) =>
          {
             ModelPanel.SelectTable(table.TableName);
-            InspectorPanel.ShowTable(table);
+            InspectorPanel.ShowTable(table, ModelPanel.Enumerations);
          };
 
          // Model replaced (File → Open) → refresh the explorer tree.
@@ -65,10 +65,14 @@ namespace ModelConsole.Controls
 
       /// <summary>
       /// Replace the model in the drawing and the explorer (File → Open).
+      /// The optional enumerations (backlog 021) flow to the panel so the
+      /// inspector can show value-sets.
       /// </summary>
-      public void SetModel(IReadOnlyList<TableInfo> tables)
+      public void SetModel(
+         IReadOnlyList<TableInfo> tables,
+         IReadOnlyDictionary<string, Enumeration> enumerations = null)
       {
-         ModelPanel.SetModel(tables);
+         ModelPanel.SetModel(tables, enumerations);
          ExplorerPanel.SetModel(tables);
       }
 

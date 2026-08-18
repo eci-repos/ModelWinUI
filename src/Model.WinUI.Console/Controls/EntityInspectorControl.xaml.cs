@@ -6,6 +6,7 @@ using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 
 using Windows.System;
 
@@ -39,9 +40,13 @@ namespace ModelConsole.Controls
 
       /// <summary>
       /// Show a table's metadata: schema::table header plus one row per
-      /// column (name, editable data type, constraints).
+      /// column (name, editable data type, constraints). A column that
+      /// resolves to an enumeration (backlog 021) gets a read-only value-set
+      /// line beneath it when the model's enumerations are supplied.
       /// </summary>
-      public void ShowTable(TableInfo table)
+      public void ShowTable(
+         TableInfo table,
+         IReadOnlyDictionary<string, Enumeration> enumerations = null)
       {
          HeaderText.Text = table.SchemaName + "::" + table.TableName;
          ContentPanel.Children.Clear();
@@ -57,6 +62,11 @@ namespace ModelConsole.Controls
          foreach (var column in table.Columns)
          {
             ContentPanel.Children.Add(BuildColumnRow(column));
+            var enumReadout = BuildEnumReadout(column, enumerations);
+            if (enumReadout != null)
+            {
+               ContentPanel.Children.Add(enumReadout);
+            }
          }
       }
 
@@ -142,6 +152,29 @@ namespace ModelConsole.Controls
          row.Children.Add(constraintText);
 
          return row;
+      }
+
+      /// <summary>
+      /// A read-only value-set line for an enum-typed column (backlog 021):
+      /// "enum Gender: M, F, OTHER". Null when the column is not enum-typed
+      /// or the model's enumerations are not available.
+      /// </summary>
+      private static UIElement BuildEnumReadout(
+         ColumnInfo column, IReadOnlyDictionary<string, Enumeration> enumerations)
+      {
+         if (string.IsNullOrEmpty(column.EnumerationName) || enumerations == null ||
+             !enumerations.TryGetValue(column.EnumerationName, out var enumeration))
+         {
+            return null;
+         }
+         return new TextBlock
+         {
+            Text = "enum " + enumeration.Name + ": " + enumeration.ValueList,
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+            Margin = new Thickness(12, 0, 0, 4),
+            TextWrapping = TextWrapping.WrapWholeWords
+         };
       }
 
       /// <summary>
