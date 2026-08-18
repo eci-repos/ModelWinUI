@@ -8,7 +8,8 @@ This folder is the project's working documentation. It is the single source of t
 docs/
 ├── README.md          ← this file: how the docs are organized
 ├── WORKLOG.md         ← running record of work done + next pending tasks (handoff doc)
-├── backlog/           ← plans for scheduled work and sprint definitions
+├── design/            ← design documents (long-lived design decisions, e.g. schema-driven interpretation)
+├── backlog/           ← plans for backlog items and sprint definitions
 │   ├── README.md      ← backlog conventions + workflow
 │   ├── _TEMPLATE.md   ← template for a new backlog item
 │   └── archive/       ← completed/promoted backlog items are moved here

@@ -12,6 +12,13 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-18 — Planned schema-driven model interpretation (design doc + backlog 019–022)
+
+- **Context (user conversation):** the user wants the app to load a model from **any JSON schema** — a different shape (grouped `$.entities`) and vocabulary (`Entity`/`Elements`/`Depends On` for Table/Column/FK) — with **no code updates**, grounded in rules that make concept-equivalencies unambiguous. Reviewed and folded in: type-system gaps (real canonical type, enumerations, optionality), relationship gaps (per-side cardinality/optionality, role names, composite-ready identity), metadata, provenance, and the discipline of keeping metadata the "everything else" sink. v2 (generalization, uniqueness, referential-integrity, stereotypes) is designed-for, not built.
+- **Design doc:** `docs/design/schema-driven-model-interpretation.md` — canonical vocabulary (v1), grounding rules R1–R8 (container, identity, key, reference-by-name, cardinality/optionality, annotation, precedence, grace), the mapping spec (built-in profiles + sidecar `.map.json` + `x-` annotations), the canonical-hub decision (extend the existing `Model.Data` POCOs additively), five extensibility gears (versioned spec, additive relationship kind, per-node extension bag, data-driven type map, rule registry), v1 scope vs v2 roadmap, known risks.
+- **Backlog items created (next free numbers after archived 001–018):** `019` interpreter core, `020` proof sample model (gate — different domain/structure/vocabulary, authored as a third-party model), `021` type + enumeration wiring, `022` model readout (cardinality/metadata/provenance in the inspector). Sequence 019 → gated by 020 → 021/022; v2 planned only after the gate passes.
+- **Key decision (fork from the review):** v1 grows the existing `TableInfo`/`ColumnInfo`/`ConstraintInfo` types additively (optional members + `Extensions` bag + sibling `Enumeration`/`Provenance`), keeping renderer/explorer/`LoadModel` untouched — the "no code updates" guarantee is data (mapping specs), not code.
+
 ### 2026-08-18 — Model explorer populated on startup (default model)
 
 - **User request:** "when loading the default or last document upon app initialization make sure to populate the left side panel with the 'Model'."
@@ -264,7 +271,7 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ### Next tasks (in priority order)
 
-1. **The backlog is empty** — every backlog item (001–018) is complete and archived in `docs/backlog/archive/`, and the user signed off on the app's behavior (2026-08-18). Sprints 2026-08-15 → 2026-08-17 are all promoted to `docs/sprints/archive/`; `docs/sprints/CURRENT.md` is a placeholder (no sprint in execution) until the next sprint is defined. The README roadmap's "assess next steps" is the natural next conversation — candidates below.
+1. **Schema-driven model interpretation (backlog `019`–`022`)** is the next planned work — design at `docs/design/schema-driven-model-interpretation.md`. Sequence **`019` (interpreter core) → gated by `020` (proof sample: new domain/structure/vocabulary, no code updates) → `021` (type + enum wiring) → `022` (cardinality/metadata/provenance readout)**. v2 (generalization, uniqueness, referential-integrity, stereotypes) is designed-for, not built, until the `020` gate passes. Define the sprint from `019` when ready. The prior backlog (001–018) is complete and archived; the user signed off on the app's behavior (2026-08-18); `docs/sprints/CURRENT.md` is a placeholder until the next sprint is defined.
 
 ### Known gaps / issues (candidates for backlog items)
 
