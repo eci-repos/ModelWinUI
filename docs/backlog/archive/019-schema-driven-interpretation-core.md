@@ -48,6 +48,6 @@ The first slice of **schema-driven model interpretation** (design: `docs/design/
 
 ## Status
 
-- **State:** Planned
-- **Sprint:** (TBD)
-- **Completed:** (TBD)
+- **State:** Completed
+- **Sprint:** 2026-08-18 (schema-driven interpretation core)
+- **Completed:** 2026-08-18

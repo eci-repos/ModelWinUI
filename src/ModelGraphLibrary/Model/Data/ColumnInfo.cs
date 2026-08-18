@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Model.Data
@@ -28,8 +29,24 @@ namespace Model.Data
       public bool IsKey { get; set; } = false;
       public bool IsForeignKey { get; set; } = false;
 
-      public List<ConstraintInfo> Constraints { get; set; } = 
+      public List<ConstraintInfo> Constraints { get; set; } =
          new List<ConstraintInfo>();
+
+      /// <summary>
+      /// Optional canonical enumeration (value-set) this column resolves to.
+      /// Carried by the interpreter (backlog 021); not part of the array
+      /// JSON format (JsonIgnore keeps that format byte-stable).
+      /// </summary>
+      [JsonIgnore]
+      public string EnumerationName { get; set; }
+
+      /// <summary>
+      /// Unmodeled source fields preserved verbatim (the per-node extension
+      /// bag). Captured by the interpreter when the mapping spec names them;
+      /// ignored by the array JSON format.
+      /// </summary>
+      [JsonIgnore]
+      public Dictionary<string, string> Extensions { get; set; }
 
       /// <summary>
       /// Add Constraint.
