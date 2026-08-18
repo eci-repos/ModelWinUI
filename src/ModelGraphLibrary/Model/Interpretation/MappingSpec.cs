@@ -128,6 +128,13 @@ namespace Model.Interpretation
       /// </summary>
       public string DescriptionField { get; set; } = "description";
 
+      /// <summary>
+      /// Optional field carrying the entity's provenance object (backlog 026):
+      /// where this entity came from, at what version. Absent (null) means no
+      /// per-entity provenance is captured.
+      /// </summary>
+      public string ProvenanceField { get; set; }
+
       /// <summary>Field on each entity that holds its elements.</summary>
       public string ElementsField { get; set; } = "elements";
 
@@ -180,6 +187,13 @@ namespace Model.Interpretation
       /// Absent means no description is captured.
       /// </summary>
       public string DescriptionField { get; set; } = "description";
+
+      /// <summary>
+      /// Optional field carrying the element's provenance object (backlog 026):
+      /// where this element came from, at what version. Absent (null) means no
+      /// per-element provenance is captured.
+      /// </summary>
+      public string ProvenanceField { get; set; }
 
       /// <summary>Boolean field marking the element as the entity's identity (primary key).</summary>
       public string KeyField { get; set; } = "primaryKey";

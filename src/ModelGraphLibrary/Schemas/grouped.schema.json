@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://edam.studio/schemas/grouped.schema.json",
+  "title": "EDAM Studio grouped model representation",
+  "description": "The grouped entity-element representation (backlog 025), authored in the Entity / Elements / \"Depends On\" vocabulary. One of two shapes: a flat root holding an entities container, or the containerized Repository → Schema → Entities → Elements form (backlog 023). Unknown fields are ignored, not rejected — interpretation is graceful (R8).",
+  "oneOf": [
+    { "$ref": "#/$defs/flatRoot" },
+    { "$ref": "#/$defs/containerRoot" }
+  ],
+  "$defs": {
+    "flatRoot": {
+      "description": "The flat grouped form: the document root holds the Entities container.",
+      "type": "object",
+      "required": [ "entities" ],
+      "properties": {
+        "entities": { "$ref": "#/$defs/entities" }
+      }
+    },
+    "containerRoot": {
+      "description": "The containerized grouped form: a Repository (optional scalar) holds Schemas keyed by name, each holding its Entities.",
+      "type": "object",
+      "required": [ "schemas" ],
+      "properties": {
+        "repository": { "type": "string" },
+        "schemas": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "entities": { "$ref": "#/$defs/entities" }
+            }
+          }
+        }
+      }
+    },
+    "entities": {
+      "description": "A container of entities: either keyed by entity name (object) or a named list (array).",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/entity" }
+        },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/entity" }
+        }
+      ]
+    },
+    "entity": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "schema": { "type": "string" },
+        "description": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "metadata": { "type": "object" },
+        "Elements": { "$ref": "#/$defs/elements" }
+      }
+    },
+    "elements": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          { "$ref": "#/$defs/element" }
+        ]
+      }
+    },
+    "element": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "description": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "primaryKey": { "type": "boolean" },
+        "nullable": { "type": "boolean" },
+        "Depends On": { "type": "string" },
+        "refColumn": { "type": "string" },
+        "enum": { "type": "string" },
+        "cardinality": { "type": "string" },
+        "childRole": { "type": "string" },
+        "parentRole": { "type": "string" },
+        "value": { "type": "string" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "source": { "type": "string" },
+        "version": { "type": "string" },
+        "loadedAt": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

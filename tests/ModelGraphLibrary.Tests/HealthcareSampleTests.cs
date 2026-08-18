@@ -256,6 +256,34 @@ namespace ModelConsole.Tests
       }
 
       [Fact]
+      public void PerNodeProvenanceIsCapturedFromTheSample()
+      {
+         // Backlog 026: the shipped Healthcare sample carries provenance on
+         // Patient (entity) and on the name element — different origins, which
+         // is exactly what per-node provenance is for. The readout reuses the
+         // 022 formatter.
+         var result = Interpret();
+
+         var patient = result.Tables.First(t => t.TableName == "Patient");
+         Assert.NotNull(patient.Provenance);
+         Assert.Equal("patient-registry.json", patient.Provenance.Source);
+         Assert.Equal("1.1", patient.Provenance.Version);
+         Assert.Equal(
+            "source: patient-registry.json · version: 1.1",
+            ReadoutFormatter.Provenance(patient.Provenance));
+
+         var name = patient.Columns.Single(c => c.ColumnName == "name");
+         Assert.NotNull(name.Provenance);
+         Assert.Equal("demographics-transform.json", name.Provenance.Source);
+         Assert.Equal(
+            "source: demographics-transform.json · version: 2.0",
+            ReadoutFormatter.Provenance(name.Provenance));
+
+         // Most entities/elements have none — optionality.
+         Assert.Null(result.Tables.First(t => t.TableName == "Provider").Provenance);
+      }
+
+      [Fact]
       public void TypeMapResolvesCommonTypesAndPassesOthersThrough()
       {
          var tables = Interpret().Tables;

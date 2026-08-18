@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://edam.studio/schemas/array.schema.json",
+  "title": "EDAM Studio array model representation",
+  "description": "The ModelFile array format (backlog 025). One of two shapes: a flat JSON array of TableInfo objects (the legacy form), or the containerized Data Source → Schema → Tables → Columns form (backlog 023). Field names are the canonical PascalCase members (TableName, Columns, Constraints, ...). Unknown fields are ignored, not rejected — interpretation is graceful.",
+  "oneOf": [
+    { "$ref": "#/$defs/flatArray" },
+    { "$ref": "#/$defs/container" }
+  ],
+  "$defs": {
+    "flatArray": {
+      "description": "A JSON array of tables (the legacy ModelFile flat form).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/table" }
+    },
+    "container": {
+      "description": "The containerized database representation: schemas declared once, each holding its tables.",
+      "type": "object",
+      "required": [ "schemas" ],
+      "properties": {
+        "dataSource": { "type": "string" },
+        "schemas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [ "name", "tables" ],
+            "properties": {
+              "name": { "type": "string" },
+              "tables": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/table" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "table": {
+      "type": "object",
+      "required": [ "TableName" ],
+      "properties": {
+        "CatalogName": { "type": [ "string", "null" ] },
+        "SchemaName": { "type": [ "string", "null" ] },
+        "TableName": { "type": "string" },
+        "Description": { "type": [ "string", "null" ] },
+        "Columns": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/column" }
+        }
+      }
+    },
+    "column": {
+      "type": "object",
+      "required": [ "ColumnName" ],
+      "properties": {
+        "SchemaName": { "type": [ "string", "null" ] },
+        "ColumnName": { "type": "string" },
+        "Description": { "type": [ "string", "null" ] },
+        "OrdinalPosition": { "type": "integer" },
+        "Type": { "type": "string" },
+        "Size": { "type": "integer" },
+        "IsNullable": { "type": "boolean" },
+        "IsIdentity": { "type": "boolean" },
+        "IsKey": { "type": "boolean" },
+        "IsForeignKey": { "type": "boolean" },
+        "Constraints": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/constraint" }
+        }
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "properties": {
+        "SchemaName": { "type": [ "string", "null" ] },
+        "TableName": { "type": [ "string", "null" ] },
+        "ColumnName": { "type": [ "string", "null" ] },
+        "Description": { "type": [ "string", "null" ] },
+        "Type": { "type": "string" },
+        "ReferencedTableName": { "type": [ "string", "null" ] },
+        "ReferencedColumnName": { "type": [ "string", "null" ] },
+        "IsKey": { "type": "boolean" },
+        "IsForeignKey": { "type": "boolean" }
+      }
+    }
+  }
+}

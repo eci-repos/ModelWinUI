@@ -6,10 +6,10 @@ Provenance is currently **model-level only** (`ModelInterpretation.Provenance`).
 
 ## Goals
 
-- [ ] `[JsonIgnore]` `Provenance` members on `TableInfo` and `ColumnInfo` (additive canonical members).
-- [ ] Interpreter captures per-node provenance from the source (e.g. a `provenance` field on an entity/element in the grouped representation).
-- [ ] Inspector surfaces table/column provenance (reusing the 022 readout pattern).
-- [ ] Tests: per-node provenance capture + readout.
+- [x] `[JsonIgnore]` `Provenance` members on `TableInfo` and `ColumnInfo` (additive canonical members).
+- [x] Interpreter captures per-node provenance from the source (e.g. a `provenance` field on an entity/element in the grouped representation).
+- [x] Inspector surfaces table/column provenance (reusing the 022 readout pattern).
+- [x] Tests: per-node provenance capture + readout.
 
 ## Scope
 
@@ -31,12 +31,12 @@ Provenance is currently **model-level only** (`ModelInterpretation.Provenance`).
 
 ## Definition of Done
 
-- [ ] `dotnet build ModelWinUI.sln -p:Platform=x64 --no-incremental` → **0 errors, 0 warnings**.
-- [ ] `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug` → all pass.
-- [ ] A table/element that declares provenance shows it in the inspector.
+- [x] `dotnet build ModelWinUI.sln -p:Platform=x64 --no-incremental` → **0 errors, 0 warnings**.
+- [x] `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug` → all pass.
+- [x] A table/element that declares provenance shows it in the inspector.
 
 ## Status
 
-- **State:** Planned
+- **State:** Completed
 - **Sprint:** 2026-08-18 (per-node provenance)
-- **Completed:** (TBD)
+- **Completed:** 2026-08-18

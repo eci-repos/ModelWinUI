@@ -314,6 +314,21 @@ namespace Model.Interpretation
          if (!string.IsNullOrEmpty(containerSpec.DescriptionField))
             table.Description = ReadField(slot.Element, containerSpec.DescriptionField);
 
+         // Backlog 026: an entity's provenance, when the source declares one.
+         // A present-but-malformed provenance is an issue, never a silent drop
+         // (the model-level provenance reading sets the same rule).
+         if (!string.IsNullOrEmpty(containerSpec.ProvenanceField))
+         {
+            var provenanceEl = FindField(slot.Element, containerSpec.ProvenanceField);
+            if (provenanceEl != null)
+            {
+               if (provenanceEl.Value.ValueKind == JsonValueKind.Object)
+                  table.Provenance = ReadProvenance(provenanceEl.Value);
+               else
+                  result.Issues.Add($"{slot.Name}: provenance is not an object.");
+            }
+         }
+
          var elementsEl = FindField(slot.Element, containerSpec.ElementsField);
          if (elementsEl != null)
          {
@@ -415,6 +430,21 @@ namespace Model.Interpretation
             // Backlog 024: an element's description, when the source declares one.
             if (!string.IsNullOrEmpty(elementSpec.DescriptionField))
                column.Description = ReadField(element, elementSpec.DescriptionField);
+
+            // Backlog 026: an element's provenance, when the source declares
+            // one. Malformed → issue, never a silent drop.
+            if (!string.IsNullOrEmpty(elementSpec.ProvenanceField))
+            {
+               var provenanceEl = FindField(element, elementSpec.ProvenanceField);
+               if (provenanceEl != null)
+               {
+                  if (provenanceEl.Value.ValueKind == JsonValueKind.Object)
+                     column.Provenance = ReadProvenance(provenanceEl.Value);
+                  else
+                     result.Issues.Add(
+                        $"{table.TableName}.{column.ColumnName}: provenance is not an object.");
+               }
+            }
          }
          else
          {

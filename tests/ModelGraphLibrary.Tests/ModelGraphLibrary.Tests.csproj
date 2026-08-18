@@ -23,6 +23,11 @@
     <Content Include="..\..\src\ModelGraphLibrary\Samples\*.json"
              Link="Samples\%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" />
+    <!-- Shipped representation schemas (backlog 025): copied into the test
+         output so the schema-validation tests exercise the exact artifacts. -->
+    <Content Include="..\..\src\ModelGraphLibrary\Schemas\*.json"
+             Link="Schemas\%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

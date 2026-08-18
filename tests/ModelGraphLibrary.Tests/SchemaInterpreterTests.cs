@@ -333,6 +333,72 @@ namespace ModelConsole.Tests
             patient.Columns.Single(c => c.ColumnName == "name").Description);
       }
 
+      // -------- 026: per-node provenance (entity → element) ----------------
+
+      [Fact]
+      public void EntityAndElementProvenanceIsCaptured()
+      {
+         const string json = """
+            {
+               "entities": {
+                  "Patient": {
+                     "provenance": { "source": "patient-registry.json", "version": "1.1" },
+                     "Elements": [
+                        { "name": "id", "type": "int", "primaryKey": true },
+                        { "name": "name", "type": "string",
+                          "provenance": { "source": "demographics-transform.json", "version": "2.0" } }
+                     ]
+                  },
+                  "Provider": {
+                     "Elements": [ { "name": "id", "type": "int", "primaryKey": true } ]
+                  }
+               }
+            }
+            """;
+
+         var result = SchemaInterpreter.Interpret(json, BuiltInProfiles.Grouped);
+
+         Assert.Empty(result.Issues);
+         var patient = result.Tables.First(t => t.TableName == "Patient");
+         Assert.NotNull(patient.Provenance);
+         Assert.Equal("patient-registry.json", patient.Provenance.Source);
+         Assert.Equal("1.1", patient.Provenance.Version);
+
+         var name = patient.Columns.Single(c => c.ColumnName == "name");
+         Assert.NotNull(name.Provenance);
+         Assert.Equal("demographics-transform.json", name.Provenance.Source);
+         Assert.Equal("2.0", name.Provenance.Version);
+         Assert.Null(patient.Columns.Single(c => c.ColumnName == "id").Provenance);
+
+         // An entity without provenance stays silent — never invented.
+         Assert.Null(result.Tables.First(t => t.TableName == "Provider").Provenance);
+      }
+
+      [Fact]
+      public void MalformedNodeProvenanceIsAnIssueNotASilentDrop()
+      {
+         const string json = """
+            {
+               "entities": {
+                  "Order": {
+                     "provenance": "not-an-object",
+                     "Elements": [
+                        { "name": "id", "type": "int", "primaryKey": true,
+                          "provenance": "also-bad" }
+                     ]
+                  }
+               }
+            }
+            """;
+
+         var result = SchemaInterpreter.Interpret(json, BuiltInProfiles.Grouped);
+
+         var order = result.Tables.Single();
+         Assert.Null(order.Provenance);
+         Assert.Null(order.Columns.Single().Provenance);
+         Assert.Contains(result.Issues, issue => issue.Contains("provenance is not an object"));
+      }
+
       // -------- R7: declared beats inferred --------------------------------
 
       [Fact]

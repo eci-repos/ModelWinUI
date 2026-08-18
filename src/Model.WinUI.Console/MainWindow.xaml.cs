@@ -19,6 +19,7 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 
 using Model.Data;
 using Model.Interpretation;
+using Model.Validation;
 using ModelConsole.ModelData;
 using ModelConsole.Services;
 
@@ -91,7 +92,8 @@ namespace ModelWinUI
 
          try
          {
-            LoadModel(ModelFile.Load(file.Path));
+            string json = File.ReadAllText(file.Path);
+            LoadModel(ModelFile.LoadJson(json), schemaIssues: ValidateModelJson(json));
          }
          catch (Exception ex)
          {
@@ -125,16 +127,19 @@ namespace ModelWinUI
             AppContext.BaseDirectory, "Samples", fileName);
          try
          {
+            string json = File.ReadAllText(path);
+            IReadOnlyList<string> schemaIssues = ValidateModelJson(json);
             if (sample.Profile != null)
             {
                var interpretation = SchemaInterpreter.Interpret(
-                  File.ReadAllText(path), BuiltInProfiles.FromName(sample.Profile));
+                  json, BuiltInProfiles.FromName(sample.Profile));
                LoadModel(interpretation.Tables, interpretation.Enumerations,
-                  interpretation.Provenance, interpretation.Metadata, interpretation.Issues);
+                  interpretation.Provenance, interpretation.Metadata, interpretation.Issues,
+                  schemaIssues);
             }
             else
             {
-               LoadModel(ModelFile.Load(path));
+               LoadModel(ModelFile.LoadJson(json), schemaIssues: schemaIssues);
             }
          }
          catch (Exception ex)
@@ -155,19 +160,22 @@ namespace ModelWinUI
          IReadOnlyDictionary<string, Enumeration> enumerations = null,
          Provenance provenance = null,
          IReadOnlyDictionary<string, string> metadata = null,
-         IReadOnlyList<string> issues = null)
+         IReadOnlyList<string> issues = null,
+         IReadOnlyList<string> schemaIssues = null)
       {
          XamlEditor.SetModel(tables, enumerations, provenance, metadata);
          SkiaEditor.SetModel(tables);
-         LogModelLoad(provenance, tables, issues);
+         LogModelLoad(provenance, tables, issues, schemaIssues);
       }
 
       /// <summary>
-      /// Record a load-time log line: provenance + resolution issues (backlog
-      /// 022). The log panel is the stable home for model-level provenance.
+      /// Record a load-time line: provenance + resolution issues (backlog 022)
+      /// + schema violations (backlog 025). The log panel is the stable home
+      /// for model-level provenance and the load-time warning channel.
       /// </summary>
       private void LogModelLoad(
-         Provenance provenance, IReadOnlyList<TableInfo> tables, IReadOnlyList<string> issues)
+         Provenance provenance, IReadOnlyList<TableInfo> tables, IReadOnlyList<string> issues,
+         IReadOnlyList<string> schemaIssues)
       {
          var log = Ioc.Default.GetRequiredService<ILogService>();
          string source = provenance != null && !string.IsNullOrEmpty(provenance.Source)
@@ -175,8 +183,13 @@ namespace ModelWinUI
          string version = provenance != null && !string.IsNullOrEmpty(provenance.Version)
             ? " (version " + provenance.Version + ")" : "";
          int issueCount = issues?.Count ?? 0;
-         log.WriteMessage("Loaded " + tables.Count + " tables from " + source + version +
-            (issueCount > 0 ? "; " + issueCount + " resolution issue(s)." : "."));
+         int schemaCount = schemaIssues?.Count ?? 0;
+         string suffix = issueCount > 0 ? "; " + issueCount + " resolution issue(s)." : ".";
+         if (schemaCount > 0)
+         {
+            suffix = suffix.TrimEnd('.') + "; " + schemaCount + " schema violation(s).";
+         }
+         log.WriteMessage("Loaded " + tables.Count + " tables from " + source + version + suffix);
          if (issues != null)
          {
             foreach (var issue in issues)
@@ -184,6 +197,41 @@ namespace ModelWinUI
                log.WriteMessage("  issue: " + issue);
             }
          }
+         if (schemaIssues != null)
+         {
+            foreach (var violation in schemaIssues)
+            {
+               log.WriteMessage("  schema: " + violation);
+            }
+         }
+      }
+
+      /// <summary>
+      /// Validate a model document against its representation's schema (backlog
+      /// 025). The schema is selected by the document's root shape and loaded
+      /// from the shipped <c>Schemas/</c> folder; violations are warnings on
+      /// the log channel, never a hard block — a schema violation does not stop
+      /// interpretation, mirroring the interpreter's R8 grace.
+      /// </summary>
+      private static IReadOnlyList<string> ValidateModelJson(string json)
+      {
+         ModelSchemaKind kind = ModelSchemaValidator.DetectKind(json);
+         if (kind == ModelSchemaKind.None)
+         {
+            return new[]
+            {
+               "document root is neither an array nor a data-source/schema/entity container."
+            };
+         }
+
+         string schemaFile = kind == ModelSchemaKind.Grouped
+            ? "grouped.schema.json" : "array.schema.json";
+         string path = Path.Combine(AppContext.BaseDirectory, "Schemas", schemaFile);
+         if (!File.Exists(path))
+         {
+            return new[] { "shipped schema " + schemaFile + " was not found next to the app." };
+         }
+         return ModelSchemaValidator.Validate(json, File.ReadAllText(path));
       }
 
       /// <summary>

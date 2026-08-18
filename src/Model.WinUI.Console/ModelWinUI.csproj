@@ -35,6 +35,11 @@
     <Content Include="..\ModelGraphLibrary\Samples\*.json"
              Link="Samples\%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" />
+    <!-- Shipped representation schemas (backlog 025): copied into the app
+         output under Schemas/ so load-time validation can find them. -->
+    <Content Include="..\ModelGraphLibrary\Schemas\*.json"
+             Link="Schemas\%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

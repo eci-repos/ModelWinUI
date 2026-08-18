@@ -87,6 +87,33 @@ namespace ModelConsole.Controls
             {
                ContentPanel.Children.Add(enumReadout);
             }
+            var provenanceReadout = BuildProvenanceReadout(column);
+            if (provenanceReadout != null)
+            {
+               ContentPanel.Children.Add(provenanceReadout);
+            }
+         }
+
+         // Backlog 026: the entity's provenance, when the source declared one.
+         // Shown next to the metadata section, mirroring the 022 readout.
+         var provenanceText = ReadoutFormatter.Provenance(table.Provenance);
+         if (provenanceText != null)
+         {
+            ContentPanel.Children.Add(new TextBlock
+            {
+               Text = "Provenance",
+               FontWeight = FontWeights.SemiBold,
+               FontSize = 12,
+               Margin = new Thickness(0, 8, 0, 2)
+            });
+            ContentPanel.Children.Add(new TextBlock
+            {
+               Text = provenanceText,
+               FontSize = 11,
+               Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+               Margin = new Thickness(12, 0, 0, 0),
+               TextWrapping = TextWrapping.WrapWholeWords
+            });
          }
 
          // Backlog 022: the entity's metadata annotations, when the model
@@ -304,6 +331,25 @@ namespace ModelConsole.Controls
          return new TextBlock
          {
             Text = column.Description,
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+            Margin = new Thickness(12, 0, 0, 4),
+            TextWrapping = TextWrapping.WrapWholeWords
+         };
+      }
+
+      /// <summary>
+      /// A read-only provenance line for a column (backlog 026): the column's
+      /// source provenance, when the model carried one. Null when the column
+      /// has none.
+      /// </summary>
+      private static UIElement BuildProvenanceReadout(ColumnInfo column)
+      {
+         string text = ReadoutFormatter.Provenance(column.Provenance);
+         if (text == null) return null;
+         return new TextBlock
+         {
+            Text = text,
             FontSize = 11,
             Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
             Margin = new Thickness(12, 0, 0, 4),

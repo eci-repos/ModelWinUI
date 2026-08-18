@@ -11,11 +11,11 @@ Folder contents (one schema per representation, shipped to the app/tests output 
 
 ## Goals
 
-- [ ] `ModelGraphLibrary/Schemas/grouped.schema.json` + `array.schema.json` (draft-07 or 2020-12), each allowing both flat and container forms.
-- [ ] The `Schemas` folder is content-included by the app and test projects (mirroring the `Samples\*.json` pattern) so it lands in output `Schemas/`.
-- [ ] **Load-time validation of any input model**: File → Open Model and Open Sample validate the raw JSON against the detected schema before interpretation; violations surface via the existing issues/log channel (warn, not hard-block — consistent with the interpreter's grace philosophy).
-- [ ] `JsonSchema.Net` (pure C#, net10.0-friendly) in `ModelGraphLibrary` so the app, library, and tests share one validator.
-- [ ] Tests: every shipped sample validates against its representation's schema; a deliberately-invalid document produces violations.
+- [x] `ModelGraphLibrary/Schemas/grouped.schema.json` + `array.schema.json` (draft-07 or 2020-12), each allowing both flat and container forms.
+- [x] The `Schemas` folder is content-included by the app and test projects (mirroring the `Samples\*.json` pattern) so it lands in output `Schemas/`.
+- [x] **Load-time validation of any input model**: File → Open Model and Open Sample validate the raw JSON against the detected schema before interpretation; violations surface via the existing issues/log channel (warn, not hard-block — consistent with the interpreter's grace philosophy).
+- [x] `JsonSchema.Net` (pure C#, net10.0-friendly) in `ModelGraphLibrary` so the app, library, and tests share one validator.
+- [x] Tests: every shipped sample validates against its representation's schema; a deliberately-invalid document produces violations.
 
 ## Scope
 
@@ -39,12 +39,12 @@ Folder contents (one schema per representation, shipped to the app/tests output 
 
 ## Definition of Done
 
-- [ ] `dotnet build ModelWinUI.sln -p:Platform=x64 --no-incremental` → **0 errors, 0 warnings**.
-- [ ] `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug` → all pass.
-- [ ] Every shipped sample validates against its representation's schema; an invalid document surfaces schema violations at load.
+- [x] `dotnet build ModelWinUI.sln -p:Platform=x64 --no-incremental` → **0 errors, 0 warnings**.
+- [x] `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug` → all pass.
+- [x] Every shipped sample validates against its representation's schema; an invalid document surfaces schema violations at load.
 
 ## Status
 
-- **State:** Planned
+- **State:** Completed
 - **Sprint:** 2026-08-18 (JSON schemas for both representations)
-- **Completed:** (TBD)
+- **Completed:** 2026-08-18

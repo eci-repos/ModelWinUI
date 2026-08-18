@@ -26,6 +26,15 @@ namespace Model.Data
       public Dictionary<string, string> Metadata { get; set; }
 
       /// <summary>
+      /// This entity's provenance — where it came from, at what version
+      /// (backlog 026). Canonical member captured by the interpreter from a
+      /// per-entity provenance declaration and surfaced by the readout.
+      /// Ignored by the array JSON format (provenance is a source concern).
+      /// </summary>
+      [JsonIgnore]
+      public Provenance Provenance { get; set; }
+
+      /// <summary>
       /// Unmodeled source fields preserved verbatim (the per-node extension
       /// bag). Captured by the interpreter when the mapping spec names them;
       /// ignored by the array JSON format.
@@ -39,6 +48,7 @@ namespace Model.Data
          SchemaName = table.SchemaName;
          TableName = table.TableName;
          Description = table.Description;
+         Provenance = table.Provenance;
          Columns = table.Columns;
       }
 

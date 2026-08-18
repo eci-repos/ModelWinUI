@@ -22,10 +22,11 @@
       "entities": {
         "Patient": {
           "description": "A person receiving care at the clinic.",
+          "provenance": { "source": "patient-registry.json", "version": "1.1" },
           "metadata": { "sensitive": "true", "retention": "7y" },
           "Elements": [
             { "name": "id", "type": "int" },
-            { "name": "name", "type": "string", "description": "Full legal name." },
+            { "name": "name", "type": "string", "description": "Full legal name.", "provenance": { "source": "demographics-transform.json", "version": "2.0" } },
             { "name": "dateOfBirth", "type": "date" },
             { "name": "gender", "type": "string", "enum": "Gender" },
             { "name": "phone", "type": "varchar" }

@@ -34,7 +34,7 @@ The internal model is fixed; external schemas use their own words. Entity / Elem
 | **Cardinality** | multiplicity per dependency side (`min`/`max`), plus optionality | Multiplicity, required | new members on the dependency |
 | **Enumeration** | a named set of allowed values (code + label) | Value-set, Domain, Lookup | new `EnumerationInfo` |
 | **Metadata** | annotations that describe, not structure | Tags, Description, Label, display hints | passthrough bag on each node |
-| **Provenance** | where/when/how the model came to be | Source, Origin, Lineage, Version | new `Provenance` on the model |
+| **Provenance** | where/when/how the model came to be | Source, Origin, Lineage, Version | `Provenance` on the model and per node (026) |
 | **Group** | a named collection of entities | Schema, Catalog, Namespace | `CatalogInfo` |
 
 **Terminology note:** we adopt Entity / Element / Dependency as canonical and treat Table / Column / FK as synonyms — but the **internal type names are unchanged** (`TableInfo`, `ColumnInfo`, `ConstraintInfo`). Naming is an alias layer; concepts overlap freely (a Table *is* an Entity). This is the "overlap concepts" intent, made data, not code.
@@ -48,9 +48,9 @@ Terms are free; **roles are ruled**. The rules are how a schema author's freedom
 - **R3 — Key.** An entity's identity is its key: a *declared flag* or a convention (a single element named `Id`). Composite-ready: a declared list of key elements.
 - **R4 — Reference.** A dependency is **resolved by name, not by keyword**: any field whose value resolves to a known entity (+ optional element) is a dependency. This is what makes "FK" and "Depends On" the same rule.
 - **R5 — Cardinality & optionality.** Declared on the dependency (explicit `min`/`max`/required), or inferred by convention (an element that is a list ⇒ 1:N / M:N).
-- **R6 — Annotation.** Anything not caught by R1–R5 is *metadata*; a declared provenance block (any name) is captured as provenance. Neither ever blocks interpretation. Descriptions (backlog 024) ride the first-class canonical members instead of the bag: a `description` on an entity/element flows into `TableInfo.Description` / `ColumnInfo.Description` (round-tripped in the array format), with the metadata bag reserved for everything else.
+- **R6 — Annotation.** Anything not caught by R1–R5 is *metadata*; a declared provenance block (any name) is captured as provenance. Neither ever blocks interpretation. Descriptions (backlog 024) ride the first-class canonical members instead of the bag: a `description` on an entity/element flows into `TableInfo.Description` / `ColumnInfo.Description` (round-tripped in the array format), with the metadata bag reserved for everything else. Provenance is per-node (backlog 026): a `provenance` object on an entity/element is captured into `TableInfo.Provenance` / `ColumnInfo.Provenance`, and a present-but-malformed provenance is an issue, never a silent drop.
 - **R7 — Precedence.** Explicitly declared roles **always beat** inferred ones. Name-resolution is powerful but sharp (an element literally named `Type` whose value matches an entity name must not become a dependency). Declared references win; convention only when nothing is declared.
-- **R8 — Grace.** Unknown fields are ignored. A schema is **valid iff R1–R5 resolve every required concept unambiguously**; ambiguity → a resolution issue at load, never a silent guess. (Extends the existing FK-issue diagnostics.)
+- **R8 — Grace.** Unknown fields are ignored. A schema is **valid iff R1–R5 resolve every required concept unambiguously**; ambiguity → a resolution issue at load, never a silent guess. (Extends the existing FK-issue diagnostics.) Shape is checked up front (backlog 025): any input document is validated against its representation's shipped JSON Schema (`Schemas/`) before interpretation, and violations are warn-channel issues, never a hard block — the schema is the authority on shape, the interpreter on semantics.
 
 ## The mapping spec
 

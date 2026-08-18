@@ -49,6 +49,15 @@ namespace Model.Data
       public Dictionary<string, string> Extensions { get; set; }
 
       /// <summary>
+      /// This column's provenance — where it came from, at what version
+      /// (backlog 026). Canonical member captured by the interpreter from a
+      /// per-element provenance declaration and surfaced by the readout.
+      /// Ignored by the array JSON format (provenance is a source concern).
+      /// </summary>
+      [JsonIgnore]
+      public Provenance Provenance { get; set; }
+
+      /// <summary>
       /// Add Constraint.
       /// </summary>
       /// <param name="constraint">constraint to add</param>

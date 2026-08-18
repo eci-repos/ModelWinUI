@@ -116,6 +116,7 @@ namespace Model.Interpretation
                NameField = "name",
                SchemaField = "schema",
                DescriptionField = "description",
+               ProvenanceField = "provenance",
                ElementsField = "Elements",
                MetadataField = "metadata",
             },
@@ -135,6 +136,7 @@ namespace Model.Interpretation
                NameField = "name",
                TypeField = "type",
                DescriptionField = "description",
+               ProvenanceField = "provenance",
                KeyField = "primaryKey",
                NullableField = "nullable",
                // The grouped vocabulary's dependency synonym is "Depends On"
