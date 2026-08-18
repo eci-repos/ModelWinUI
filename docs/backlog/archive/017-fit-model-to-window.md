@@ -38,6 +38,6 @@ A **Fit** button — always visible, labeled "Fit" (icon + text) — that shows 
 
 ## Status
 
-- **State:** In progress (first-pass implementation in the working tree, uncommitted; manual interactive pass pending)
+- **State:** Completed
 - **Sprint:** 2026-08-17 (execution-log follow-up to `015`)
-- **Completed:** (TBD)
+- **Completed:** 2026-08-18

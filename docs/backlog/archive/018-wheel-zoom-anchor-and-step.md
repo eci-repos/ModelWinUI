@@ -40,6 +40,6 @@ The user reports two visible problems with wheel zooming: (1) "You are not using
 
 ## Status
 
-- **State:** In progress (root-caused; fix pending in the working tree)
+- **State:** Completed
 - **Sprint:** 2026-08-17
-- **Completed:** (TBD)
+- **Completed:** 2026-08-18

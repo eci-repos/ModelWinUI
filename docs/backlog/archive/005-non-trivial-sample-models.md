@@ -42,6 +42,6 @@ The README roadmap's item 3: *"Prepare non-trivial sample models that will be sh
 
 ## Status
 
-- **State:** In progress (sprint 2026-08-17, item 005)
-- **Sprint:** (TBD)
-- **Completed:** (TBD)
+- **State:** Completed
+- **Sprint:** 2026-08-17
+- **Completed:** 2026-08-18

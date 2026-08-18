@@ -40,6 +40,6 @@ The Skia renderer (`SkiaPanelControl`) draws the ERD at **actual size with no vi
 
 ## Status
 
-- **State:** In progress (sprint 2026-08-17, item 015)
-- **Sprint:** (TBD)
-- **Completed:** (TBD)
+- **State:** Completed
+- **Sprint:** 2026-08-17
+- **Completed:** 2026-08-18

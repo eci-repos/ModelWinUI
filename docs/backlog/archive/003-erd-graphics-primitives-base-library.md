@@ -47,6 +47,6 @@ The README roadmap's item 1: *"an ERD data-modeling base library to define and d
 
 ## Status
 
-- **State:** In progress (sprint 2026-08-17, item 003)
-- **Sprint:** (TBD)
-- **Completed:** (TBD)
+- **State:** Completed
+- **Sprint:** 2026-08-17
+- **Completed:** 2026-08-18

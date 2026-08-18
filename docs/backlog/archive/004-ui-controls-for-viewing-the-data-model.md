@@ -47,6 +47,6 @@ The README roadmap's item 4: *"UI controls for viewing the data model."* Today t
 
 ## Status
 
-- **State:** In progress (sprint 2026-08-17, item 004)
-- **Sprint:** (TBD)
-- **Completed:** (TBD)
+- **State:** Completed
+- **Sprint:** 2026-08-17
+- **Completed:** 2026-08-18

@@ -12,6 +12,14 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-18 — Backlog closed: all items archived, backlog is empty (user sign-off)
+
+- **User sign-off:** the user tested the app (both renderers, wheel zoom/fit/pan) and confirmed it works as expected — "all the backlog has been completed."
+- **Archived all open backlog items** to `docs/backlog/archive/` (marked **Completed**, `2026-08-18`): `003` (ERD graphics primitives base library), `004` (UI controls for viewing the data model), `005` (non-trivial sample models), `015` (Skia fit-to-window + zoom + compose off the UI thread), `016` (mouse-wheel zoom around the pointer), `017` (fit the whole model into the visible area), `018` (wheel-zoom anchor at the cursor + finer wheel increments).
+- **Promoted the executed sprint:** `docs/sprints/CURRENT.md` → `docs/sprints/archive/sprint-2026-08-17-non-trivial-sample-models.md` (End `2026-08-18`; Results now `005`, `015`, `016`, `017`, `018`). The planned (unexecuted) sprint definition `docs/backlog/sprint-2026-08-16-connector-routing.md` — whose executed copy already lives in the sprints archive — was moved to `docs/backlog/archive/`.
+- **`docs/backlog/` now contains only `README.md` + `_TEMPLATE.md`** — the backlog is empty. No sprint is in execution; `CURRENT.md` is a placeholder until the next sprint is defined.
+- Next work: the "assess next steps" candidates in Pending (below).
+
 ### 2026-08-17 — XAML wheel/fit/pan used the wrong ScrollViewer coordinate model; fixed (backlog 018)
 
 - **User report:** "You are not using the current mouse pointer position as the transformation reference point it looks like you are using the origin (0,0) instead. also the increments of the wheeling up/down are too big and just jump to fast."
@@ -248,7 +256,7 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ### Next tasks (in priority order)
 
-1. **All backlog items 001–015 are complete** — the README roadmap is fully delivered: base library (001–003, 006–013), UI controls (004, 014), sample models (005), and the Skia renderer viewing controls (015). Sprints 2026-08-16 (items 008–012) and 2026-08-17 (items 014, 003, 004, 005, 015) are done: records at `docs/sprints/archive/sprint-2026-08-16-connector-routing.md`, `docs/sprints/archive/sprint-2026-08-17-closeable-right-panel.md`, `docs/sprints/archive/sprint-2026-08-17-erd-graphics-primitives-base-library.md`, `docs/sprints/archive/sprint-2026-08-17-ui-controls-for-viewing-the-data-model.md`, and `docs/sprints/CURRENT.md`; archived items `docs/backlog/archive/001`–`014` (bug-fix item 013 archived with per-edge timing diagnostics deferred). The roadmap's "assess next steps" (item 4) is the natural next conversation — candidates below.
+1. **The backlog is empty** — every backlog item (001–018) is complete and archived in `docs/backlog/archive/`, and the user signed off on the app's behavior (2026-08-18). Sprints 2026-08-15 → 2026-08-17 are all promoted to `docs/sprints/archive/`; `docs/sprints/CURRENT.md` is a placeholder (no sprint in execution) until the next sprint is defined. The README roadmap's "assess next steps" is the natural next conversation — candidates below.
 
 ### Known gaps / issues (candidates for backlog items)
 

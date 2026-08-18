@@ -38,6 +38,6 @@ The mouse wheel must **zoom the drawing in/out with the pointer as the fixed ref
 
 ## Status
 
-- **State:** In progress (first-pass implementation in the working tree, uncommitted; manual interactive pass pending)
+- **State:** Completed
 - **Sprint:** 2026-08-17 (execution-log follow-up to `015`)
-- **Completed:** (TBD)
+- **Completed:** 2026-08-18
