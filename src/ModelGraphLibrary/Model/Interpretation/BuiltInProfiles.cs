@@ -112,7 +112,9 @@ namespace Model.Interpretation
                TypeField = "type",
                KeyField = "primaryKey",
                NullableField = "nullable",
-               RefField = "ref",
+               // The grouped vocabulary's dependency synonym is "Depends On"
+               // (the canonical example in the design doc).
+               RefField = "Depends On",
                RefColumnField = "refColumn",
                EnumField = "enum",
                CardinalityField = "cardinality",
@@ -120,6 +122,13 @@ namespace Model.Interpretation
                ParentRoleField = "parentRole",
                ValueField = "value",
             },
+            // The grouped shape's extras live at the document root. A document
+            // without them is still valid — the interpreter treats a missing
+            // optional section as silent (only a present-but-malformed one is
+            // an issue).
+            EnumerationsPath = "$.enumerations",
+            ProvenancePath = "$.provenance",
+            MetadataPath = "$.metadata",
             TypeMap = new Dictionary<string, string>
             {
                // The type map is data (gear 4), not a switch statement.

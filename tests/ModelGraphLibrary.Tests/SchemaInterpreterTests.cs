@@ -55,7 +55,7 @@ namespace ModelConsole.Tests
                      "Elements": [
                         { "name": "Id", "type": "int", "primaryKey": true },
                         { "name": "Title", "type": "string" },
-                        { "name": "AuthorId", "type": "int", "ref": "Author" }
+                        { "name": "AuthorId", "type": "int", "Depends On": "Author" }
                      ]
                   }
                }
@@ -96,7 +96,7 @@ namespace ModelConsole.Tests
                      "Elements": [
                         { "name": "id", "type": "int", "primaryKey": true },
                         { "name": "Title", "type": "string" },
-                        { "name": "AuthorId", "type": "int", "ref": "Author" }
+                        { "name": "AuthorId", "type": "int", "Depends On": "Author" }
                      ]
                   }
                ]
@@ -262,7 +262,7 @@ namespace ModelConsole.Tests
                   "Book": {
                      "Elements": [
                         { "name": "id", "primaryKey": true },
-                        { "name": "authorId", "ref": "Author",
+                        { "name": "authorId", "Depends On": "Author",
                            "cardinality": "1:N", "childRole": "writes", "parentRole": "writtenBy" }
                      ]
                   }
@@ -287,8 +287,9 @@ namespace ModelConsole.Tests
       [Fact]
       public void EnumerationsProvenanceAndMetadataAreCaptured()
       {
-         // A spec declares where the extras live; the built-in grouped profile
-         // deliberately leaves them unset so documents without them stay quiet.
+         // A spec declares where the extras live. The built-in grouped profile
+         // declares the same root paths; a document without a section stays
+         // quiet (missing optional sections are silent, not issues).
          const string specJson = """
             {
                "specVersion": 1,
@@ -441,7 +442,7 @@ namespace ModelConsole.Tests
                   "Ghost": {
                      "Elements": [
                         { "name": "id", "primaryKey": true },
-                        { "name": "parent", "ref": "NoSuchEntity" }
+                        { "name": "parent", "Depends On": "NoSuchEntity" }
                      ]
                   }
                }

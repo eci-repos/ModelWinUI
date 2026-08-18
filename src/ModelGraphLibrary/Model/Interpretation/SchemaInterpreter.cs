@@ -76,42 +76,46 @@ namespace Model.Interpretation
 
       /// <summary>
       /// Read the document-level extras: enumerations, provenance, model
-      /// metadata (R6). Each is optional and read tolerantly — a malformed
-      /// section is an issue, never a failure.
+      /// metadata (R6). Each is optional and read tolerantly — a missing
+      /// section is silent (a model without enumerations is a valid model),
+      /// while a present-but-malformed section is an issue, never a failure.
       /// </summary>
       private static void ReadModelFields(JsonElement root, MappingSpec spec, ModelInterpretation result)
       {
          if (!string.IsNullOrEmpty(spec.EnumerationsPath))
          {
             var el = ResolvePath(root, spec.EnumerationsPath);
-            if (el == null)
-               result.Issues.Add($"enumerations container not found at '{spec.EnumerationsPath}'.");
-            else if (el.Value.ValueKind == JsonValueKind.Object)
-               ReadEnumerations(el.Value, result);
-            else
-               result.Issues.Add($"enumerations container at '{spec.EnumerationsPath}' is not an object.");
+            if (el != null)
+            {
+               if (el.Value.ValueKind == JsonValueKind.Object)
+                  ReadEnumerations(el.Value, result);
+               else
+                  result.Issues.Add($"enumerations container at '{spec.EnumerationsPath}' is not an object.");
+            }
          }
 
          if (!string.IsNullOrEmpty(spec.ProvenancePath))
          {
             var el = ResolvePath(root, spec.ProvenancePath);
-            if (el == null)
-               result.Issues.Add($"provenance not found at '{spec.ProvenancePath}'.");
-            else if (el.Value.ValueKind == JsonValueKind.Object)
-               result.Provenance = ReadProvenance(el.Value);
-            else
-               result.Issues.Add($"provenance at '{spec.ProvenancePath}' is not an object.");
+            if (el != null)
+            {
+               if (el.Value.ValueKind == JsonValueKind.Object)
+                  result.Provenance = ReadProvenance(el.Value);
+               else
+                  result.Issues.Add($"provenance at '{spec.ProvenancePath}' is not an object.");
+            }
          }
 
          if (!string.IsNullOrEmpty(spec.MetadataPath))
          {
             var el = ResolvePath(root, spec.MetadataPath);
-            if (el == null)
-               result.Issues.Add($"metadata container not found at '{spec.MetadataPath}'.");
-            else if (el.Value.ValueKind == JsonValueKind.Object)
-               result.Metadata = ReadStringMap(el.Value, "model metadata");
-            else
-               result.Issues.Add($"metadata container at '{spec.MetadataPath}' is not an object.");
+            if (el != null)
+            {
+               if (el.Value.ValueKind == JsonValueKind.Object)
+                  result.Metadata = ReadStringMap(el.Value, "model metadata");
+               else
+                  result.Issues.Add($"metadata container at '{spec.MetadataPath}' is not an object.");
+            }
          }
       }
 

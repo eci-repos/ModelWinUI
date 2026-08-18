@@ -16,6 +16,7 @@ using Windows.Foundation.Collections;
 using Windows.Storage.Pickers;
 
 using Model.Data;
+using Model.Interpretation;
 using ModelConsole.ModelData;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -98,7 +99,10 @@ namespace ModelWinUI
       /// <summary>
       /// File → Open Sample: load one of the shipped sample models (backlog
       /// 005). The item's <see cref="FrameworkElement.Tag"/> carries the JSON
-      /// file name; the file ships in the app output under Samples/.
+      /// file name; the file ships in the app output under Samples/. A sample
+      /// that declares a mapping profile (backlog 020) is read through the
+      /// interpreter instead of <see cref="ModelFile.Load"/> — the renderers
+      /// and explorer consume the same canonical model either way.
       /// </summary>
       private async void OpenSample_Click(object sender, RoutedEventArgs e)
       {
@@ -108,11 +112,28 @@ namespace ModelWinUI
             return;
          }
 
+         var sample = SampleModels.All.FirstOrDefault(s => s.FileName == fileName);
+         if (sample == null)
+         {
+            return;
+         }
+
          string path = Path.Combine(
             AppContext.BaseDirectory, "Samples", fileName);
          try
          {
-            LoadModel(ModelFile.Load(path));
+            IReadOnlyList<TableInfo> tables;
+            if (sample.Profile != null)
+            {
+               var interpretation = SchemaInterpreter.Interpret(
+                  File.ReadAllText(path), BuiltInProfiles.FromName(sample.Profile));
+               tables = interpretation.Tables;
+            }
+            else
+            {
+               tables = ModelFile.Load(path);
+            }
+            LoadModel(tables);
          }
          catch (Exception ex)
          {

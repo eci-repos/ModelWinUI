@@ -41,6 +41,6 @@ The **gate** for the schema-driven interpretation work: author a new sample mode
 
 ## Status
 
-- **State:** Planned
-- **Sprint:** (TBD)
-- **Completed:** (TBD)
+- **State:** Completed
+- **Sprint:** 2026-08-18 (proof sample model)
+- **Completed:** 2026-08-18

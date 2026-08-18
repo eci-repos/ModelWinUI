@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 
 using Model.Data;
+using Model.Interpretation;
 using ModelConsole.Graph;
 using ModelConsole.ModelData;
 
@@ -28,7 +29,7 @@ namespace ModelConsole.Tests
       [MemberData(nameof(Samples))]
       public void ShippedSamplesLoadAndAreValid(SampleModel sample)
       {
-         var tables = ModelFile.Load(ShippedPath(sample));
+         var tables = LoadTables(sample);
 
          Assert.NotEmpty(tables);
          foreach (var table in tables)
@@ -47,7 +48,9 @@ namespace ModelConsole.Tests
       public void ShippedJsonMatchesFixture(SampleModel sample)
       {
          string shipped = Normalize(File.ReadAllText(ShippedPath(sample)));
-         string fixture = Normalize(ModelFile.ToJson(sample.Tables));
+         string fixture = sample.FixtureJson != null
+            ? Normalize(sample.FixtureJson)
+            : Normalize(ModelFile.ToJson(sample.Tables));
          Assert.Equal(fixture, shipped);
       }
 
@@ -82,9 +85,29 @@ namespace ModelConsole.Tests
             AppContext.BaseDirectory, "Samples", sample.FileName);
       }
 
+      /// <summary>
+      /// Load a shipped sample the way the app does: array-format files via
+      /// <see cref="ModelFile.Load"/>, grouped files through the interpreter
+      /// (backlog 020). A grouped sample must interpret with no issues.
+      /// </summary>
+      private static IReadOnlyList<TableInfo> LoadTables(SampleModel sample)
+      {
+         if (sample.Profile != null)
+         {
+            var interpretation = SchemaInterpreter.Interpret(
+               File.ReadAllText(ShippedPath(sample)),
+               BuiltInProfiles.FromName(sample.Profile));
+            Assert.Empty(interpretation.Issues);
+            return interpretation.Tables;
+         }
+         return ModelFile.Load(ShippedPath(sample));
+      }
+
       private static string Normalize(string text)
       {
-         return text.Replace("\r\n", "\n");
+         // Line endings and a trailing newline are cosmetic; the content is
+         // what must stay in sync.
+         return text.Replace("\r\n", "\n").TrimEnd('\n');
       }
 
    }
