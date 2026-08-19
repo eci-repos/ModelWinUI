@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -98,6 +99,36 @@ namespace ModelConsole.Controls
       private string _selectedTable;
 
       /// <summary>
+      /// Delay before a hover readout appears (ms) — long enough that sweeping
+      /// the pointer across the drawing never flashes tooltips (backlog 027).
+      /// </summary>
+      private static readonly TimeSpan HoverDelay = TimeSpan.FromMilliseconds(400);
+
+      /// <summary>
+      /// The model payload currently hovered (a <see cref="TableInfo"/> or
+      /// <see cref="FkRelation"/>), or null when nothing is hovered. The
+      /// tooltip content is rebuilt only when this changes (backlog 027).
+      /// </summary>
+      private object _hoverTarget;
+
+      /// <summary>
+      /// Latest hover pointer position in canvas (content) coordinates; the
+      /// tooltip is positioned from it (converted to viewport px) so it
+      /// follows the pointer (backlog 027).
+      /// </summary>
+      private Point _hoverPosition;
+
+      /// <summary>
+      /// Delay trigger: when it fires, the hover readout is shown. Restarted
+      /// when the hovered object changes, cancelled when the pointer leaves.
+      /// (<see cref="UIElement.DispatcherQueue"/> is the WinUI 3
+      /// <c>Microsoft.UI.Dispatching</c> queue, so its timer is that type —
+      /// fully qualified because the file also imports the WinRT
+      /// <c>Windows.System</c> timer.)
+      /// </summary>
+      private Microsoft.UI.Dispatching.DispatcherQueueTimer _hoverTimer;
+
+      /// <summary>
       /// Raised when the user clicks a graphic entity. The payload is the
       /// entity's <see cref="TableInfo"/> or <see cref="FkRelation"/>.
       /// </summary>
@@ -123,6 +154,14 @@ namespace ModelConsole.Controls
          _context.ShapeReleased += OnShapeReleased;
          _context.ShapeClicked += OnShapeClicked;
          _context.PanRequested += OnPanRequested;
+         _context.HoverChanged += OnHoverChanged;
+
+         // Hover readout delay trigger (backlog 027): show the tooltip only
+         // after the pointer has rested on an object for the hover delay.
+         _hoverTimer = DispatcherQueue.CreateTimer();
+         _hoverTimer.Interval = HoverDelay;
+         _hoverTimer.IsRepeating = false;
+         _hoverTimer.Tick += (s, e) => ShowHover();
 
          _tables = _dataProvider.GetPublicSafetyTables();
          InitializeLayout();
@@ -357,6 +396,9 @@ namespace ModelConsole.Controls
          object sender, ScrollViewerViewChangedEventArgs e)
       {
          SyncZoomUI();
+         // The view moved (pan / zoom / fit): the tooltip's content position
+         // would be stale — close it (backlog 027).
+         HideHover();
       }
 
       private void FitButton_Click(object sender, RoutedEventArgs e)
@@ -474,6 +516,11 @@ namespace ModelConsole.Controls
       {
          ModelCanvas.Children.Clear();
          _context.Reset();
+
+         // The shapes are being rebuilt, so any hovered object is stale —
+         // close the readout (backlog 027).
+         HideHover();
+         _hoverTarget = null;
 
          IGlModel model = Ioc.Default.GetRequiredService<IGlModel>();
 
@@ -713,6 +760,128 @@ namespace ModelConsole.Controls
                EntitySelected?.Invoke(this, edge);
             }
          }
+      }
+
+      /// <summary>
+      /// The pointer moved over the drawing. Track the hovered payload and
+      /// drive the delay-triggered, pointer-following readout (backlog 027):
+      /// a null object closes it; a changed object restarts the delay; moving
+      /// within the same object only repositions an already-visible tooltip.
+      /// </summary>
+      private void OnHoverChanged(GlObject obj, Point position)
+      {
+         _hoverPosition = position;
+
+         var payload = ResolveHoverPayload(obj);
+         if (payload == null)
+         {
+            _hoverTarget = null;
+            _hoverTimer.Stop();
+            HideHover();
+            return;
+         }
+
+         if (!ReferenceEquals(payload, _hoverTarget))
+         {
+            _hoverTarget = payload;
+            _hoverTimer.Stop();
+            HideHover();
+            _hoverTimer.Start();
+         }
+         else if (HoverTooltip.Visibility == Visibility.Visible)
+         {
+            PositionHover();
+         }
+      }
+
+      /// <summary>
+      /// Resolve a hovered <see cref="GlObject"/> to its model payload — the
+      /// <see cref="TableInfo"/> a table renders or the <see cref="FkRelation"/>
+      /// a connector carries (mirrors <see cref="OnShapeClicked"/>).
+      /// </summary>
+      private static object ResolveHoverPayload(GlObject obj)
+      {
+         if (obj is Table table) return table.TableInfo;
+         if (obj is GlOrthoPath connector) return connector.Data as FkRelation;
+         return null;
+      }
+
+      /// <summary>
+      /// Show the hover readout at the pointer: build the content from the
+      /// portable <see cref="HoverSummary"/> provider (backlog 027) and
+      /// position it. The first line is the header; the rest are gray detail
+      /// lines — the same readout lines the inspector shows.
+      /// </summary>
+      private void ShowHover()
+      {
+         if (_hoverTarget == null)
+         {
+            return;
+         }
+
+         var lines = HoverSummary.For(_hoverTarget);
+         if (lines.Count == 0)
+         {
+            HideHover();
+            return;
+         }
+
+         HoverTooltipContent.Children.Clear();
+         for (int i = 0; i < lines.Count; i++)
+         {
+            HoverTooltipContent.Children.Add(new TextBlock
+            {
+               Text = lines[i],
+               FontSize = i == 0 ? 12 : 11,
+               FontWeight = i == 0 ? FontWeights.SemiBold : FontWeights.Normal,
+               Foreground = i == 0
+                  ? new SolidColorBrush(Microsoft.UI.Colors.Black)
+                  : new SolidColorBrush(Microsoft.UI.Colors.Gray),
+               TextWrapping = TextWrapping.WrapWholeWords
+            });
+         }
+
+         HoverTooltip.Visibility = Visibility.Visible;
+         HoverTooltip.UpdateLayout();
+         PositionHover();
+      }
+
+      /// <summary>
+      /// Position the tooltip near the pointer. The pointer position is in
+      /// canvas (content) coordinates; ScrollViewer offsets are viewport px, so
+      /// content is mapped with c*zoom - offset (backlog 018's mapping) and
+      /// clamped to the overlay so the tooltip stays on screen.
+      /// </summary>
+      private void PositionHover()
+      {
+         if (ModelScrollViewer == null ||
+             HoverTooltip.Visibility != Visibility.Visible)
+         {
+            return;
+         }
+
+         double zoom = ModelScrollViewer.ZoomFactor;
+         double x = _hoverPosition.X * zoom -
+            ModelScrollViewer.HorizontalOffset + 12;
+         double y = _hoverPosition.Y * zoom -
+            ModelScrollViewer.VerticalOffset + 12;
+
+         double maxX = HoverOverlay.ActualWidth - HoverTooltip.ActualWidth - 4;
+         double maxY = HoverOverlay.ActualHeight - HoverTooltip.ActualHeight - 4;
+         if (maxX > 0) x = Math.Min(x, maxX);
+         if (maxY > 0) y = Math.Min(y, maxY);
+
+         Canvas.SetLeft(HoverTooltip, Math.Max(0, x));
+         Canvas.SetTop(HoverTooltip, Math.Max(0, y));
+      }
+
+      /// <summary>
+      /// Hide the hover readout and cancel its pending delay trigger.
+      /// </summary>
+      private void HideHover()
+      {
+         _hoverTimer.Stop();
+         HoverTooltip.Visibility = Visibility.Collapsed;
       }
 
       /// <summary>

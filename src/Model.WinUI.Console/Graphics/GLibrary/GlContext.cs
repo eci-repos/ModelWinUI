@@ -33,6 +33,13 @@ namespace ModelConsole.Graphics.GLibrary
       private PointerPoint _pointerPoint = null;
 
       /// <summary>
+      /// The object currently under the pointer (hover), or null when the
+      /// pointer is over empty canvas space. Updated on pointer move, cleared
+      /// on press, exit, and reset (backlog 027).
+      /// </summary>
+      private GlObject _hoveredObject = null;
+
+      /// <summary>
       /// Grip implements the Shape resizing on predefine grip-nodes.
       /// </summary>
       private GlGrip _grip = null;
@@ -91,6 +98,14 @@ namespace ModelConsole.Graphics.GLibrary
       /// </summary>
       public event Action<GlObject> ShapeClicked;
 
+      /// <summary>
+      /// Fired when the object under the pointer changes (backlog 027): raised
+      /// on every hover move with the hovered <see cref="GlObject"/> and the
+      /// pointer position in canvas (content) coordinates, and with a null
+      /// object when the pointer leaves all shapes (press / exit / reset).
+      /// </summary>
+      public event Action<GlObject, Point> HoverChanged;
+
       private Canvas _canvas;
       public Canvas Instance
       {
@@ -147,6 +162,7 @@ namespace ModelConsole.Graphics.GLibrary
          _currentShape = null;
          _selectedShape = null;
          _pointerPoint = null;
+         _hoveredObject = null;
          _grip = null;
          _handle = new GlHandle();
          _grabber = null;
@@ -241,6 +257,23 @@ namespace ModelConsole.Graphics.GLibrary
       }
 
       /// <summary>
+      /// Resolve a hit-tested object to the object the pointer is really over:
+      /// hovering a connector draws a move handle at the pointer (via
+      /// <see cref="SetPointerHandle"/>), so the hit-test target may be a
+      /// grabber whose <see cref="IGlGrabber.Shape"/> points back at the object
+      /// it grabs — resolve that chain so hover reports the connector, not the
+      /// handle (backlog 027).
+      /// </summary>
+      private static GlObject ResolveHoverObject(GlObject o)
+      {
+         if (o is IGlGrabber grabber && grabber.Shape != null)
+         {
+            return grabber.Shape.Tag as GlObject;
+         }
+         return o;
+      }
+
+      /// <summary>
       /// True while the space key is held (space+drag pans). Queried from the
       /// current thread's keyboard state so it works regardless of which
       /// element has focus.
@@ -300,6 +333,14 @@ namespace ModelConsole.Graphics.GLibrary
       {
          e.Handled = true;
          _dragMoved = false;
+
+         // A press (drag, pan, or click) starts an interaction — close any
+         // hover readout (backlog 027).
+         if (_hoveredObject != null)
+         {
+            _hoveredObject = null;
+            HoverChanged?.Invoke(null, default);
+         }
 
          if (_currentShape != null)
          {
@@ -420,7 +461,18 @@ namespace ModelConsole.Graphics.GLibrary
             {
                o.PointerEvent(GlPointerEvent.Enter, pt);
 
-               var tag = _currentShape == null ? 
+               // Hover tracking (backlog 027): report the object under the
+               // pointer on every move (so the tooltip follows) with the
+               // content-space position; a changed object is reported with a
+               // new payload, and a grabber resolves to the object it grabs.
+               var hover = ResolveHoverObject(o);
+               if (hover != _hoveredObject || hover != null)
+               {
+                  _hoveredObject = hover;
+                  HoverChanged?.Invoke(hover, pt.Position);
+               }
+
+               var tag = _currentShape == null ?
                   null : _currentShape.Tag as GlObject;
                if (tag == null)
                {
@@ -433,6 +485,15 @@ namespace ModelConsole.Graphics.GLibrary
 
                return;
             }
+         }
+
+         // The pointer is over empty canvas space (or a shape with no model
+         // payload) - clear any hovered object so the readout closes
+         // (backlog 027).
+         if (_hoveredObject != null)
+         {
+            _hoveredObject = null;
+            HoverChanged?.Invoke(null, pt.Position);
          }
       }
 
@@ -551,6 +612,13 @@ namespace ModelConsole.Graphics.GLibrary
          }
 
          e.Handled = true;
+
+         // The pointer left the canvas — close any hover readout (backlog 027).
+         if (_hoveredObject != null)
+         {
+            _hoveredObject = null;
+            HoverChanged?.Invoke(null, default);
+         }
 
          var s = e.OriginalSource as Shape;
          if (s == null)

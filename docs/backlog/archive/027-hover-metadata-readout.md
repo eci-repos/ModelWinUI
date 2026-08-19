@@ -8,10 +8,10 @@ Hovering over a graphic entity shows a floating tooltip with that object's metad
 
 ## Goals
 
-- [ ] Hover over a connector shows the FK relationship readout — `ReadoutFormatter.Cardinality` + `Roles` (the "admitting → admits" line) sourced from the connector's `FkRelation.Constraint`, the same live constraint the inspector shows.
-- [ ] Hover over a table shows its key metadata (description, column count, PK/FK count, provenance) from the live `TableInfo`.
-- [ ] The tooltip is delay-triggered (~400 ms, no flicker while sweeping), follows the pointer, and closes on exit / drag / pan / zoom.
-- [ ] Hover never interferes with existing gestures (press/drag/pan/click-select, wheel zoom) — it is strictly read-only.
+- [x] Hover over a connector shows the FK relationship readout — `ReadoutFormatter.Cardinality` + `Roles` (the "admitting → admits" line) sourced from the connector's `FkRelation.Constraint`, the same live constraint the inspector shows.
+- [x] Hover over a table shows its key metadata (description, column count, PK/FK count, provenance) from the live `TableInfo`.
+- [x] The tooltip is delay-triggered (~400 ms, no flicker while sweeping), follows the pointer, and closes on exit / drag / pan / zoom.
+- [x] Hover never interferes with existing gestures (press/drag/pan/click-select, wheel zoom) — it is strictly read-only.
 
 ## Scope
 
@@ -34,13 +34,13 @@ Hovering over a graphic entity shows a floating tooltip with that object's metad
 
 ## Definition of Done
 
-- [ ] Hovering an FK shows cardinality/roles from its constraint; hovering a table shows description/columns/provenance.
-- [ ] Tooltip is delay-triggered, pointer-following, and closes cleanly on drag / pan / zoom.
-- [ ] Existing gestures unchanged (drag, pan, click-select, wheel zoom).
-- [ ] `dotnet build` → **0 errors, 0 warnings**; `dotnet test` → all pass.
+- [x] Hovering an FK shows cardinality/roles from its constraint; hovering a table shows description/columns/provenance.
+- [x] Tooltip is delay-triggered, pointer-following, and closes cleanly on drag / pan / zoom.
+- [x] Existing gestures unchanged (drag, pan, click-select, wheel zoom).
+- [x] `dotnet build` → **0 errors, 0 warnings**; `dotnet test` → all pass.
 
 ## Status
 
-- **State:** Planned
-- **Sprint:** (TBD)
-- **Completed:** (TBD)
+- **State:** Completed
+- **Sprint:** 2026-08-19 (pointer-hover metadata readout)
+- **Completed:** 2026-08-19
