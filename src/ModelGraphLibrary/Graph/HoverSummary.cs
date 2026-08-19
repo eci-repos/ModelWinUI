@@ -88,6 +88,63 @@ namespace ModelConsole.Graph
       }
 
       /// <summary>
+      /// Hover readout for a column: the "table.column" header, its type
+      /// (with size when it has one), a tags line (PK, FK, enum:Name — only
+      /// the tags present), and its description (when present). Empty when
+      /// the column is null.
+      /// </summary>
+      public static IReadOnlyList<string> ForColumn(
+         ColumnInfo column, string tableName)
+      {
+         var lines = new List<string>();
+         if (column == null) return lines;
+
+         lines.Add(tableName + "." + column.ColumnName);
+
+         if (!string.IsNullOrEmpty(column.Type))
+         {
+            lines.Add(column.Size > 0
+               ? column.Type + "(" + column.Size + ")"
+               : column.Type);
+         }
+
+         var tags = new List<string>();
+         if (column.IsKey) tags.Add("PK");
+         if (column.IsForeignKey) tags.Add("FK");
+         if (!string.IsNullOrEmpty(column.EnumerationName))
+         {
+            tags.Add("enum:" + column.EnumerationName);
+         }
+         if (tags.Count > 0)
+         {
+            lines.Add(string.Join(", ", tags));
+         }
+
+         if (!string.IsNullOrEmpty(column.Description))
+         {
+            lines.Add(column.Description);
+         }
+
+         return lines;
+      }
+
+      /// <summary>
+      /// Hover readout for a schema group: the schema name header and its
+      /// table count. Empty when the tables list is null.
+      /// </summary>
+      public static IReadOnlyList<string> ForGroup(
+         string schemaName, IReadOnlyList<TableInfo> tables)
+      {
+         var lines = new List<string>();
+         if (tables == null) return lines;
+
+         lines.Add(schemaName ?? "");
+         lines.Add(tables.Count + " tables");
+
+         return lines;
+      }
+
+      /// <summary>
       /// Dispatch a canvas payload to its hover readout: a <see cref="TableInfo"/>
       /// (what a table renders) or an <see cref="FkRelation"/> (what a connector
       /// carries). Anything else produces no readout.

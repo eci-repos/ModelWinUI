@@ -123,6 +123,73 @@ namespace ModelConsole.Tests
       }
 
       [Fact]
+      public void ForColumnShowsTypeTagsAndDescription()
+      {
+         var column = new ColumnInfo
+         {
+            ColumnName = "name",
+            Type = "VARCHAR",
+            Size = 256,
+            IsKey = true,
+            EnumerationName = "Gender",
+            Description = "The patient's name."
+         };
+
+         var lines = HoverSummary.ForColumn(column, "Patient");
+
+         Assert.Equal(4, lines.Count);
+         Assert.Equal("Patient.name", lines[0]);
+         Assert.Equal("VARCHAR(256)", lines[1]);
+         Assert.Equal("PK, enum:Gender", lines[2]);
+         Assert.Equal("The patient's name.", lines[3]);
+      }
+
+      [Fact]
+      public void ForColumnMinimalShowsNameAndType()
+      {
+         var column = new ColumnInfo
+         {
+            ColumnName = "Id",
+            Type = "INT",
+            Size = 0
+         };
+
+         var lines = HoverSummary.ForColumn(column, "Patient");
+
+         Assert.Equal(2, lines.Count);
+         Assert.Equal("Patient.Id", lines[0]);
+         Assert.Equal("INT", lines[1]);
+      }
+
+      [Fact]
+      public void ForColumnNullProducesNoReadout()
+      {
+         Assert.Empty(HoverSummary.ForColumn(null, "Patient"));
+      }
+
+      [Fact]
+      public void ForGroupShowsSchemaAndTableCount()
+      {
+         var tables = new List<TableInfo>
+         {
+            new TableInfo { TableName = "Patient" },
+            new TableInfo { TableName = "Visit" }
+         };
+
+         var lines = HoverSummary.ForGroup("clinic", tables);
+
+         Assert.Equal(2, lines.Count);
+         Assert.Equal("clinic", lines[0]);
+         Assert.Equal("2 tables", lines[1]);
+      }
+
+      [Fact]
+      public void ForGroupNullTablesProducesNoReadout()
+      {
+         Assert.Empty(HoverSummary.ForGroup("clinic", null));
+      }
+
+      [Fact]
       public void ForDispatchesPayloads()
       {
          var table = new TableInfo

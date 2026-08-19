@@ -9,6 +9,7 @@ using Microsoft.UI.Input;
 
 using Model.Data;
 using ModelConsole.Graphics.GLibrary;
+using ModelConsole.Graph;
 
 namespace ModelConsole.Graphics.Primitives
 {
@@ -55,6 +56,18 @@ namespace ModelConsole.Graphics.Primitives
       public TableInfo TableInfo
       {
          get { return _table; }
+      }
+
+      private IGraphNode _node;
+
+      /// <summary>
+      /// The entity node this table renders (backlog 028): a typed identity
+      /// over the live <see cref="TableInfo"/>. Cached — the table's model is
+      /// stable for the life of the instance (tables are rebuilt each render).
+      /// </summary>
+      public override IGraphNode Node
+      {
+         get { return _node ??= GraphNodes.Entity(TableInfo); }
       }
 
       /// <summary>

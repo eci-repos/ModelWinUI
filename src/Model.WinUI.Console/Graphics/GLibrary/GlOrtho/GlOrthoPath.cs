@@ -67,6 +67,26 @@ namespace ModelConsole.Graphics.GLibrary.GlOrtho
          get { return _path; }
       }
 
+      private IGraphNode _node;
+
+      /// <summary>
+      /// The dependency node this connector renders (backlog 028): a typed
+      /// identity over the <see cref="FkRelation"/> carried in <see cref="Data"/>.
+      /// Null in grip mode (no model payload). Cached — Data is set once per
+      /// render before any hit-test, so the node never goes stale.
+      /// </summary>
+      public override IGraphNode Node
+      {
+         get
+         {
+            if (_node == null && Data is FkRelation edge)
+            {
+               _node = GraphNodes.Dependency(edge);
+            }
+            return _node;
+         }
+      }
+
       public GlOrthoPath() : base(null)
       {
          m_Instance = _path;

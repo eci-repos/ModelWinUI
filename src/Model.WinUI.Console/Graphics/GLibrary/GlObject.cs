@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.UI.Input;
 using Windows.Foundation;
 
+using ModelConsole.Graph;
+
 namespace ModelConsole.Graphics.GLibrary
 {
 
@@ -28,6 +30,14 @@ namespace ModelConsole.Graphics.GLibrary
       /// model entity.
       /// </summary>
       public object Data { get; set; } = null;
+
+      /// <summary>
+      /// The typed graph node this drawable exposes (backlog 028): identity,
+      /// the live canonical model object it renders, and its hover summary.
+      /// Null for drawables with no model payload (grips, handles, highlights).
+      /// The host consumes <c>obj.Node</c> — it never type-checks raw objects.
+      /// </summary>
+      public virtual IGraphNode Node => null;
 
       public GlObject(object instance) : base()
       {

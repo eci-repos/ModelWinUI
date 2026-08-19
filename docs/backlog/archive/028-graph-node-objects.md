@@ -8,10 +8,10 @@ Make every drawable on the XAML canvas a first-class **node object**: a single s
 
 ## Goals
 
-- [ ] A canonical node surface (in ModelGraphLibrary) that any drawable exposes: node **kind** (entity / element / dependency / group — the design doc's canonical vocabulary), **identity** (name), the **live** canonical object it renders (`TableInfo` / `ConstraintInfo` / column), a hover-summary provider, and edit verbs.
-- [ ] Every model-bearing XAML `GlObject` (table, connector, endpoint, group) implements/exposes its node; `GlContext` hit-testing returns the node, so hover, click, drag, and edit all read one object.
-- [ ] The summary/recognition provider is a ModelGraphLibrary API (portable, unit-tested), so the Skia/WASM sibling reuses the same identification and text.
-- [ ] No two sources of truth: hover, readout, inspector, and the edit surface all read the same live object (022 discipline).
+- [x] A canonical node surface (in ModelGraphLibrary) that any drawable exposes: node **kind** (entity / element / dependency / group — the design doc's canonical vocabulary), **identity** (name), the **live** canonical object it renders (`TableInfo` / `ConstraintInfo` / column), a hover-summary provider, and edit verbs.
+- [x] Every model-bearing XAML `GlObject` (table, connector, endpoint, group) implements/exposes its node; `GlContext` hit-testing returns the node, so hover, click, drag, and edit all read one object.
+- [x] The summary/recognition provider is a ModelGraphLibrary API (portable, unit-tested), so the Skia/WASM sibling reuses the same identification and text.
+- [x] No two sources of truth: hover, readout, inspector, and the edit surface all read the same live object (022 discipline).
 
 ## Scope
 
@@ -34,13 +34,13 @@ Make every drawable on the XAML canvas a first-class **node object**: a single s
 
 ## Definition of Done
 
-- [ ] Every table + connector on the XAML canvas exposes a node object with a live model reference + hover summary.
-- [ ] Hover, click-select, and the inspector all read the **same** node (no drift, no second source of truth).
-- [ ] The node/recognition surface is a ModelGraphLibrary API, unit-tested (identity, kind, summary per node type).
-- [ ] `dotnet build` → **0 errors, 0 warnings**; `dotnet test` → all pass.
+- [x] Every table + connector on the XAML canvas exposes a node object with a live model reference + hover summary.
+- [x] Hover, click-select, and the inspector all read the **same** node (no drift, no second source of truth).
+- [x] The node/recognition surface is a ModelGraphLibrary API, unit-tested (identity, kind, summary per node type).
+- [x] `dotnet build` → **0 errors, 0 warnings**; `dotnet test` → all pass.
 
 ## Status
 
-- **State:** Planned
-- **Sprint:** (TBD)
-- **Completed:** (TBD)
+- **State:** Completed
+- **Sprint:** 2026-08-19 (graph node objects)
+- **Completed:** 2026-08-19

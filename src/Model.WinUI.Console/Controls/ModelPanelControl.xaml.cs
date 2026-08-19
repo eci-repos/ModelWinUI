@@ -105,11 +105,12 @@ namespace ModelConsole.Controls
       private static readonly TimeSpan HoverDelay = TimeSpan.FromMilliseconds(400);
 
       /// <summary>
-      /// The model payload currently hovered (a <see cref="TableInfo"/> or
-      /// <see cref="FkRelation"/>), or null when nothing is hovered. The
-      /// tooltip content is rebuilt only when this changes (backlog 027).
+      /// The graph node currently hovered (an <see cref="IGraphNode"/> over a
+      /// <see cref="TableInfo"/> or <see cref="FkRelation"/>), or null when
+      /// nothing is hovered. The tooltip content is rebuilt only when the
+      /// node's live model object changes (backlog 027/028).
       /// </summary>
-      private object _hoverTarget;
+      private IGraphNode _hoverNode;
 
       /// <summary>
       /// Latest hover pointer position in canvas (content) coordinates; the
@@ -517,10 +518,10 @@ namespace ModelConsole.Controls
          ModelCanvas.Children.Clear();
          _context.Reset();
 
-         // The shapes are being rebuilt, so any hovered object is stale —
-         // close the readout (backlog 027).
+         // The shapes are being rebuilt, so any hovered node is stale —
+         // close the readout (backlog 027/028).
          HideHover();
-         _hoverTarget = null;
+         _hoverNode = null;
 
          IGlModel model = Ioc.Default.GetRequiredService<IGlModel>();
 
@@ -743,47 +744,43 @@ namespace ModelConsole.Controls
 
       /// <summary>
       /// A shape was clicked. Raise <see cref="EntitySelected"/> with the
-      /// underlying model entity (a <see cref="TableInfo"/> or
-      /// <see cref="FkRelation"/>).
+      /// node's live model object (a <see cref="TableInfo"/> for a table or
+      /// an <see cref="FkRelation"/> for a connector) — the inspector
+      /// contract is unchanged (backlog 028).
       /// </summary>
       private void OnShapeClicked(GlObject obj)
       {
-         if (obj is Table table)
+         var node = obj?.Node;
+         if (node != null)
          {
-            EntitySelected?.Invoke(this, table.TableInfo);
-         }
-         else if (obj is GlOrthoPath connector)
-         {
-            var edge = connector.Data as FkRelation;
-            if (edge != null)
-            {
-               EntitySelected?.Invoke(this, edge);
-            }
+            EntitySelected?.Invoke(this, node.Model);
          }
       }
 
       /// <summary>
-      /// The pointer moved over the drawing. Track the hovered payload and
-      /// drive the delay-triggered, pointer-following readout (backlog 027):
-      /// a null object closes it; a changed object restarts the delay; moving
-      /// within the same object only repositions an already-visible tooltip.
+      /// The pointer moved over the drawing. Track the hovered node and drive
+      /// the delay-triggered, pointer-following readout (backlog 027/028):
+      /// a null node closes it; a changed node restarts the delay; moving
+      /// within the same node only repositions an already-visible tooltip.
+      /// Identity is the node's live model object (stable within a render;
+      /// <see cref="Render"/> hides the readout on re-render).
       /// </summary>
       private void OnHoverChanged(GlObject obj, Point position)
       {
          _hoverPosition = position;
 
-         var payload = ResolveHoverPayload(obj);
-         if (payload == null)
+         var node = obj?.Node;
+         if (node == null)
          {
-            _hoverTarget = null;
+            _hoverNode = null;
             _hoverTimer.Stop();
             HideHover();
             return;
          }
 
-         if (!ReferenceEquals(payload, _hoverTarget))
+         if (!ReferenceEquals(node.Model, _hoverNode?.Model))
          {
-            _hoverTarget = payload;
+            _hoverNode = node;
             _hoverTimer.Stop();
             HideHover();
             _hoverTimer.Start();
@@ -795,31 +792,19 @@ namespace ModelConsole.Controls
       }
 
       /// <summary>
-      /// Resolve a hovered <see cref="GlObject"/> to its model payload — the
-      /// <see cref="TableInfo"/> a table renders or the <see cref="FkRelation"/>
-      /// a connector carries (mirrors <see cref="OnShapeClicked"/>).
-      /// </summary>
-      private static object ResolveHoverPayload(GlObject obj)
-      {
-         if (obj is Table table) return table.TableInfo;
-         if (obj is GlOrthoPath connector) return connector.Data as FkRelation;
-         return null;
-      }
-
-      /// <summary>
       /// Show the hover readout at the pointer: build the content from the
-      /// portable <see cref="HoverSummary"/> provider (backlog 027) and
-      /// position it. The first line is the header; the rest are gray detail
-      /// lines — the same readout lines the inspector shows.
+      /// hovered node's portable summary (backlog 027/028) and position it.
+      /// The first line is the header; the rest are gray detail lines — the
+      /// same readout lines the inspector shows.
       /// </summary>
       private void ShowHover()
       {
-         if (_hoverTarget == null)
+         if (_hoverNode == null)
          {
             return;
          }
 
-         var lines = HoverSummary.For(_hoverTarget);
+         var lines = _hoverNode.Summary();
          if (lines.Count == 0)
          {
             HideHover();
