@@ -139,11 +139,12 @@ namespace ModelConsole.Tests
          Assert.True(verbs.CanEditKey);
          Assert.True(verbs.CanEditDescription);
          Assert.True(verbs.CanEditMetadata);
+         Assert.True(verbs.CanDelete);
+         Assert.False(verbs.CanAddForeignKey);
          Assert.False(verbs.CanEditType);
          Assert.False(verbs.CanEditTarget);
          Assert.False(verbs.CanEditCardinality);
          Assert.False(verbs.CanEditRoles);
-         Assert.False(verbs.CanDelete);
       }
 
       [Fact]
@@ -157,6 +158,7 @@ namespace ModelConsole.Tests
          Assert.True(verbs.CanEditKey);
          Assert.True(verbs.CanEditDescription);
          Assert.True(verbs.CanEditMetadata);
+         Assert.True(verbs.CanAddForeignKey);
          Assert.False(verbs.CanAddColumn);
          Assert.False(verbs.CanRemoveColumn);
          Assert.False(verbs.CanEditTarget);
@@ -182,6 +184,7 @@ namespace ModelConsole.Tests
          Assert.False(verbs.CanEditKey);
          Assert.False(verbs.CanEditDescription);
          Assert.False(verbs.CanEditMetadata);
+         Assert.False(verbs.CanAddForeignKey);
       }
 
       [Fact]
@@ -197,6 +200,7 @@ namespace ModelConsole.Tests
          Assert.False(verbs.CanEditKey);
          Assert.False(verbs.CanEditDescription);
          Assert.False(verbs.CanEditMetadata);
+         Assert.False(verbs.CanAddForeignKey);
          Assert.False(verbs.CanEditTarget);
          Assert.False(verbs.CanEditCardinality);
          Assert.False(verbs.CanEditRoles);

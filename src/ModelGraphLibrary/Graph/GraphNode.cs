@@ -49,6 +49,7 @@ namespace ModelConsole.Graph
       public bool CanEditKey { get; }
       public bool CanEditDescription { get; }
       public bool CanEditMetadata { get; }
+      public bool CanAddForeignKey { get; }
       public bool CanEditTarget { get; }
       public bool CanEditCardinality { get; }
       public bool CanEditRoles { get; }
@@ -58,9 +59,9 @@ namespace ModelConsole.Graph
          bool canRename = false, bool canAddColumn = false,
          bool canRemoveColumn = false, bool canEditType = false,
          bool canEditKey = false, bool canEditDescription = false,
-         bool canEditMetadata = false, bool canEditTarget = false,
-         bool canEditCardinality = false, bool canEditRoles = false,
-         bool canDelete = false)
+         bool canEditMetadata = false, bool canAddForeignKey = false,
+         bool canEditTarget = false, bool canEditCardinality = false,
+         bool canEditRoles = false, bool canDelete = false)
       {
          CanRename = canRename;
          CanAddColumn = canAddColumn;
@@ -69,21 +70,24 @@ namespace ModelConsole.Graph
          CanEditKey = canEditKey;
          CanEditDescription = canEditDescription;
          CanEditMetadata = canEditMetadata;
+         CanAddForeignKey = canAddForeignKey;
          CanEditTarget = canEditTarget;
          CanEditCardinality = canEditCardinality;
          CanEditRoles = canEditRoles;
          CanDelete = canDelete;
       }
 
-      /// <summary>An entity: rename, add/remove columns, edit key/description/metadata.</summary>
+      /// <summary>An entity: rename, add/remove columns, edit key/description, delete.</summary>
       public static NodeVerbs Entity { get; } = new NodeVerbs(
          canRename: true, canAddColumn: true, canRemoveColumn: true,
-         canEditKey: true, canEditDescription: true, canEditMetadata: true);
+         canEditKey: true, canEditDescription: true, canEditMetadata: true,
+         canDelete: true);
 
-      /// <summary>An element (column): rename, edit type/key/description/metadata.</summary>
+      /// <summary>An element (column): rename, edit type/key/description, add an FK.</summary>
       public static NodeVerbs Element { get; } = new NodeVerbs(
          canRename: true, canEditType: true, canEditKey: true,
-         canEditDescription: true, canEditMetadata: true);
+         canEditDescription: true, canEditMetadata: true,
+         canAddForeignKey: true);
 
       /// <summary>A dependency (FK): edit target/cardinality/roles, delete.</summary>
       public static NodeVerbs Dependency { get; } = new NodeVerbs(

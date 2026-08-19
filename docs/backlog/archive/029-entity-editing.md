@@ -8,10 +8,10 @@ Make the tables/entities genuinely editable. Today the inspector edits a column'
 
 ## Goals
 
-- [ ] Inspector edits columns: rename, change type (existing), add/remove a column on an entity.
-- [ ] Inspector edits the dependency: create/delete an FK, change its target (`ReferencedTable`/`ReferencedColumn`), per-side cardinality + optionality, and child/parent role names.
-- [ ] Inspector edits entity metadata: description, the metadata bag, key marking, and (when carried) provenance — riding the existing readout fields.
-- [ ] Every edit flows **model → validation (025) → re-render + partial re-route (013)**; a deliberately-broken edit produces a resolution issue, never a crash or a dangling connector.
+- [x] Inspector edits columns: rename, change type (existing), add/remove a column on an entity.
+- [x] Inspector edits the dependency: create/delete an FK, change its target (`ReferencedTable`/`ReferencedColumn`), per-side cardinality + optionality, and child/parent role names.
+- [x] Inspector edits entity metadata: description, the metadata bag, key marking, and (when carried) provenance — riding the existing readout fields.
+- [x] Every edit flows **model → validation (025) → re-render + partial re-route (013)**; a deliberately-broken edit produces a resolution issue, never a crash or a dangling connector.
 
 ## Scope
 
@@ -35,13 +35,13 @@ Make the tables/entities genuinely editable. Today the inspector edits a column'
 
 ## Definition of Done
 
-- [ ] Rename/add/remove an entity; add/remove/rename columns; add/delete/edit FKs (target, cardinality, roles) — all from the inspector, all re-render correctly.
-- [ ] A deliberately-broken edit (dangling FK target, ambiguity) surfaces a resolution issue — no crash, no connector left pointing at nothing.
-- [ ] New tests cover the edit pipeline (mutate → validate → re-route) as pure model operations.
-- [ ] `dotnet build` → **0 errors, 0 warnings**; `dotnet test` → all pass.
+- [x] Rename/add/remove an entity; add/remove/rename columns; add/delete/edit FKs (target, cardinality, roles) — all from the inspector, all re-render correctly.
+- [x] A deliberately-broken edit (dangling FK target, ambiguity) surfaces a resolution issue — no crash, no connector left pointing at nothing.
+- [x] New tests cover the edit pipeline (mutate → validate → re-route) as pure model operations.
+- [x] `dotnet build` → **0 errors, 0 warnings**; `dotnet test` → all pass.
 
 ## Status
 
-- **State:** Planned
-- **Sprint:** (TBD)
-- **Completed:** (TBD)
+- **State:** Completed
+- **Sprint:** 2026-08-19
+- **Completed:** 2026-08-19

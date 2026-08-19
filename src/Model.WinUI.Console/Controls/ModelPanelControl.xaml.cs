@@ -21,6 +21,7 @@ using Microsoft.UI;
 
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Model.Data;
+using ModelConsole.Editing;
 using ModelConsole.Graphics.GLibrary;
 using ModelConsole.Graphics.GLibrary.GlOrtho;
 using ModelConsole.Graphics.Primitives;
@@ -928,6 +929,97 @@ namespace ModelConsole.Controls
             column.IsForeignKey = column.Constraints.Any(c => c.IsForeignKey);
          }
          Render();
+      }
+
+      /// <summary>
+      /// Rename a table (backlog 029): cascade the rename across every
+      /// referencing FK, re-key the layout, and re-render (full — the name
+      /// is part of the table's identity).
+      /// </summary>
+      public void RenameTable(TableInfo table, string oldName, string newName)
+      {
+         ModelEdits.RenameTable(_tables, table, newName);
+         if (_layout.TryGetValue(oldName, out var rect))
+         {
+            _layout[newName] = rect;
+            _layout.Remove(oldName);
+         }
+         if (_selectedTable == oldName)
+         {
+            _selectedTable = newName;
+         }
+         Render();
+         ModelChanged?.Invoke(this, EventArgs.Empty);
+      }
+
+      /// <summary>
+      /// Rename a column (backlog 029): cascade the rename across every
+      /// referencing FK, re-measure the table (the name is part of its
+      /// width), and re-route only its edges.
+      /// </summary>
+      public void RenameColumn(
+         TableInfo table, ColumnInfo column, string oldName, string newName)
+      {
+         ModelEdits.RenameColumn(_tables, table, column, newName);
+         ReMeasureTable(table);
+         Render(onlyTable: table.TableName);
+         ModelChanged?.Invoke(this, EventArgs.Empty);
+      }
+
+      /// <summary>
+      /// Remove a table from the model and re-render; referencing FKs surface
+      /// as resolution issues (never a crash or a dangling connector).
+      /// </summary>
+      public void RemoveTable(TableInfo table)
+      {
+         _tables = _tables.Where(t => !ReferenceEquals(t, table)).ToList();
+         _layout.Remove(table.TableName);
+         if (_selectedTable == table.TableName)
+         {
+            _selectedTable = null;
+         }
+         Render();
+         ModelChanged?.Invoke(this, EventArgs.Empty);
+      }
+
+      /// <summary>
+      /// Add a table to the model, re-layout (the new table needs a slot),
+      /// and re-render.
+      /// </summary>
+      public void AddTable(TableInfo table)
+      {
+         _tables = _tables.Concat(new[] { table }).ToList();
+         InitializeLayout();
+         Render();
+         ModelChanged?.Invoke(this, EventArgs.Empty);
+      }
+
+      /// <summary>
+      /// A structural edit to a table (column add/remove/rename, FK
+      /// add/remove/target, key toggle): re-measure the table and re-route
+      /// only its edges (backlog 013 partial re-route).
+      /// </summary>
+      public void StructureChanged(TableInfo table)
+      {
+         ReMeasureTable(table);
+         Render(onlyTable: table.TableName);
+         ModelChanged?.Invoke(this, EventArgs.Empty);
+      }
+
+      /// <summary>
+      /// Re-measure a table after a structural edit (a column rename or type
+      /// change alters its width) and update the layout rect so the drawing
+      /// and the router agree on its size.
+      /// </summary>
+      private void ReMeasureTable(TableInfo table)
+      {
+         if (table == null || !_layout.TryGetValue(table.TableName, out var old))
+         {
+            return;
+         }
+         var probe = new Table(_context, 0, 0, BannerHeight, table);
+         _layout[table.TableName] = new Rect2(
+            old.X, old.Y, probe.ComputedWidth, probe.ComputedHeight);
       }
 
    }

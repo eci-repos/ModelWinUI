@@ -33,22 +33,35 @@ namespace ModelConsole.Controls
          {
             if (entity is TableInfo table)
             {
-               InspectorPanel.ShowTable(table, ModelPanel.Enumerations);
+               InspectorPanel.ShowTable(
+                  table, ModelPanel.Tables, ModelPanel.Enumerations);
             }
             else if (entity is FkRelation edge)
             {
-               InspectorPanel.ShowConnector(edge);
+               InspectorPanel.ShowConnector(edge, ModelPanel.Tables);
             }
          };
 
          InspectorPanel.ModelEdited += (s, e) => ModelPanel.Refresh();
          InspectorPanel.DeleteRequested += (s, edge) => ModelPanel.DeleteConnector(edge);
 
+         // Backlog 029: the inspector's edit surface wires to real model
+         // operations on the panel (mutate → re-render → explorer refresh).
+         InspectorPanel.EntityRenamed += (s, e) =>
+            ModelPanel.RenameTable(e.Table, e.OldName, e.NewName);
+         InspectorPanel.ColumnRenamed += (s, e) =>
+            ModelPanel.RenameColumn(e.Table, e.Column, e.OldName, e.NewName);
+         InspectorPanel.EntityRemoved += (s, table) => ModelPanel.RemoveTable(table);
+         InspectorPanel.EntityAdded += (s, table) => ModelPanel.AddTable(table);
+         InspectorPanel.StructureChanged += (s, table) =>
+            ModelPanel.StructureChanged(table);
+
          // Explorer → canvas selection + inspector (backlog 004).
          ExplorerPanel.TableSelected += (s, table) =>
          {
             ModelPanel.SelectTable(table.TableName);
-            InspectorPanel.ShowTable(table, ModelPanel.Enumerations);
+            InspectorPanel.ShowTable(
+               table, ModelPanel.Tables, ModelPanel.Enumerations);
          };
 
          // Model replaced (File → Open) → refresh the explorer tree.
