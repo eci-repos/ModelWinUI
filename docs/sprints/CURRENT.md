@@ -2,6 +2,6 @@
 
 **No sprint is currently in execution.**
 
-The last sprint (2026-08-19, editable entities — backlog item `029`) was promoted to `docs/sprints/archive/sprint-2026-08-19-editable-entities.md`. `029` is part 3 of the **object-oriented drawing series**: the 028 edit verbs are wired to real model operations. Pure `ModelConsole.Editing.ModelEdits` operations (cascade renames, invariant-preserving key flags) mutate the live canonical model; the inspector builds its edit surface gated by the 028 `NodeVerbs`; the host re-renders (partial re-route where localized) and resolution issues surface via `FkEdgeExtractor` (R8) — never a crash or a dangling connector.
+The last sprint (2026-08-19, extract the XAML Graphics stack — backlog item `031`) was promoted to `docs/sprints/archive/sprint-2026-08-19-extract-xaml-graphics-stack.md`. `031` completes the **library-reusability series (030–032)**: every layer of the drawing code now lives in a referenceable class library — the five portable libraries (`Model.Diagnostics`, `Model.Geometry`, `Model.Data`, `Model.Graph`, `Model.Skia`) plus the WinUI-bound `Model.Graphics.WinUI` (the XAML `Gl*` stack + `Table` renderer + XAML factory contracts). All six pack as `Model.Console.<Layer>` 0.1.0 with READMEs embedded; no namespace is declared by two assemblies.
 
-**The object-oriented drawing series (027–029) is complete.** When the next sprint is defined, copy `docs/sprints/_TEMPLATE.md` here and start executing.
+**The backlog is empty.** Next work: any candidate from the WORKLOG "Known gaps" list (e.g. auto-arrange after drags, undo/redo, a shared drawing-surface abstraction over the two stacks), or whatever the user picks next.

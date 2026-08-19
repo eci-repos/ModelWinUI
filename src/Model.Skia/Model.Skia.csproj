@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ModelConsole</RootNamespace>
+    <Nullable>disable</Nullable>
+    <Version>0.1.0</Version>
+    <Description>Portable SkiaSharp drawing stack — generic primitives, an ERD composer, and DI-wired factory contracts.</Description>
+    <Authors>Eduardo Sobrino</Authors>
+    <PackageId>Model.Console.Skia</PackageId>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="4.151.1" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Model.Data\Model.Data.csproj" />
+    <ProjectReference Include="..\Model.Geometry\Model.Geometry.csproj" />
+    <ProjectReference Include="..\Model.Graph\Model.Graph.csproj" />
+  </ItemGroup>
+
+</Project>

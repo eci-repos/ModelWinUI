@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ModelConsole.Tests</RootNamespace>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Model.Data\Model.Data.csproj" />
+    <ProjectReference Include="..\..\src\Model.Geometry\Model.Geometry.csproj" />
+    <ProjectReference Include="..\..\src\Model.Graph\Model.Graph.csproj" />
+    <ProjectReference Include="..\..\src\Model.Skia\Model.Skia.csproj" />
+  </ItemGroup>
+
+  <!-- Shipped sample models (backlog 005): copied into the test output so
+       SampleModelTests can load and validate the exact shipped artifacts. -->
+  <ItemGroup>
+    <Content Include="..\..\src\Model.Data\Samples\*.json"
+             Link="Samples\%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
+    <!-- Shipped representation schemas (backlog 025): copied into the test
+         output so the schema-validation tests exercise the exact artifacts. -->
+    <Content Include="..\..\src\Model.Data\Schemas\*.json"
+             Link="Schemas\%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

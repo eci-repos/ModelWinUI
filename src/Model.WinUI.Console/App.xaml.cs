@@ -18,8 +18,11 @@ using Windows.Foundation.Collections;
 
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
+using ModelConsole.Diagnostics;
 using ModelConsole.Graphics.GLibrary;
+using ModelConsole.Graphics.Services;
 using ModelConsole.Services;
+using ModelConsole.Skia.Services;
 using ModelConsole.ViewModels;
 
 // To learn more about WinUI, the WinUI project structure,

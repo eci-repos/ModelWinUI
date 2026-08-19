@@ -6,8 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using ModelConsole.Model.Helpers;
-using ModelConsole.Model.Diagnostics;
-using ModelConsole.Services;
+using ModelConsole.Diagnostics;
 
 namespace ModelConsole.ViewModels
 {

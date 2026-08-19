@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ModelConsole</RootNamespace>
+    <Nullable>disable</Nullable>
+    <Version>0.1.0</Version>
+    <Description>Relational metadata model (tables/columns/FK constraints), schema interpretation, JSON validation, and sample fixtures.</Description>
+    <Authors>Eduardo Sobrino</Authors>
+    <PackageId>Model.Console.Data</PackageId>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JsonSchema.Net" Version="9.4.0" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

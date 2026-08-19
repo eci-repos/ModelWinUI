@@ -21,10 +21,13 @@ using Microsoft.UI;
 
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Model.Data;
+using ModelConsole.Diagnostics;
 using ModelConsole.Editing;
+using ModelConsole.Geometry;
 using ModelConsole.Graphics.GLibrary;
 using ModelConsole.Graphics.GLibrary.GlOrtho;
 using ModelConsole.Graphics.Primitives;
+using ModelConsole.Graphics.Services;
 using ModelConsole.Graph;
 using ModelConsole.Services;
 

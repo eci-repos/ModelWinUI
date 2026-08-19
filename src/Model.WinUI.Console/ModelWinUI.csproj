@@ -30,14 +30,14 @@
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
     <!-- Shipped sample models (backlog 005): the JSON files live in
-         ModelGraphLibrary/Samples and are copied into the app output under
+         Model.Data/Samples and are copied into the app output under
          Samples/ so File → Open Sample can load them. -->
-    <Content Include="..\ModelGraphLibrary\Samples\*.json"
+    <Content Include="..\Model.Data\Samples\*.json"
              Link="Samples\%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" />
     <!-- Shipped representation schemas (backlog 025): copied into the app
          output under Schemas/ so load-time validation can find them. -->
-    <Content Include="..\ModelGraphLibrary\Schemas\*.json"
+    <Content Include="..\Model.Data\Schemas\*.json"
              Link="Schemas\%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
@@ -52,7 +52,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ModelGraphLibrary\ModelGraphLibrary.csproj" />
+    <ProjectReference Include="..\Model.Diagnostics\Model.Diagnostics.csproj" />
+    <ProjectReference Include="..\Model.Geometry\Model.Geometry.csproj" />
+    <ProjectReference Include="..\Model.Data\Model.Data.csproj" />
+    <ProjectReference Include="..\Model.Graph\Model.Graph.csproj" />
+    <ProjectReference Include="..\Model.Graphics.WinUI\Model.Graphics.WinUI.csproj" />
+    <ProjectReference Include="..\Model.Skia\Model.Skia.csproj" />
   </ItemGroup>
 
   <!-- 

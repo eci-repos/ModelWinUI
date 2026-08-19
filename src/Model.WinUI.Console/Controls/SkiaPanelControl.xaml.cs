@@ -21,9 +21,11 @@ using Windows.UI.Core;
 using SkiaSharp.Views;
 using SkiaSharp;
 using Model.Data;
-using ModelConsole.Graph;
+using ModelConsole.Diagnostics;
+using ModelConsole.Geometry;
 using ModelConsole.Skia.GLibrary;
 using ModelConsole.Skia.Primitives;
+using ModelConsole.Skia.Services;
 using ModelConsole.Services;
 using CommunityToolkit.Mvvm.DependencyInjection;
 
