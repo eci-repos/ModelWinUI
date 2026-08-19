@@ -131,6 +131,21 @@ namespace ModelConsole.Controls
       private Microsoft.UI.Dispatching.DispatcherQueueTimer _hoverTimer;
 
       /// <summary>
+      /// The connector (<see cref="GlOrthoPath"/>) currently hover-highlighted,
+      /// or null. Emphasis is a thicker DodgerBlue line plus the
+      /// <see cref="_hoverCircles"/> endpoint markers, so the dependency's
+      /// start and end are unambiguous under the pointer.
+      /// </summary>
+      private GlOrthoPath _hoverConnector;
+
+      /// <summary>
+      /// Endpoint highlight circles drawn over a hovered connector's start/end
+      /// (12 px DodgerBlue, hit-test transparent so they never intercept clicks
+      /// or re-enter hover hit-testing); removed when the highlight clears.
+      /// </summary>
+      private List<GlEllipse> _hoverCircles;
+
+      /// <summary>
       /// Raised when the user clicks a graphic entity. The payload is the
       /// entity's <see cref="TableInfo"/> or <see cref="FkRelation"/>.
       /// </summary>
@@ -519,10 +534,13 @@ namespace ModelConsole.Controls
          ModelCanvas.Children.Clear();
          _context.Reset();
 
-         // The shapes are being rebuilt, so any hovered node is stale —
-         // close the readout (backlog 027/028).
+         // The shapes are being rebuilt, so any hovered node is stale — close
+         // the readout (backlog 027/028) and drop any connector emphasis (the
+         // canvas children were cleared, so the highlight circles are gone).
          HideHover();
          _hoverNode = null;
+         _hoverConnector = null;
+         _hoverCircles = null;
 
          IGlModel model = Ioc.Default.GetRequiredService<IGlModel>();
 
@@ -773,6 +791,7 @@ namespace ModelConsole.Controls
          var node = obj?.Node;
          if (node == null)
          {
+            ClearConnectorHighlight();
             _hoverNode = null;
             _hoverTimer.Stop();
             HideHover();
@@ -781,6 +800,18 @@ namespace ModelConsole.Controls
 
          if (!ReferenceEquals(node.Model, _hoverNode?.Model))
          {
+            // A different node is hovered: drop any connector emphasis and,
+            // when the new node is a connector (GlOrthoPath), emphasize it so
+            // the dependency's start and end are unambiguous.
+            if (!ReferenceEquals(obj, _hoverConnector))
+            {
+               ClearConnectorHighlight();
+               if (obj is GlOrthoPath connector)
+               {
+                  ApplyConnectorHighlight(connector);
+               }
+            }
+
             _hoverNode = node;
             _hoverTimer.Stop();
             HideHover();
@@ -789,6 +820,58 @@ namespace ModelConsole.Controls
          else if (HoverTooltip.Visibility == Visibility.Visible)
          {
             PositionHover();
+         }
+      }
+
+      /// <summary>
+      /// Emphasize a hovered connector: thicken its line to SlateBlue — the
+      /// analogous (violet) neighbor of DodgerBlue, so the hovered connector
+      /// pops out of the DodgerBlue rest-state connectors (the same #6A5ACD
+      /// the Skia renderer's emphasized <c>Connector</c> uses) — and draw
+      /// larger DodgerBlue endpoint circles over the route's first/last points
+      /// so start/end read at a glance. The circles are hit-test transparent so
+      /// they never intercept clicks or re-enter hover hit-testing.
+      /// </summary>
+      private void ApplyConnectorHighlight(GlOrthoPath connector)
+      {
+         _hoverConnector = connector;
+         connector.Path.Stroke = new SolidColorBrush(Colors.SlateBlue);
+         connector.Path.StrokeThickness = 3.5;
+
+         var pts = _routes.First(r => ReferenceEquals(r.Edge, connector.Data)).Points;
+         _hoverCircles = new List<GlEllipse>
+         {
+            GlEllipse.Draw(_context, pts[0].X, pts[0].Y, 12, Colors.DodgerBlue),
+            GlEllipse.Draw(
+               _context, pts[pts.Count - 1].X, pts[pts.Count - 1].Y, 12, Colors.DodgerBlue)
+         };
+         foreach (var circle in _hoverCircles)
+         {
+            circle.NativeInstance.IsHitTestVisible = false;
+         }
+      }
+
+      /// <summary>
+      /// Restore the highlighted connector's line to its rest state (1 px
+      /// black — the <see cref="GlOrthoPath"/> defaults) and remove its
+      /// endpoint highlight circles. Safe to call when nothing is highlighted.
+      /// </summary>
+      private void ClearConnectorHighlight()
+      {
+         if (_hoverConnector != null)
+         {
+            _hoverConnector.Path.Stroke = new SolidColorBrush(Colors.Black);
+            _hoverConnector.Path.StrokeThickness = 1;
+            _hoverConnector = null;
+         }
+
+         if (_hoverCircles != null)
+         {
+            foreach (var circle in _hoverCircles)
+            {
+               _context.Instance.Children.Remove(circle.NativeInstance);
+            }
+            _hoverCircles = null;
          }
       }
 

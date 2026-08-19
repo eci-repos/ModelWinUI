@@ -27,10 +27,18 @@ namespace ModelConsole.Skia.GLibrary
         // DodgerBlue in the routing diagnostics too).
         public const string CONNECTOR_BLUE = "#1E90FF";
 
+        // Hovered-connector line — SlateBlue, the analogous (violet) neighbor
+        // of DodgerBlue on the color wheel. A hovered connector is drawn in
+        // this hue so it pops out of the DodgerBlue rest-state connectors
+        // while its endpoint markers stay DodgerBlue (the emphasized line is
+        // the same #6A5ACD SlateBlue the XAML path applies).
+        public const string CONNECTOR_HOVER_BLUE = "#6A5ACD";
+
         public static SKColor LightGreen = SKColor.Parse(LIGHT_GREEN);
 
         public static SKColor ConnectorStroke = SKColor.Parse(CONNECTOR_BLUE);
         public static SKColor ConnectorFill = SKColor.Parse(CONNECTOR_BLUE);
+        public static SKColor ConnectorHoverStroke = SKColor.Parse(CONNECTOR_HOVER_BLUE);
     }
 
 }

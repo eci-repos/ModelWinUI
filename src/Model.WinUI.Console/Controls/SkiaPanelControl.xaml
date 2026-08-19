@@ -42,10 +42,17 @@
 
       <Grid Grid.Row="1">
          <!-- Background="Transparent" keeps the canvas hit-testable so the
-              wheel reaches it; the wheel zooms around the cursor. -->
-         <sk:SKXamlCanvas x:Name="SkiaCanvas" Background="Transparent"
-                          PaintSurface="SkiaCanvas_PaintSurface"
-                          PointerWheelChanged="SkiaCanvas_PointerWheelChanged" />
+              wheel reaches it (zoom) and the pointer reaches it (pan);
+              SkiaCanvasView exposes the cursor so panning can give feedback. -->
+         <local:SkiaCanvasView x:Name="SkiaCanvas" Background="Transparent"
+                               PaintSurface="SkiaCanvas_PaintSurface"
+                               PointerWheelChanged="SkiaCanvas_PointerWheelChanged"
+                               PointerPressed="SkiaCanvas_PointerPressed"
+                               PointerMoved="SkiaCanvas_PointerMoved"
+                               PointerReleased="SkiaCanvas_PointerReleased"
+                               PointerCanceled="SkiaCanvas_PointerCanceled"
+                               PointerCaptureLost="SkiaCanvas_PointerCaptureLost"
+                               PointerExited="SkiaCanvas_PointerExited" />
          <!-- Shown while the diagram is being composed off the UI thread, so
               the first paint shows progress instead of a blank canvas. -->
          <TextBlock x:Name="ComposingText" Text="Composing…"

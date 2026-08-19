@@ -43,6 +43,39 @@ namespace ModelConsole.Tests
       }
 
       [Fact]
+      public void DrawEmphasizedThickensStrokeAndMarkers()
+      {
+         using var surface = CreateSurface(400, 200, out var bitmap);
+         var frame = new GlFrame(surface);
+
+         var points = new List<Point2>
+         {
+            new Point2(20, 100), new Point2(200, 100), new Point2(380, 100)
+         };
+         new Connector(points) { Emphasized = true }.Draw(frame);
+
+         // The emphasized line is SlateBlue — the analogous violet neighbor
+         // of the rest-state DodgerBlue, so the hovered connector stands out
+         // from the connector tangle. Asserted exactly (a dead-center pixel of
+         // the 3.5 px stroke is fully covered).
+         Assert.Equal(SKColor.Parse("#6A5ACD"), bitmap.GetPixel(200, 100));
+         // The 3.5 px emphasized stroke reaches a pixel the 1.5 px rest
+         // stroke would leave white.
+         Assert.True(IsColored(bitmap.GetPixel(200, 101)),
+            "emphasized stroke should be thicker");
+         // The 3.5 px emphasized stroke reaches a pixel the 1.5 px rest
+         // stroke would leave white.
+         Assert.True(IsColored(bitmap.GetPixel(200, 101)),
+            "emphasized stroke should be thicker");
+         // The radius-6 emphasized endpoint marker reaches a pixel the
+         // radius-4 rest marker would leave white.
+         Assert.True(IsColored(bitmap.GetPixel(20, 105)),
+            "emphasized start marker should be larger");
+         Assert.True(IsColored(bitmap.GetPixel(380, 105)),
+            "emphasized end marker should be larger");
+      }
+
+      [Fact]
       public void DrawWithNullOrEmptyPointsIsNoOp()
       {
          using var surface = CreateSurface(100, 100, out var bitmap);

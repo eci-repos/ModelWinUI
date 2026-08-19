@@ -13,11 +13,15 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Microsoft.UI.Input;
+using Windows.System;
+using Windows.UI.Core;
 
 // The User Control item template is documented at https://go.microsoft.com/fwlink/?LinkId=234236
 using SkiaSharp.Views;
 using SkiaSharp;
 using Model.Data;
+using ModelConsole.Graph;
 using ModelConsole.Skia.GLibrary;
 using ModelConsole.Skia.Primitives;
 using ModelConsole.Services;
@@ -50,6 +54,12 @@ namespace ModelConsole.Controls
       /// </summary>
       private const double WheelZoomStep = 1.1;
 
+      /// <summary>
+      /// Connector hover hit radius (DIPs): a constant on-screen distance,
+      /// scaled to content space by the current zoom + DPI when hit-testing.
+      /// </summary>
+      private const double HoverHitRadius = 6;
+
       private readonly IModelDataProvider _dataProvider;
       private readonly ISkiaTableFactory _tableFactory;
       private readonly ISkiaConnectorFactory _connectorFactory;
@@ -78,10 +88,29 @@ namespace ModelConsole.Controls
       private double _panX;
       private double _panY;
 
+      /// <summary>True while a drag-pan gesture is active.</summary>
+      private bool _panning;
+
+      /// <summary>Pan start: the press point (DIPs) and the pan offset at that moment.</summary>
+      private Point _panStartPoint;
+      private double _panStartX;
+      private double _panStartY;
+
+      /// <summary>Hover + panning cursors (mirrors the XAML path's GlContext).</summary>
+      private InputCursor _handCursor;
+      private InputCursor _moveCursor;
+
       /// <summary>Last paint's surface size (physical px) and DPI scale (px per DIP).</summary>
       private double _viewW;
       private double _viewH;
       private double _dpiScale = 1.0;
+
+      /// <summary>
+      /// Index of the connector route under the pointer (in <c>_diagram.Routes</c>),
+      /// or −1 when none; drives the emphasized hover paint. Reset when the
+      /// diagram is replaced and when the pointer leaves/pan ends.
+      /// </summary>
+      private int _hoveredRoute = -1;
 
       public SkiaPanelControl()
       {
@@ -92,6 +121,9 @@ namespace ModelConsole.Controls
          _connectorFactory = Ioc.Default.GetRequiredService<ISkiaConnectorFactory>();
          _tables = _dataProvider.GetPublicSafetyTables();
          _tablesByName = _tables.ToDictionary(t => t.TableName, t => t);
+
+         _handCursor = InputSystemCursor.Create(InputSystemCursorShape.Hand);
+         _moveCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeAll);
 
          _initialized = true;
          SyncZoomUI();
@@ -108,6 +140,7 @@ namespace ModelConsole.Controls
          _tables = tables;
          _tablesByName = tables.ToDictionary(t => t.TableName, t => t);
          _diagram = null;
+         _hoveredRoute = -1;
          SkiaCanvas.Invalidate();
       }
 
@@ -174,9 +207,19 @@ namespace ModelConsole.Controls
                BannerHeight, _tablesByName[kv.Key]);
          }
 
-         foreach (var route in _diagram.Routes)
+         // Draw the routes, then the hovered route last, on top, emphasized
+         // (thicker stroke + larger endpoint markers) so its start and end
+         // are unambiguous under the pointer.
+         for (int i = 0; i < _diagram.Routes.Count; i++)
          {
-            _connectorFactory.Create(frame, route);
+            if (i != _hoveredRoute)
+            {
+               _connectorFactory.Create(frame, _diagram.Routes[i]);
+            }
+         }
+         if (_hoveredRoute >= 0 && _hoveredRoute < _diagram.Routes.Count)
+         {
+            new Connector(_diagram.Routes[_hoveredRoute]) { Emphasized = true }.Draw(frame);
          }
       }
 
@@ -215,6 +258,7 @@ namespace ModelConsole.Controls
                      }
 
                      _diagram = diagram;
+                     _hoveredRoute = -1; // route indices change with the new diagram
                      _composing = false;
                      ComposingText.Visibility = Visibility.Collapsed;
                      foreach (var issue in diagram.Issues)
@@ -294,6 +338,215 @@ namespace ModelConsole.Controls
          SyncZoomUI();
          SkiaCanvas.Invalidate();
          e.Handled = true;
+      }
+
+      // ------------------------------------------------------------------
+      // Drag-to-pan (mirrors the XAML path's backlog-011 gesture). The Skia
+      // renderer is view-only — no per-object drag — so a left-drag anywhere
+      // pans (map-like); middle-drag and space+drag pan too. The pan offset
+      // (_panX/_panY) is the single source the paint transform consumes, so
+      // the gesture composes with wheel-zoom and fit for free.
+      // ------------------------------------------------------------------
+
+      /// <summary>
+      /// Start a pan on a left-drag anywhere, a middle-drag, or a space+drag
+      /// (mouse/touchpad only). Capture the pointer and show the move cursor.
+      /// </summary>
+      private void SkiaCanvas_PointerPressed(
+         object sender, PointerRoutedEventArgs e)
+      {
+         if (_diagram == null || _diagram.Layout.Count == 0)
+         {
+            return;
+         }
+
+         var device = e.Pointer.PointerDeviceType;
+         bool mouse = device == PointerDeviceType.Mouse ||
+                      device == PointerDeviceType.Touchpad;
+         if (!mouse)
+         {
+            return;
+         }
+
+         var pt = e.GetCurrentPoint(SkiaCanvas);
+         var props = pt.Properties;
+         bool leftPan = props.IsLeftButtonPressed;
+         bool middlePan = props.IsMiddleButtonPressed;
+         bool spacePan = IsSpaceHeld() && props.IsLeftButtonPressed;
+
+         if (leftPan || middlePan || spacePan)
+         {
+            _panning = true;
+            _panStartPoint = pt.Position;
+            _panStartX = _panX;
+            _panStartY = _panY;
+            SkiaCanvas.CapturePointer(e.Pointer);
+            SetCursor(_moveCursor);
+            e.Handled = true;
+         }
+      }
+
+      /// <summary>
+      /// While panning, move the drawing 1:1 with the pointer at any zoom:
+      /// the DIP delta scaled to surface px (the transform works in surface
+      /// px) is added to the pan offset captured at the pan start.
+      /// </summary>
+      private void SkiaCanvas_PointerMoved(
+         object sender, PointerRoutedEventArgs e)
+      {
+         var pt = e.GetCurrentPoint(SkiaCanvas);
+
+         if (_panning)
+         {
+            double dx = (pt.Position.X - _panStartPoint.X) * _dpiScale;
+            double dy = (pt.Position.Y - _panStartPoint.Y) * _dpiScale;
+            _panX = _panStartX + dx;
+            _panY = _panStartY + dy;
+            _fitMode = false;
+            SkiaCanvas.Invalidate();
+            e.Handled = true;
+            return;
+         }
+
+         // Hover cursor: hand over empty space, default over a table.
+         SetCursor(IsOverTable(pt.Position) ? null : _handCursor);
+
+         // Connector hover highlight: pure distance-to-polyline hit-test with
+         // a constant on-screen radius (6 DIPs, scaled to content space via
+         // the current zoom + DPI). Invalidate only when the hovered route
+         // changes so plain moves don't repaint.
+         if (_diagram != null && _diagram.Routes.Count > 0 && _viewW > 0)
+         {
+            Point2 content = GetContentPoint(pt.Position);
+            int hovered = RouteHitTest.Nearest(_diagram.Routes, content,
+               HoverHitRadius * _dpiScale / _zoom);
+            if (hovered != _hoveredRoute)
+            {
+               _hoveredRoute = hovered;
+               SkiaCanvas.Invalidate();
+            }
+         }
+      }
+
+      private void SkiaCanvas_PointerReleased(
+         object sender, PointerRoutedEventArgs e) => EndPan(e);
+
+      private void SkiaCanvas_PointerCanceled(
+         object sender, PointerRoutedEventArgs e) => EndPan(e);
+
+      private void SkiaCanvas_PointerCaptureLost(
+         object sender, PointerRoutedEventArgs e) => EndPan(e);
+
+      /// <summary>
+      /// Leave the canvas (not panning): restore the default cursor and drop
+      /// the hover highlight.
+      /// </summary>
+      private void SkiaCanvas_PointerExited(
+         object sender, PointerRoutedEventArgs e)
+      {
+         if (!_panning)
+         {
+            SetCursor(null);
+         }
+         if (_hoveredRoute != -1)
+         {
+            _hoveredRoute = -1;
+            SkiaCanvas.Invalidate();
+         }
+      }
+
+      /// <summary>
+      /// End a pan gesture: release the pointer and restore the hover cursor.
+      /// A capture-lost event may arrive with the pointer already gone, so the
+      /// hit-test is guarded and falls back to the default cursor.
+      /// </summary>
+      private void EndPan(PointerRoutedEventArgs e)
+      {
+         if (!_panning)
+         {
+            return;
+         }
+         _panning = false;
+         SkiaCanvas.ReleasePointerCapture(e.Pointer);
+         try
+         {
+            var pt = e.GetCurrentPoint(SkiaCanvas);
+            SetCursor(IsOverTable(pt.Position) ? null : _handCursor);
+         }
+         catch
+         {
+            SetCursor(null);
+         }
+
+         // The pan branch never updates the hover highlight; drop any stale
+         // emphasis now that the gesture ended (the release point may be over
+         // a different spot than the press).
+         if (_hoveredRoute != -1)
+         {
+            _hoveredRoute = -1;
+            SkiaCanvas.Invalidate();
+         }
+      }
+
+      /// <summary>
+      /// Whether the pointer (DIPs) is over a drawn table, using the same
+      /// pointer → content mapping as the paint/wheel transform so the cursor
+      /// feedback never drifts from what is drawn.
+      /// </summary>
+      private bool IsOverTable(Point point)
+      {
+         if (_diagram == null || _diagram.Layout.Count == 0 || _viewW <= 0)
+         {
+            return false;
+         }
+         return _diagram.Layout.Values.Any(r => r.Contains(GetContentPoint(point)));
+      }
+
+      /// <summary>
+      /// The content-space point under a pointer position (DIPs), via the same
+      /// mapping the paint/wheel transform uses (pan offset + centering minus
+      /// content origin, then divide by zoom), so hover hit-testing never
+      /// drifts from what is drawn.
+      /// </summary>
+      private Point2 GetContentPoint(Point dip)
+      {
+         Point offset = GetPanOffset();
+         double x = (dip.X * _dpiScale - offset.X) / _zoom;
+         double y = (dip.Y * _dpiScale - offset.Y) / _zoom;
+         return new Point2(x, y);
+      }
+
+      /// <summary>
+      /// The surface-px translation the paint handler applies before the
+      /// scale — pan offset plus centering minus the content origin.
+      /// </summary>
+      private Point GetPanOffset()
+      {
+         if (_diagram == null || _diagram.Layout.Count == 0)
+         {
+            return new Point(0, 0);
+         }
+         double minX = _diagram.Layout.Values.Min(r => r.X);
+         double minY = _diagram.Layout.Values.Min(r => r.Y);
+         double contentW = _diagram.Layout.Values.Max(r => r.Right) - minX;
+         double contentH = _diagram.Layout.Values.Max(r => r.Bottom) - minY;
+         return new Point(
+            _panX + (_viewW - contentW * _zoom) / 2 - minX * _zoom,
+            _panY + (_viewH - contentH * _zoom) / 2 - minY * _zoom);
+      }
+
+      /// <summary>Swap the canvas cursor (the SkiaCanvasView exposes ProtectedCursor).</summary>
+      private void SetCursor(InputCursor cursor)
+      {
+         SkiaCanvas.Cursor = cursor;
+      }
+
+      /// <summary>True while the space key is held (the space+drag pan convention).</summary>
+      private static bool IsSpaceHeld()
+      {
+         return (InputKeyboardSource.GetKeyStateForCurrentThread(
+            VirtualKey.Space) & CoreVirtualKeyStates.Down) ==
+            CoreVirtualKeyStates.Down;
       }
 
       private void FitButton_Click(object sender, RoutedEventArgs e)

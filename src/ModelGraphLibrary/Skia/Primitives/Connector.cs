@@ -23,6 +23,12 @@ namespace ModelConsole.Skia.Primitives
         /// </summary>
         public const float EndpointRadius = 4;
 
+        /// <summary>
+        /// Endpoint marker radius while <see cref="Emphasized"/> (a hover
+        /// highlight makes start and end unambiguous).
+        /// </summary>
+        public const float EmphasizedEndpointRadius = 6;
+
         /// <summary>Stroke paint for the polyline.</summary>
         private static readonly SKPaint LinePaint = new SKPaint
         {
@@ -41,9 +47,37 @@ namespace ModelConsole.Skia.Primitives
         };
 
         /// <summary>
+        /// Emphasized stroke paint (a thicker, SlateBlue line under the hover
+        /// highlight — the analogous violet neighbor of the DodgerBlue rest
+        /// color, so the hovered connector pops out of the connector tangle).
+        /// </summary>
+        private static readonly SKPaint LinePaintEmphasized = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            Color = GlPastelPalette.ConnectorHoverStroke,
+            StrokeWidth = 3.5f
+        };
+
+        /// <summary>Emphasized endpoint marker paint (same fill as at rest).</summary>
+        private static readonly SKPaint MarkerPaintEmphasized = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill,
+            Color = GlPastelPalette.ConnectorFill
+        };
+
+        /// <summary>
         /// The polyline this connector renders. Never null; may be empty.
         /// </summary>
         public IReadOnlyList<Point2> Points { get; }
+
+        /// <summary>
+        /// Draw the connector under the hover highlight: a thicker stroke and
+        /// larger endpoint markers so the dependency's start and end are
+        /// unambiguous. Default false (normal drawing).
+        /// </summary>
+        public bool Emphasized { get; set; }
 
         /// <summary>
         /// Connector class initialization.
@@ -75,14 +109,17 @@ namespace ModelConsole.Skia.Primitives
                 }
                 using (var path = builder.Detach())
                 {
-                    frame.Canvas.DrawPath(path, LinePaint);
+                    frame.Canvas.DrawPath(
+                        path, Emphasized ? LinePaintEmphasized : LinePaint);
                 }
             }
 
+            float radius = Emphasized ? EmphasizedEndpointRadius : EndpointRadius;
+            SKPaint marker = Emphasized ? MarkerPaintEmphasized : MarkerPaint;
             Point2 first = Points[0];
             Point2 last = Points[Points.Count - 1];
-            frame.Canvas.DrawCircle((float)first.X, (float)first.Y, EndpointRadius, MarkerPaint);
-            frame.Canvas.DrawCircle((float)last.X, (float)last.Y, EndpointRadius, MarkerPaint);
+            frame.Canvas.DrawCircle((float)first.X, (float)first.Y, radius, marker);
+            frame.Canvas.DrawCircle((float)last.X, (float)last.Y, radius, marker);
         }
 
         /// <summary>
