@@ -6,10 +6,12 @@ namespace ModelConsole.Geometry
 
    /// <summary>
    /// Routes a set of orthogonal connectors in a deterministic order so that
-   /// each new connector avoids the ones already routed. Each routed polyline
-   /// is converted into thin obstacle rectangles (its segments) and passed to
-   /// the router as non-inflated obstacles, so later edges keep a small
-   /// clearance from it instead of crossing it.
+   /// each new connector avoids the ones already routed when that is cheap.
+   /// Each routed polyline is converted into thin obstacle rectangles (its
+   /// segments) and passed to the router as non-inflated obstacles, so later
+   /// edges keep a small clearance from it; when avoiding a wall costs more
+   /// than the router's crossing tolerance (backlog 033), the connector
+   /// crosses it instead of taking a huge detour to the drawing's extremes.
    /// </summary>
    public static class SequentialRouter
    {
@@ -38,7 +40,7 @@ namespace ModelConsole.Geometry
 
          foreach (var edge in edges)
          {
-            var pts = OrthogonalRouter.Route(
+            var pts = OrthogonalRouter.RouteBest(
                edge.Start, edge.End, obstacles, bounds, options, thin);
             result.Add(pts);
             AddSegmentObstacles(thin, pts, edgeMargin);

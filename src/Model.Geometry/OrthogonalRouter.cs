@@ -25,6 +25,14 @@ namespace ModelConsole.Geometry
       /// (e.g. a table dragged far away grows the canvas quadratically -
       /// backlog 013).</summary>
       public long MaxExpansions { get; set; } = 100000;
+
+      /// <summary>How much longer an already-routed-connector-avoiding detour
+      /// may be than the crossing route before the crossing route wins
+      /// (backlog 033). 1.0 = always take the shorter route (may cross other
+      /// connectors); larger = keep the crossing-free route unless avoiding
+      /// it is absurdly expensive. Table interiors are never crossed either
+      /// way.</summary>
+      public double CrossingTolerance { get; set; } = 1.5;
    }
 
    /// <summary>
@@ -129,6 +137,57 @@ namespace ModelConsole.Geometry
          points.Add(endStub);
          points.Add(end);
          return Simplify(points);
+      }
+
+      /// <summary>
+      /// Route between two points, taking the shorter of the wall-avoiding
+      /// route and the wall-ignoring route when the avoiding detour costs
+      /// more than <see cref="RouterOptions.CrossingTolerance"/>× (backlog
+      /// 033). Both candidates avoid every table interior; the wall-ignoring
+      /// candidate may cross an already-routed connector. The returned
+      /// polyline is what the caller feeds back as a thin obstacle, so later
+      /// edges see whichever route actually won.
+      /// </summary>
+      /// <param name="start">anchor point (may sit on an obstacle boundary)
+      /// </param>
+      /// <param name="end">anchor point (may sit on an obstacle boundary)
+      /// </param>
+      /// <param name="obstacles">table rectangles the route must avoid
+      /// (inflated by <see cref="RouterOptions.ObstacleMargin"/>)</param>
+      /// <param name="bounds">bounds of the routing region</param>
+      /// <param name="options">router options (the tolerance comes from
+      /// <see cref="RouterOptions.CrossingTolerance"/>)</param>
+      /// <param name="thinObstacles">already-routed connector segments that
+      /// the route avoids when cheap</param>
+      /// <returns>the chosen axis-aligned polyline from <paramref
+      /// name="start"/> to <paramref name="end"/></returns>
+      public static IReadOnlyList<Point2> RouteBest(
+         Point2 start, Point2 end,
+         IReadOnlyList<Rect2> obstacles, Rect2 bounds, RouterOptions options,
+         IReadOnlyList<Rect2> thinObstacles)
+      {
+         double factor = options != null && options.CrossingTolerance > 0
+            ? options.CrossingTolerance : 1.5;
+         var withWalls = Route(start, end, obstacles, bounds, options, thinObstacles);
+         var withoutWalls = Route(start, end, obstacles, bounds, options, null);
+         return PolylineLength(withoutWalls) * factor < PolylineLength(withWalls)
+            ? withoutWalls
+            : withWalls;
+      }
+
+      /// <summary>
+      /// Total length of an axis-aligned polyline (Manhattan distance summed
+      /// over its segments).
+      /// </summary>
+      public static double PolylineLength(IReadOnlyList<Point2> pts)
+      {
+         double total = 0;
+         for (int i = 0; i < pts.Count - 1; i++)
+         {
+            total += Math.Abs(pts[i + 1].X - pts[i].X) +
+                     Math.Abs(pts[i + 1].Y - pts[i].Y);
+         }
+         return total;
       }
 
       /// <summary>

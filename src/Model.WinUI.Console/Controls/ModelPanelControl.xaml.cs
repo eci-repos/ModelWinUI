@@ -664,7 +664,7 @@ namespace ModelConsole.Controls
             var newRoutes = new List<(FkRelation Edge, IReadOnlyList<Point2> Points)>();
             foreach (var a in toRoute)
             {
-               var pts = OrthogonalRouter.Route(
+               var pts = OrthogonalRouter.RouteBest(
                   a.Start, a.End, obstacles, bounds, routerOptions, thin);
                newRoutes.Add((a.Edge, pts));
                AddSegmentObstacles(thin, pts, 4);
