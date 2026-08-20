@@ -18,6 +18,20 @@ namespace Model.Data
       public List<ColumnInfo> Columns { get; set; }
 
       /// <summary>
+      /// UML-ready entity tags (backlog 037): short, identifier-like labels
+      /// (letters, digits, '_' or '-', no leading digit) carried on the
+      /// entity for diagrams/readouts. Unlike Metadata/Provenance/Extensions
+      /// this is a <b>serialized</b> member — the model-file formats round-trip
+      /// it automatically (the container and array forms both support a tags
+      /// array). A table without tags writes no <c>Tags</c> member at all
+      /// (the schemas declare the array without a null case), so older model
+      /// files stay byte-identical. Set via <c>ModelEdits.SetTableTags</c>,
+      /// never hand-mutated.
+      /// </summary>
+      [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+      public List<string> Tags { get; set; }
+
+      /// <summary>
       /// Free-form metadata annotations attached to this entity. Canonical v1
       /// member; captured by the interpreter, surfaced by the readout
       /// (backlog 022). Ignored by the array JSON format.
@@ -48,6 +62,7 @@ namespace Model.Data
          SchemaName = table.SchemaName;
          TableName = table.TableName;
          Description = table.Description;
+         Tags = table.Tags;
          Provenance = table.Provenance;
          Columns = table.Columns;
       }

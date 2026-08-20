@@ -52,6 +52,44 @@ namespace ModelConsole.Tests
       }
 
       [Fact]
+      public void ForTableShowsTagsLineAfterDescription()
+      {
+         var table = new TableInfo
+         {
+            SchemaName = "public",
+            TableName = "Incident",
+            Description = "An incident.",
+            Tags = new List<string> { "Core", "uml" },
+            Columns = new List<ColumnInfo>
+            {
+               new ColumnInfo { ColumnName = "Id", IsKey = true }
+            }
+         };
+
+         var lines = HoverSummary.ForTable(table);
+
+         Assert.Equal("An incident.", lines[1]);
+         Assert.Equal("Tags: Core, uml", lines[2]);
+         Assert.Equal("1 columns", lines[3]);
+         Assert.Equal("PK: 1, FK: 0", lines[4]);
+      }
+
+      [Fact]
+      public void ForTableWithoutTagsOmitsTheTagsLine()
+      {
+         var table = new TableInfo
+         {
+            SchemaName = "public",
+            TableName = "Incident",
+            Columns = new List<ColumnInfo>()
+         };
+
+         var lines = HoverSummary.ForTable(table);
+
+         Assert.DoesNotContain(lines, l => l.StartsWith("Tags:"));
+      }
+
+      [Fact]
       public void ForTableMinimalShowsHeaderAndColumnCount()
       {
          var table = new TableInfo

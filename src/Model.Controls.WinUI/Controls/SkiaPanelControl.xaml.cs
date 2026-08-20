@@ -27,6 +27,9 @@ using ModelConsole.Skia.GLibrary;
 using ModelConsole.Skia.Primitives;
 using ModelConsole.Skia.Services;
 using ModelConsole.Controls.Services;
+using ModelConsole.Controls.Helpers;
+using ModelConsole.Palette;
+using Windows.UI;
 using CommunityToolkit.Mvvm.DependencyInjection;
 
 namespace ModelConsole.Controls
@@ -114,6 +117,22 @@ namespace ModelConsole.Controls
       /// </summary>
       private int _hoveredRoute = -1;
 
+      /// <summary>
+      /// Name of the table under the pointer, or null; drives the accent
+      /// border on the hovered table (backlog 041). Reset when the diagram is
+      /// replaced and when the pointer leaves/pan ends (mirrors
+      /// <see cref="_hoveredRoute"/>).
+      /// </summary>
+      private string _hoveredTable;
+
+      /// <summary>
+      /// The drawing-surface background color (backlog 041): each paint clears
+      /// the surface to this color. The renderer-bar drop-down drives it;
+      /// defaults to the shared palette's canvas background.
+      /// </summary>
+      private Color _backgroundColor =
+         HexColor.FromHex(TablePalette.CanvasBackgroundHex);
+
       public SkiaPanelControl()
       {
          this.InitializeComponent();
@@ -143,13 +162,32 @@ namespace ModelConsole.Controls
          _tablesByName = tables.ToDictionary(t => t.TableName, t => t);
          _diagram = null;
          _hoveredRoute = -1;
+         _hoveredTable = null;
          SkiaCanvas.Invalidate();
+      }
+
+      /// <summary>
+      /// The drawing-surface background color (backlog 041). The renderer-bar
+      /// drop-down sets this on both renderers; each Skia paint clears to it.
+      /// </summary>
+      public Color BackgroundColor
+      {
+         get { return _backgroundColor; }
+         set
+         {
+            if (_backgroundColor.Equals(value))
+            {
+               return;
+            }
+            _backgroundColor = value;
+            SkiaCanvas?.Invalidate();
+         }
       }
 
       private void SkiaCanvas_PaintSurface(
          object sender, SkiaSharp.Views.Windows.SKPaintSurfaceEventArgs e)
       {
-         GlFrame frame = new GlFrame(e.Surface);
+         GlFrame frame = new GlFrame(e.Surface, ToSkColor(_backgroundColor));
 
          // Compose once on the first paint, off the UI thread (the routing
          // pass takes a few seconds); every later paint replays the cached
@@ -205,8 +243,11 @@ namespace ModelConsole.Controls
 
          foreach (var kv in _diagram.Layout)
          {
+            // The hovered table draws its accent border (backlog 041) — the
+            // same emphasis the XAML path applies live on hover.
+            bool hovered = kv.Key == _hoveredTable;
             _tableFactory.Create(frame, (float)kv.Value.X, (float)kv.Value.Y,
-               BannerHeight, _tablesByName[kv.Key]);
+               BannerHeight, _tablesByName[kv.Key], hovered);
          }
 
          // Draw the routes, then the hovered route last, on top, emphasized
@@ -410,23 +451,29 @@ namespace ModelConsole.Controls
             return;
          }
 
-         // Hover cursor: hand over empty space, default over a table.
-         SetCursor(IsOverTable(pt.Position) ? null : _handCursor);
+         // Table hover (backlog 041): the table under the pointer draws its
+         // accent border; the cursor flips to a hand over empty space.
+         string hoveredTable = HitTestTable(pt.Position);
+         bool hoverChanged = hoveredTable != _hoveredTable;
+         _hoveredTable = hoveredTable;
+         SetCursor(hoveredTable != null ? null : _handCursor);
 
          // Connector hover highlight: pure distance-to-polyline hit-test with
          // a constant on-screen radius (6 DIPs, scaled to content space via
-         // the current zoom + DPI). Invalidate only when the hovered route
-         // changes so plain moves don't repaint.
+         // the current zoom + DPI). Invalidate only when either hover changes
+         // so plain moves don't repaint.
+         bool routeChanged = false;
          if (_diagram != null && _diagram.Routes.Count > 0 && _viewW > 0)
          {
             Point2 content = GetContentPoint(pt.Position);
             int hovered = RouteHitTest.Nearest(_diagram.Routes, content,
                HoverHitRadius * _dpiScale / _zoom);
-            if (hovered != _hoveredRoute)
-            {
-               _hoveredRoute = hovered;
-               SkiaCanvas.Invalidate();
-            }
+            routeChanged = hovered != _hoveredRoute;
+            _hoveredRoute = hovered;
+         }
+         if (hoverChanged || routeChanged)
+         {
+            SkiaCanvas.Invalidate();
          }
       }
 
@@ -450,9 +497,10 @@ namespace ModelConsole.Controls
          {
             SetCursor(null);
          }
-         if (_hoveredRoute != -1)
+         if (_hoveredRoute != -1 || _hoveredTable != null)
          {
             _hoveredRoute = -1;
+            _hoveredTable = null;
             SkiaCanvas.Invalidate();
          }
       }
@@ -473,7 +521,7 @@ namespace ModelConsole.Controls
          try
          {
             var pt = e.GetCurrentPoint(SkiaCanvas);
-            SetCursor(IsOverTable(pt.Position) ? null : _handCursor);
+            SetCursor(HitTestTable(pt.Position) != null ? null : _handCursor);
          }
          catch
          {
@@ -483,25 +531,35 @@ namespace ModelConsole.Controls
          // The pan branch never updates the hover highlight; drop any stale
          // emphasis now that the gesture ended (the release point may be over
          // a different spot than the press).
-         if (_hoveredRoute != -1)
+         if (_hoveredRoute != -1 || _hoveredTable != null)
          {
             _hoveredRoute = -1;
+            _hoveredTable = null;
             SkiaCanvas.Invalidate();
          }
       }
 
       /// <summary>
-      /// Whether the pointer (DIPs) is over a drawn table, using the same
-      /// pointer → content mapping as the paint/wheel transform so the cursor
-      /// feedback never drifts from what is drawn.
+      /// The name of the table under the pointer (DIPs), or null when no
+      /// table is hovered (backlog 041). Uses the same pointer → content
+      /// mapping as the paint/wheel transform so the emphasis never drifts
+      /// from what is drawn.
       /// </summary>
-      private bool IsOverTable(Point point)
+      private string HitTestTable(Point point)
       {
          if (_diagram == null || _diagram.Layout.Count == 0 || _viewW <= 0)
          {
-            return false;
+            return null;
          }
-         return _diagram.Layout.Values.Any(r => r.Contains(GetContentPoint(point)));
+         Point2 content = GetContentPoint(point);
+         foreach (var kv in _diagram.Layout)
+         {
+            if (kv.Value.Contains(content))
+            {
+               return kv.Key;
+            }
+         }
+         return null;
       }
 
       /// <summary>
@@ -541,6 +599,12 @@ namespace ModelConsole.Controls
       private void SetCursor(InputCursor cursor)
       {
          SkiaCanvas.Cursor = cursor;
+      }
+
+      /// <summary>Convert a Windows.UI.Color to the SKColor the surface clears to.</summary>
+      private static SKColor ToSkColor(Color c)
+      {
+         return new SKColor(c.R, c.G, c.B);
       }
 
       /// <summary>True while the space key is held (the space+drag pan convention).</summary>

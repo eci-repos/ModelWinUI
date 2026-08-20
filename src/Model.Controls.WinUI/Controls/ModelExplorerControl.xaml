@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-   <Grid BorderBrush="{ThemeResource ControlBorderBrush}" BorderThickness=".5">
+   <Grid x:Name="RootGrid" BorderBrush="{ThemeResource ControlBorderBrush}" BorderThickness=".5">
       <Grid.RowDefinitions>
          <RowDefinition Height="Auto" />
          <RowDefinition Height="*" />

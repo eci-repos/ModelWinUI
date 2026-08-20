@@ -1,4 +1,5 @@
 using Model.Data;
+using ModelConsole.Palette;
 using ModelConsole.Skia.GLibrary;
 using ModelConsole.Skia.Primitives;
 
@@ -45,6 +46,24 @@ namespace ModelConsole.Tests
 
          // A later column sits lower than the first.
          Assert.True(table.GetRowCenterY("Code") > table.GetRowCenterY("ID"));
+      }
+
+      [Fact]
+      public void ComputedHeightIncludesSharedFooterBudget()
+      {
+         using var surface = SKSurface.Create(new SKImageInfo(10, 10));
+         var frame = new GlFrame(surface);
+         using var table = new Table(frame, 0, 0, 40, MakeTable());
+
+         // Backlog 036: the closing footer band is part of the measured
+         // height. From the last column row center to the table bottom sits
+         // half a row, the bottom corner radius, and the one shared footer
+         // budget both renderers use.
+         float rowHeight = frame.DefaultFont.Size + frame.DefaultTextPanelPadding +
+            frame.DefaultTextPanelPadding * 2;
+         Assert.Equal(table.ComputedHeight,
+            table.GetRowCenterY("Code") + rowHeight / 2.0f +
+               TablePalette.FooterHeight + frame.DefaultRoundCorderRadious, 3);
       }
 
       [Fact]

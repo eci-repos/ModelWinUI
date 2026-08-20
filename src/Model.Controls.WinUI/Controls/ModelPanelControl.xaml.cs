@@ -30,6 +30,8 @@ using ModelConsole.Graphics.Primitives;
 using ModelConsole.Graphics.Services;
 using ModelConsole.Graph;
 using ModelConsole.Controls.Services;
+using ModelConsole.Controls.Helpers;
+using ModelConsole.Palette;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -103,6 +105,14 @@ namespace ModelConsole.Controls
       private string _selectedTable;
 
       /// <summary>
+      /// The drawing-surface (canvas) background color (backlog 041). The
+      /// renderer-bar drop-down drives this and both renderers honor it;
+      /// defaults to the shared palette's canvas background.
+      /// </summary>
+      private Color _backgroundColor =
+         HexColor.FromHex(TablePalette.CanvasBackgroundHex);
+
+      /// <summary>
       /// Delay before a hover readout appears (ms) — long enough that sweeping
       /// the pointer across the drawing never flashes tooltips (backlog 027).
       /// </summary>
@@ -149,6 +159,13 @@ namespace ModelConsole.Controls
       private List<GlEllipse> _hoverCircles;
 
       /// <summary>
+      /// The table (<see cref="Table"/>) currently hovered (backlog 041), or
+      /// null. Its border draws the thicker DodgerBlue accent while hovered;
+      /// cleared when the pointer leaves or the hover moves to another node.
+      /// </summary>
+      private Table _hoverTable;
+
+      /// <summary>
       /// Raised when the user clicks a graphic entity. The payload is the
       /// entity's <see cref="TableInfo"/> or <see cref="FkRelation"/>.
       /// </summary>
@@ -163,6 +180,11 @@ namespace ModelConsole.Controls
       public ModelPanelControl()
       {
          this.InitializeComponent();
+
+         // Drawing-surface base color (backlog 041): paint the drawing host
+         // grid (the transparent canvas shows it through). The renderer-bar
+         // drop-down overrides this later via BackgroundColor.
+         DrawingSurface.Background = new SolidColorBrush(_backgroundColor);
 
          _dataProvider = Ioc.Default.GetRequiredService<IModelDataProvider>();
          _tableFactory = Ioc.Default.GetRequiredService<ITableFactory>();
@@ -224,6 +246,25 @@ namespace ModelConsole.Controls
       public IReadOnlyDictionary<string, Enumeration> Enumerations
       {
          get { return _enumerations; }
+      }
+
+      /// <summary>
+      /// The drawing-surface (canvas) background color (backlog 041). Painting
+      /// the drawing host grid shows the color through the transparent canvas
+      /// and behind the paper at low zoom. The renderer-bar drop-down sets
+      /// this on both renderers.
+      /// </summary>
+      public Color BackgroundColor
+      {
+         get { return _backgroundColor; }
+         set
+         {
+            _backgroundColor = value;
+            if (DrawingSurface != null)
+            {
+               DrawingSurface.Background = new SolidColorBrush(value);
+            }
+         }
       }
 
       // ------------------------------------------------------------------
@@ -540,10 +581,13 @@ namespace ModelConsole.Controls
          // The shapes are being rebuilt, so any hovered node is stale — close
          // the readout (backlog 027/028) and drop any connector emphasis (the
          // canvas children were cleared, so the highlight circles are gone).
+         // The hovered-table reference is stale too (the tables are rebuilt);
+         // its border is redrawn by the new instances.
          HideHover();
          _hoverNode = null;
          _hoverConnector = null;
          _hoverCircles = null;
+         _hoverTable = null;
 
          IGlModel model = Ioc.Default.GetRequiredService<IGlModel>();
 
@@ -795,6 +839,7 @@ namespace ModelConsole.Controls
          if (node == null)
          {
             ClearConnectorHighlight();
+            ClearTableHover();
             _hoverNode = null;
             _hoverTimer.Stop();
             HideHover();
@@ -803,15 +848,26 @@ namespace ModelConsole.Controls
 
          if (!ReferenceEquals(node.Model, _hoverNode?.Model))
          {
-            // A different node is hovered: drop any connector emphasis and,
-            // when the new node is a connector (GlOrthoPath), emphasize it so
-            // the dependency's start and end are unambiguous.
+            // A different node is hovered: drop any connector emphasis and
+            // any table-border emphasis, then apply the new node's — a
+            // connector (GlOrthoPath) thickens + enlarges its markers so the
+            // dependency's start and end are unambiguous; a table (backlog
+            // 041) draws its thicker DodgerBlue accent border.
             if (!ReferenceEquals(obj, _hoverConnector))
             {
                ClearConnectorHighlight();
                if (obj is GlOrthoPath connector)
                {
                   ApplyConnectorHighlight(connector);
+               }
+            }
+            if (!ReferenceEquals(obj, _hoverTable))
+            {
+               ClearTableHover();
+               if (obj is Table table)
+               {
+                  _hoverTable = table;
+                  table.Hovered = true;
                }
             }
 
@@ -875,6 +931,19 @@ namespace ModelConsole.Controls
                _context.Instance.Children.Remove(circle.NativeInstance);
             }
             _hoverCircles = null;
+         }
+      }
+
+      /// <summary>
+      /// Restore the hovered table's border to its rest state (the shared
+      /// neutral border). Safe to call when no table is emphasized.
+      /// </summary>
+      private void ClearTableHover()
+      {
+         if (_hoverTable != null)
+         {
+            _hoverTable.Hovered = false;
+            _hoverTable = null;
          }
       }
 

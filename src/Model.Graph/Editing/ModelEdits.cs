@@ -200,6 +200,75 @@ namespace ModelConsole.Editing
       }
 
       /// <summary>
+      /// Set an entity's tags (backlog 037). The applied list is normalized:
+      /// each tag is trimmed, blanks dropped, duplicates dropped
+      /// (case-insensitive, first occurrence kept, order preserved). A tag
+      /// must be UML-identifier friendly — letters, digits, '_' or '-', no
+      /// leading digit (<see cref="IsValidTagName"/>). Names that fail
+      /// validation are not applied and are collected in
+      /// <paramref name="rejected"/> so the caller can surface a diagnostics
+      /// message (this library is UI-free); a malformed tag never throws and
+      /// never lands on the entity. Returns the normalized list applied.
+      /// </summary>
+      public static List<string> SetTableTags(
+         TableInfo table, IEnumerable<string> tags, out IReadOnlyList<string> rejected)
+      {
+         var applied = new List<string>();
+         var rejectedNames = new List<string>();
+         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+         if (tags != null)
+         {
+            foreach (var raw in tags)
+            {
+               string tag = raw?.Trim() ?? "";
+               if (tag.Length == 0)
+               {
+                  continue;
+               }
+               if (!IsValidTagName(tag))
+               {
+                  rejectedNames.Add(tag);
+                  continue;
+               }
+               if (seen.Add(tag))
+               {
+                  applied.Add(tag);
+               }
+            }
+         }
+
+         table.Tags = applied;
+         rejected = rejectedNames;
+         return applied;
+      }
+
+      /// <summary>
+      /// Whether a tag name is UML-identifier friendly: letters, digits, '_'
+      /// or '-' only, no leading digit, at least one character. Empty and
+      /// null names are not valid.
+      /// </summary>
+      public static bool IsValidTagName(string tag)
+      {
+         if (string.IsNullOrEmpty(tag))
+         {
+            return false;
+         }
+         if (char.IsDigit(tag[0]))
+         {
+            return false;
+         }
+         foreach (char c in tag)
+         {
+            if (!(char.IsLetterOrDigit(c) || c == '_' || c == '-'))
+            {
+               return false;
+            }
+         }
+         return true;
+      }
+
+      /// <summary>
       /// Add a foreign-key constraint to a column. A blank parent column
       /// resolves to the parent's primary key (the extractor's default).
       /// </summary>

@@ -5,23 +5,19 @@
     <RootNamespace>ModelConsole</RootNamespace>
     <Nullable>disable</Nullable>
     <Version>0.1.0</Version>
-    <Description>Portable SkiaSharp drawing stack — generic primitives, an ERD composer, and DI-wired factory contracts.</Description>
+    <Description>The single source of table-surface colors and metrics (backlog 036) — consumed by both the XAML and Skia ERD renderers.</Description>
     <Authors>Eduardo Sobrino</Authors>
-    <PackageId>Model.Console.Skia</PackageId>
+    <PackageId>Model.Console.Palette</PackageId>
     <IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SkiaSharp" Version="4.151.1" />
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Model.Data\Model.Data.csproj" />
-    <ProjectReference Include="..\Model.Geometry\Model.Geometry.csproj" />
-    <ProjectReference Include="..\Model.Graph\Model.Graph.csproj" />
-    <ProjectReference Include="..\Model.Palette\Model.Palette.csproj" />
   </ItemGroup>
 
 </Project>

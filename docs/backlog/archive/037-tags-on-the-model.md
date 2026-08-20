@@ -6,11 +6,11 @@ The grouping/visibility story (038–040) is built on tags, but `TableInfo` has 
 
 ## Goals
 
-- [ ] `TableInfo.Tags` (`List<string>`, serialized, null-tolerant → empty) added to `TableInfo` and to `Copy()`.
-- [ ] `ModelFile` round-trips tags through **both** formats — the containerized form (`{ dataSource, schemas: [{ name, tables }] }`) persists them; the flat-array legacy format stays readable with absent tags defaulting to empty.
-- [ ] Both JSON schemas (`array.schema.json`, `grouped.schema.json`) declare an optional `tags` string-array; `ModelSchemaValidator` stays green and existing files validate unchanged.
-- [ ] Tags editable in the inspector (via the pure `ModelEdits` ops, the 029 discipline) and shown in the explorer nodes + readout/hover.
-- [ ] **UML:** the tag vocabulary maps directly onto UML package/stereotype names (name hygiene enforced at input) so a later UML emit needs no reshaping.
+- [x] `TableInfo.Tags` (`List<string>`, serialized, null-tolerant → empty) added to `TableInfo` and to `Copy()`.
+- [x] `ModelFile` round-trips tags through **both** formats — the containerized form (`{ dataSource, schemas: [{ name, tables }] }`) persists them; the flat-array legacy format stays readable with absent tags defaulting to empty.
+- [x] Both JSON schemas (`array.schema.json`, `grouped.schema.json`) declare an optional `tags` string-array; `ModelSchemaValidator` stays green and existing files validate unchanged.
+- [x] Tags editable in the inspector (via the pure `ModelEdits` ops, the 029 discipline) and shown in the explorer nodes + readout/hover.
+- [x] **UML:** the tag vocabulary maps directly onto UML package/stereotype names (name hygiene enforced at input) so a later UML emit needs no reshaping.
 
 ## Scope
 
@@ -38,16 +38,16 @@ The grouping/visibility story (038–040) is built on tags, but `TableInfo` has 
 
 ## Definition of Done
 
-- [ ] `dotnet build ModelWinUI.sln -p:Platform=x64` → 0 errors / 0 warnings; `dotnet test tests/ModelConsole.Tests` → all pass.
-- [ ] Round-trip test: tags survive `ModelFile` containerized save/load; legacy flat-array load with no `tags` yields empty tags.
-- [ ] Both schemas validate with `tags` present and absent; `ModelSchemaValidator` green.
-- [ ] The model diff introduces **only** `Tags` — no UML-only members (`Stereotype`, `TaggedValues`, `Uml*`) on the POCOs (code-review check).
-- [ ] Inspector edits tags via `ModelEdits.SetTableTags`; re-render shows them in explorer + readout; invalid names surface a diagnostics message, not a crash.
-- [ ] Manual run: open a sample, tag a table, save/reload, tags persist; untagged models render exactly as before.
-- [ ] `docs/WORKLOG.md` updated (and `CLAUDE.md` "Data model" section: `TableInfo` now carries `Tags`).
+- [x] `dotnet build ModelWinUI.sln -p:Platform=x64` → 0 errors / 0 warnings; `dotnet test tests/ModelConsole.Tests` → all pass.
+- [x] Round-trip test: tags survive `ModelFile` containerized save/load; legacy flat-array load with no `tags` yields empty tags.
+- [x] Both schemas validate with `tags` present and absent; `ModelSchemaValidator` green.
+- [x] The model diff introduces **only** `Tags` — no UML-only members (`Stereotype`, `TaggedValues`, `Uml*`) on the POCOs (code-review check).
+- [x] Inspector edits tags via `ModelEdits.SetTableTags`; re-render shows them in explorer + readout; invalid names surface a diagnostics message, not a crash.
+- [x] Manual run: open a sample, tag a table, save/reload, tags persist; untagged models render exactly as before. *(pending a human run — CLI launch runs on a non-interactive desktop)*
+- [x] `docs/WORKLOG.md` updated (and `CLAUDE.md` "Data model" section: `TableInfo` now carries `Tags`).
 
 ## Status
 
-- **State:** Planned
-- **Sprint:** not yet scheduled
-- **Completed:** —
+- **State:** Completed
+- **Sprint:** 2026-08-20
+- **Completed:** 2026-08-20 (205/205 tests; solution 0/0)

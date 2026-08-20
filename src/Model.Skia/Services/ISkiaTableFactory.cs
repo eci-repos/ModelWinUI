@@ -20,8 +20,10 @@ namespace ModelConsole.Skia.Services
       /// <param name="y">y lower-left</param>
       /// <param name="bannerHeight">top banner height</param>
       /// <param name="table">table information</param>
+      /// <param name="hovered">when true, the border draws the hovered accent
+      /// (backlog 041); false (default) draws the rest-state border</param>
       /// <returns>the created Table instance is returned</returns>
       Table Create(GlFrame frame, float x, float y,
-         float bannerHeight, TableInfo table);
+         float bannerHeight, TableInfo table, bool hovered = false);
    }
 }

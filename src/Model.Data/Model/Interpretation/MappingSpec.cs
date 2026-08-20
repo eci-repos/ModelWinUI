@@ -129,6 +129,13 @@ namespace Model.Interpretation
       public string DescriptionField { get; set; } = "description";
 
       /// <summary>
+      /// Optional field carrying the entity's tags array (backlog 037):
+      /// UML-ready labels captured verbatim into <see cref="Model.Data.TableInfo.Tags"/>.
+      /// Absent (null) means no tags are captured.
+      /// </summary>
+      public string TagsField { get; set; }
+
+      /// <summary>
       /// Optional field carrying the entity's provenance object (backlog 026):
       /// where this entity came from, at what version. Absent (null) means no
       /// per-entity provenance is captured.

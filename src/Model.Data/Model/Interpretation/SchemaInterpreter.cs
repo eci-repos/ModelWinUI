@@ -314,6 +314,33 @@ namespace Model.Interpretation
          if (!string.IsNullOrEmpty(containerSpec.DescriptionField))
             table.Description = ReadField(slot.Element, containerSpec.DescriptionField);
 
+         // Backlog 037: an entity's tags, when the source declares one. A
+         // present-but-malformed tags field is an issue, never a silent drop
+         // (the provenance and metadata readings set the same rule).
+         if (!string.IsNullOrEmpty(containerSpec.TagsField))
+         {
+            var tagsEl = FindField(slot.Element, containerSpec.TagsField);
+            if (tagsEl != null && tagsEl.Value.ValueKind != JsonValueKind.Null)
+            {
+               if (tagsEl.Value.ValueKind == JsonValueKind.Array)
+               {
+                  var tags = new List<string>();
+                  foreach (var item in tagsEl.Value.EnumerateArray())
+                  {
+                     if (item.ValueKind == JsonValueKind.String)
+                        tags.Add(item.GetString());
+                     else
+                        result.Issues.Add($"{slot.Name}: a tag is not a string.");
+                  }
+                  if (tags.Count > 0) table.Tags = tags;
+               }
+               else
+               {
+                  result.Issues.Add($"{slot.Name}: tags is not an array.");
+               }
+            }
+         }
+
          // Backlog 026: an entity's provenance, when the source declares one.
          // A present-but-malformed provenance is an issue, never a silent drop
          // (the model-level provenance reading sets the same rule).

@@ -32,14 +32,18 @@ namespace ModelConsole.Skia.GLibrary
         }
 
         /// <summary>
-        /// Initialize canvas with white color and setup coordinate system by
-        /// changing the origin on the left-bottom of the drawing area.
+        /// Initialize canvas and setup coordinate system by changing the
+        /// origin on the left-bottom of the drawing area.
         /// </summary>
         /// <param name="surface">surface</param>
-        public GlFrame(SKSurface surface)
+        /// <param name="backgroundColor">the surface clear color (default:
+        /// white). The drawing surface background (backlog 041) comes from
+        /// the host — e.g. the renderer-bar drop-down — so each paint clears
+        /// to the chosen color.</param>
+        public GlFrame(SKSurface surface, SKColor? backgroundColor = null)
         {
             canvas = surface.Canvas;
-            canvas.Clear(SKColors.White);
+            canvas.Clear(backgroundColor ?? SKColors.White);
             canvas.GetDeviceClipBounds(out SKRectI b);
             //canvas.Scale(1, -1);
             //canvas.Translate(0, -b.Height);

@@ -13,6 +13,8 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 
+using Windows.UI;
+
 using Model.Data;
 using ModelConsole.Graph;
 
@@ -91,6 +93,24 @@ namespace ModelConsole.Controls
          ModelPanel.SetModel(tables, enumerations);
          ExplorerPanel.SetModel(tables);
          InspectorPanel.ShowModel(provenance, metadata);
+      }
+
+      /// <summary>
+      /// The drawing-surface (canvas) background color (backlog 041) —
+      /// forwarded to the drawing panel and to the explorer, diagnostics, and
+      /// inspector work panels, so the app's renderer bar "Base:" selection
+      /// tints the whole XAML workspace through this control.
+      /// </summary>
+      public Color BackgroundColor
+      {
+         get { return ModelPanel.BackgroundColor; }
+         set
+         {
+            ModelPanel.BackgroundColor = value;
+            ExplorerPanel.BackgroundColor = value;
+            DiagnosticsPanel.BackgroundColor = value;
+            InspectorPanel.BackgroundColor = value;
+         }
       }
 
       /// <summary>Whether the left panel (model explorer) is currently shown.</summary>

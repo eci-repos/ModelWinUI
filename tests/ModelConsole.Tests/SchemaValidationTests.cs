@@ -103,6 +103,26 @@ namespace ModelConsole.Tests
       }
 
       [Fact]
+      public void TagsArrayValidatesAgainstBothSchemas()
+      {
+         // Backlog 037: both representations' schemas accept a tags array on
+         // a table/entity, and reject a non-string tag.
+         string arrayJson = """
+            [ { "TableName": "Incident", "Tags": [ "Core", "uml" ], "Columns": [] } ]
+            """;
+         Assert.Empty(ModelSchemaValidator.Validate(arrayJson, ReadSchema("array.schema.json")));
+         Assert.NotEmpty(ModelSchemaValidator.Validate(
+            "[ { \"TableName\": \"A\", \"Tags\": [ 42 ] } ]", ReadSchema("array.schema.json")));
+
+         string groupedJson = """
+            { "entities": { "Incident": { "tags": [ "Core", "uml" ], "Elements": [] } } }
+            """;
+         Assert.Empty(ModelSchemaValidator.Validate(groupedJson, ReadSchema("grouped.schema.json")));
+         Assert.NotEmpty(ModelSchemaValidator.Validate(
+            "{ \"entities\": { \"A\": { \"tags\": [ 42 ] } } }", ReadSchema("grouped.schema.json")));
+      }
+
+      [Fact]
       public void UnparseableJsonIsReportedAsAViolationNotThrown()
       {
          // Validation never throws — even a document that is not JSON at all

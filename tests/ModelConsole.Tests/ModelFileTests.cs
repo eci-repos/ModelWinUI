@@ -187,6 +187,44 @@ namespace ModelConsole.Tests
          Assert.Null(patient.Columns.Single(c => c.ColumnName == "ID").Description);
       }
 
+      // -------- Tags (backlog 037) ---------------------------------------
+
+      [Fact]
+      public void TableTagsRoundTripThroughModelFile()
+      {
+         var tables = new[]
+         {
+            new TableInfo
+            {
+               SchemaName = "dbo",
+               TableName = "Incident",
+               Tags = new List<string> { "Core", "uml", "audit" },
+               Columns = new ColumnList
+               {
+                  new ColumnInfo { ColumnName = "ID", Type = "int", IsKey = true }
+               }
+            }
+         };
+
+         var json = ModelFile.ToJson(tables);
+         var loaded = ModelFile.LoadJson(json);
+
+         Assert.Equal(new[] { "Core", "uml", "audit" }, loaded.Single().Tags);
+      }
+
+      [Fact]
+      public void TableTagsStayNullWhenAbsent()
+      {
+         var tables = new[]
+         {
+            new TableInfo { TableName = "Patient", Columns = new ColumnList() }
+         };
+
+         var loaded = ModelFile.LoadJson(ModelFile.ToJson(tables));
+
+         Assert.Null(loaded.Single().Tags);
+      }
+
       private static IReadOnlyList<TableInfo> BuildFixture()
       {
          var parent = new TableInfo

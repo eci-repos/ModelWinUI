@@ -52,6 +52,10 @@
         "name": { "type": "string" },
         "schema": { "type": "string" },
         "description": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
         "provenance": { "$ref": "#/$defs/provenance" },
         "metadata": { "type": "object" },
         "Elements": { "$ref": "#/$defs/elements" }

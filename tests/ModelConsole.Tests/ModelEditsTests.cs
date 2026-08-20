@@ -289,6 +289,65 @@ namespace ModelConsole.Tests
       }
 
       [Fact]
+      public void SetTableTagsNormalizesAndApplies()
+      {
+         var table = new TableInfo { TableName = "Incident" };
+
+         var applied = ModelEdits.SetTableTags(
+            table, new[] { "  Core ", "", "core", "uml", " Core " }, out var rejected);
+
+         // Trimmed, blanks dropped, duplicates dropped (case-insensitive,
+         // first occurrence kept), order preserved.
+         Assert.Equal(new[] { "Core", "uml" }, applied);
+         Assert.Same(applied, table.Tags);
+         Assert.Empty(rejected);
+      }
+
+      [Fact]
+      public void SetTableTagsRejectsInvalidNames()
+      {
+         var table = new TableInfo { TableName = "Incident" };
+
+         var applied = ModelEdits.SetTableTags(
+            table, new[] { "Core", "1st", "has space", "has.dash", "ok-1", "ok_2" },
+            out var rejected);
+
+         Assert.Equal(new[] { "Core", "ok-1", "ok_2" }, applied);
+         Assert.Equal(new[] { "1st", "has space", "has.dash" }, rejected);
+      }
+
+      [Fact]
+      public void SetTableTagsNullInputClears()
+      {
+         var table = new TableInfo
+         {
+            TableName = "Incident",
+            Tags = new List<string> { "Core" }
+         };
+
+         ModelEdits.SetTableTags(table, null, out var rejected);
+
+         Assert.Empty(table.Tags);
+         Assert.Empty(rejected);
+      }
+
+      [Theory]
+      [InlineData("Core", true)]
+      [InlineData("ok_1", true)]
+      [InlineData("ok-1", true)]
+      [InlineData("camelCaseTag", true)]
+      [InlineData("1st", false)]
+      [InlineData("has space", false)]
+      [InlineData("has.dot", false)]
+      [InlineData("has,comma", false)]
+      [InlineData("", false)]
+      [InlineData(null, false)]
+      public void IsValidTagNameEnforcesUmlIdentifier(string tag, bool valid)
+      {
+         Assert.Equal(valid, ModelEdits.IsValidTagName(tag));
+      }
+
+      [Fact]
       public void RemoveTableThenExtractReportsDanglingFks()
       {
          var parent = new TableInfo

@@ -28,6 +28,7 @@
     <ProjectReference Include="..\Model.Geometry\Model.Geometry.csproj" />
     <ProjectReference Include="..\Model.Data\Model.Data.csproj" />
     <ProjectReference Include="..\Model.Graph\Model.Graph.csproj" />
+    <ProjectReference Include="..\Model.Palette\Model.Palette.csproj" />
   </ItemGroup>
 
 </Project>

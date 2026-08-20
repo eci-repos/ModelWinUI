@@ -636,6 +636,92 @@ namespace ModelConsole.Tests
          Assert.Equal("legacy", table.Columns.Single().Extensions["sourceSystem"]);
       }
 
+      // -------- Tags (backlog 037) -----------------------------------------
+
+      [Fact]
+      public void GroupedProfileCapturesTags()
+      {
+         const string json = """
+            {
+               "entities": {
+                  "Incident": {
+                     "tags": [ "Core", "uml", "audit" ],
+                     "Elements": [
+                        { "name": "Id", "type": "int" }
+                     ]
+                  }
+               }
+            }
+            """;
+
+         var result = SchemaInterpreter.Interpret(json, BuiltInProfiles.Grouped);
+
+         Assert.Empty(result.Issues);
+         Assert.Equal(new[] { "Core", "uml", "audit" }, result.Tables.Single().Tags);
+      }
+
+      [Fact]
+      public void ArrayProfileCapturesTagsFromPascalCaseField()
+      {
+         const string json = """
+            [
+               {
+                  "TableName": "Incident",
+                  "Tags": [ "Core", "uml" ],
+                  "Columns": [
+                     { "ColumnName": "Id", "Type": "int", "IsKey": true }
+                  ]
+               }
+            ]
+            """;
+
+         var result = SchemaInterpreter.Interpret(json, BuiltInProfiles.Array);
+
+         Assert.Empty(result.Issues);
+         Assert.Equal(new[] { "Core", "uml" }, result.Tables.Single().Tags);
+      }
+
+      [Fact]
+      public void MalformedTagsFieldIsAnIssueNotASilentDrop()
+      {
+         const string json = """
+            {
+               "entities": {
+                  "Incident": {
+                     "tags": "not-an-array",
+                     "Elements": [ { "name": "Id", "type": "int" } ]
+                  }
+               }
+            }
+            """;
+
+         var result = SchemaInterpreter.Interpret(json, BuiltInProfiles.Grouped);
+
+         Assert.Contains(result.Issues, i => i.Contains("tags is not an array"));
+         Assert.Null(result.Tables.Single().Tags);
+      }
+
+      [Fact]
+      public void NonStringTagItemIsAnIssue()
+      {
+         const string json = """
+            {
+               "entities": {
+                  "Incident": {
+                     "tags": [ "Core", 42 ],
+                     "Elements": [ { "name": "Id", "type": "int" } ]
+                  }
+               }
+            }
+            """;
+
+         var result = SchemaInterpreter.Interpret(json, BuiltInProfiles.Grouped);
+
+         Assert.Contains(result.Issues, i => i.Contains("a tag is not a string"));
+         // The valid string tag is still captured.
+         Assert.Equal(new[] { "Core" }, result.Tables.Single().Tags);
+      }
+
       // -------- Spec reader ------------------------------------------------
 
       [Fact]

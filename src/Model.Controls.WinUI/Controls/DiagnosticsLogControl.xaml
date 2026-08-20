@@ -9,7 +9,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-   <Grid BorderBrush="{ThemeResource ControlBorderBrush}" BorderThickness=".5">
+   <Grid x:Name="RootGrid" BorderBrush="{ThemeResource ControlBorderBrush}" BorderThickness=".5">
       <Grid.ColumnDefinitions>
          <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
@@ -25,7 +25,7 @@
                        Click="ClearViewButton_Click" ToolTipService.ToolTip="Clean all Entries"/>
       </StackPanel>
 
-      <ListView ItemsSource="{x:Bind m_ViewModel.Items}" VerticalAlignment="top" 
+      <ListView x:Name="LogList" ItemsSource="{x:Bind m_ViewModel.Items}" VerticalAlignment="top"
              HorizontalAlignment="Stretch"
              ScrollViewer.VerticalScrollBarVisibility="Visible"
              ScrollViewer.VerticalScrollMode="Auto"

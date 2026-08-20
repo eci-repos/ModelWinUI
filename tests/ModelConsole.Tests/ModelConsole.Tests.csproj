@@ -18,6 +18,7 @@
     <ProjectReference Include="..\..\src\Model.Geometry\Model.Geometry.csproj" />
     <ProjectReference Include="..\..\src\Model.Graph\Model.Graph.csproj" />
     <ProjectReference Include="..\..\src\Model.Skia\Model.Skia.csproj" />
+    <ProjectReference Include="..\..\src\Model.Palette\Model.Palette.csproj" />
   </ItemGroup>
 
   <!-- Shipped sample models (backlog 005): copied into the test output so

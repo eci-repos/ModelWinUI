@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Model.Data;
+using ModelConsole.Palette;
 using ModelConsole.Skia.GLibrary;
 
 namespace ModelConsole.Skia.Primitives
@@ -44,6 +45,32 @@ namespace ModelConsole.Skia.Primitives
 
         private TableInfo _table;
 
+        /// <summary>
+        /// Table kind, captured when the table is set — colors the banner and
+        /// footer bands (defaults to entity for the geometry-only constructors
+        /// that have no metadata).
+        /// </summary>
+        private TableKind _kind = TableKind.Entity;
+
+        /// <summary>
+        /// True while the pointer is over this table (backlog 041): the border
+        /// draws the DodgerBlue accent, thicker, so the hovered card reads at
+        /// a glance (mirrors the XAML table's live Hovered toggle — the Skia
+        /// stack redraws, so it is set before each draw instead).
+        /// </summary>
+        private bool _hovered;
+
+        /// <summary>
+        /// Whether this table is hovered (backlog 041). The border color and
+        /// width are picked from the shared <see cref="TablePalette"/> when the
+        /// table draws — rest neutral, hovered accent.
+        /// </summary>
+        public bool Hovered
+        {
+            get { return _hovered; }
+            set { _hovered = value; }
+        }
+
         private Panel _panel = new Panel();
         private List<TablePanel> _panels = new List<TablePanel>();
 
@@ -79,6 +106,7 @@ namespace ModelConsole.Skia.Primitives
         public void SetTable(TableInfo table)
         {
             _table = table;
+            _kind = TableKindClassifier.Classify(table);
             Copy(table);
             AddColumns(table.Columns);
         }
@@ -151,7 +179,12 @@ namespace ModelConsole.Skia.Primitives
             _panel.width = maxLength + _frame.DefaultTextPanelPadding * 2 +
                maxTypeLength + _frame.DefaultTextPanelPadding * 2 +
                _leftPadding + _rightPadding;
-            _panel.height = y + _cornerRadious - _panel.y;
+            // The footer band (backlog 036) is part of the measured height —
+            // one shared F for both renderers, so the XAML and Skia tables
+            // close identically. Row Y positions are unchanged; only the
+            // bottom budget grows.
+            _panel.height = y + _cornerRadious - _panel.y +
+               TablePalette.FooterHeight;
         }
 
         /// <summary>
@@ -252,15 +285,30 @@ namespace ModelConsole.Skia.Primitives
             _frame.Canvas.Save();
             _frame.Canvas.Concat(GlFrame.GetOriginTransformMatrix(cx, cy));
 
-            //spHalfRec.DrawBottom(
-            //   _panel.x, _panel.y, _panel.width, dy, _cornerRadious);
-            spHalfRec.DrawTop(
-               _panel.x, dy, _panel.width, _bannerHeight, _cornerRadious);
+            // Banner and footer bands, both tinted from the shared palette by
+            // table kind (backlog 036). The footer was anticipated here —
+            // RectangleHalf.DrawBottom existed but was never wired in.
+            spHalfRec.DrawTop(_panel.x, dy, _panel.width, _bannerHeight,
+               _cornerRadious, SKColor.Parse(TablePalette.BannerHex(_kind)));
+            spHalfRec.DrawBottom(_panel.x, _panel.y, _panel.width,
+               TablePalette.FooterHeight, _cornerRadious,
+               SKColor.Parse(TablePalette.FooterHex(_kind)));
+            // Card border (backlog 041): a thicker neutral line at rest, the
+            // DodgerBlue accent — thicker — while the table is hovered, both
+            // from the shared palette (parity with the XAML table).
             spHalfRec.DrawBorder(
-               _panel.x, _panel.y, _panel.width, _panel.height, _cornerRadious);
+               _panel.x, _panel.y, _panel.width, _panel.height, _cornerRadious,
+               SKColor.Parse(_hovered ? TablePalette.HoveredBorderHex : TablePalette.BorderHex),
+               _hovered ? TablePalette.HoveredBorderWidth : TablePalette.BorderWidth);
 
+            // Hairslines: under the banner where the rows start, and over the
+            // footer where the last row meets it.
             _frame.Canvas.DrawLine(
                _panel.x, dy, _panel.x + _panel.width, dy, _frame.DefaultStroke);
+            _frame.Canvas.DrawLine(
+               _panel.x, _panel.y + TablePalette.FooterHeight,
+               _panel.x + _panel.width, _panel.y + TablePalette.FooterHeight,
+               _frame.DefaultStroke);
 
             //_frame.Canvas.DrawCircle(cx, cy, 5, _frame.DefaultStroke);
 
@@ -308,14 +356,30 @@ namespace ModelConsole.Skia.Primitives
             DrawBorders();
             DrawBannerText(_table.SchemaName, _table.TableName);
 
+            // Kind-tinted body rows (backlog 036): the alternating stripe
+            // carries a whisper of the banner hue; the plain row stays white.
+            // Before this the two row paints were both #efefef, so the Skia
+            // table showed no alternation.
+            var stripePaint = new SKPaint
+            {
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill,
+                Color = SKColor.Parse(TablePalette.StripeHex(_kind))
+            };
+            var plainPaint = new SKPaint
+            {
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill,
+                Color = SKColor.Parse(TablePalette.PlainRowHex)
+            };
+
             SKPoint p = new SKPoint();
             SKPaint paint;
             bool everyOther = true;
             foreach (var i in _panels)
             {
                 // fill everyother
-                paint = everyOther ?
-                   _frame.DefaultLightFill : _frame.DefaultLightStroke;
+                paint = everyOther ? stripePaint : plainPaint;
                 everyOther = !everyOther;
 
                 _frame.Canvas.DrawRect(
@@ -356,6 +420,9 @@ namespace ModelConsole.Skia.Primitives
                    p.X, p.Y, SKTextAlign.Left, _frame.DefaultFont,
                    _frame.DefaultTextPaint);
             }
+
+            stripePaint.Dispose();
+            plainPaint.Dispose();
         }
 
         /// <summary>

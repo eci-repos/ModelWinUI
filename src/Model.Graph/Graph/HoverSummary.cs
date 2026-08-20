@@ -17,9 +17,9 @@ namespace ModelConsole.Graph
 
       /// <summary>
       /// Hover readout for a table: the "schema::table" header, the entity's
-      /// description (when it has one), its column count, its PK/FK counts
-      /// (when any), and its provenance (when present). Empty when the table
-      /// is null.
+      /// description (when it has one), its tags (backlog 037, when any), its
+      /// column count, its PK/FK counts (when any), and its provenance (when
+      /// present). Empty when the table is null.
       /// </summary>
       public static IReadOnlyList<string> ForTable(TableInfo table)
       {
@@ -31,6 +31,11 @@ namespace ModelConsole.Graph
          if (!string.IsNullOrEmpty(table.Description))
          {
             lines.Add(table.Description);
+         }
+
+         if (table.Tags != null && table.Tags.Count > 0)
+         {
+            lines.Add("Tags: " + string.Join(", ", table.Tags));
          }
 
          int columns = table.Columns?.Count ?? 0;

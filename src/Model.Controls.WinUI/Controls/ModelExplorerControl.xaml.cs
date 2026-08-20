@@ -4,9 +4,14 @@ using System.Linq;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+
+using Windows.UI;
 
 using Model.Data;
+using ModelConsole.Controls.Helpers;
 using ModelConsole.Graph;
+using ModelConsole.Palette;
 
 namespace ModelConsole.Controls
 {
@@ -30,9 +35,41 @@ namespace ModelConsole.Controls
       private readonly Dictionary<TreeViewNode, TableInfo> _nodeTables =
          new Dictionary<TreeViewNode, TableInfo>();
 
+      /// <summary>
+      /// The explorer's panel color (backlog 041) — the tree area follows the
+      /// drawing-surface "Base:" color the renderer bar selects; defaults to
+      /// the shared canvas background (white).
+      /// </summary>
+      private Color _backgroundColor =
+         HexColor.FromHex(TablePalette.CanvasBackgroundHex);
+
       public ModelExplorerControl()
       {
          this.InitializeComponent();
+
+         // The header keeps its pastel chrome; the tree body (root + the
+         // TreeView itself) paints the base color so the working area matches
+         // the drawing surface and the other work panels.
+         RootGrid.Background = new SolidColorBrush(_backgroundColor);
+         ModelTree.Background = new SolidColorBrush(_backgroundColor);
+      }
+
+      /// <summary>
+      /// The explorer's background color (backlog 041) — follows the renderer
+      /// bar's "Base:" selection, defaulting to white.
+      /// </summary>
+      public Color BackgroundColor
+      {
+         get { return _backgroundColor; }
+         set
+         {
+            _backgroundColor = value;
+            if (RootGrid != null)
+            {
+               RootGrid.Background = new SolidColorBrush(value);
+               ModelTree.Background = new SolidColorBrush(value);
+            }
+         }
       }
 
       /// <summary>
@@ -59,7 +96,9 @@ namespace ModelConsole.Controls
          {
             var tableNode = new TreeViewNode
             {
-               Content = table.TableName + " (" + table.Columns.Count + " columns)"
+               Content = table.TableName + " (" + table.Columns.Count + " columns)" +
+                         (table.Tags != null && table.Tags.Count > 0
+                            ? "  [" + string.Join(", ", table.Tags) + "]" : "")
             };
             _tableNodes[table.TableName] = tableNode;
             _nodeTables[tableNode] = table;

@@ -9,10 +9,16 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
 using Windows.System;
+using Windows.UI;
+
+using CommunityToolkit.Mvvm.DependencyInjection;
 
 using Model.Data;
+using ModelConsole.Controls.Helpers;
+using ModelConsole.Diagnostics;
 using ModelConsole.Editing;
 using ModelConsole.Graph;
+using ModelConsole.Palette;
 
 namespace ModelConsole.Controls
 {
@@ -81,9 +87,49 @@ namespace ModelConsole.Controls
       /// <summary>The model's enumerations, for the value-set readout (backlog 021).</summary>
       private IReadOnlyDictionary<string, Enumeration> _enumerations;
 
+      /// <summary>
+      /// The inspector's panel color (backlog 041) — the body follows the
+      /// drawing-surface "Base:" color the renderer bar selects; defaults to
+      /// the shared canvas background (white).
+      /// </summary>
+      private Color _backgroundColor =
+         HexColor.FromHex(TablePalette.CanvasBackgroundHex);
+
+      /// <summary>
+      /// The diagnostics channel (backlog 037): rejected tag names surface
+      /// here as a message, never as a crash. Resolved lazily at first use.
+      /// </summary>
+      private ILogService m_Log;
+
       public EntityInspectorControl()
       {
          this.InitializeComponent();
+
+         // The header keeps its pastel chrome; the body (root + content
+         // panel) paints the base color so the working area matches the
+         // drawing surface.
+         RootGrid.Background = new SolidColorBrush(_backgroundColor);
+         ContentPanel.Background = new SolidColorBrush(_backgroundColor);
+
+         m_Log = Ioc.Default.GetRequiredService<ILogService>();
+      }
+
+      /// <summary>
+      /// The inspector's background color (backlog 041) — follows the
+      /// renderer bar's "Base:" selection, defaulting to white.
+      /// </summary>
+      public Color BackgroundColor
+      {
+         get { return _backgroundColor; }
+         set
+         {
+            _backgroundColor = value;
+            if (RootGrid != null)
+            {
+               RootGrid.Background = new SolidColorBrush(value);
+               ContentPanel.Background = new SolidColorBrush(value);
+            }
+         }
       }
 
       /// <summary>
@@ -163,6 +209,46 @@ namespace ModelConsole.Controls
             ContentPanel.Children.Add(new TextBlock
             {
                Text = table.Description,
+               FontSize = 12,
+               Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+               TextWrapping = TextWrapping.WrapWholeWords,
+               Margin = new Thickness(0, 0, 0, 6)
+            });
+         }
+
+         // Tags editor (backlog 037): a comma-separated list of UML-ready
+         // labels, committed through ModelEdits.SetTableTags (normalization +
+         // identifier validation; rejected names surface on the diagnostics
+         // log, never a crash).
+         if (verbs.CanEditTags)
+         {
+            ContentPanel.Children.Add(new TextBlock
+            {
+               Text = "Tags (comma-separated)",
+               FontWeight = FontWeights.SemiBold,
+               FontSize = 12
+            });
+            var tagsBox = new TextBox
+            {
+               Text = table.Tags != null ? string.Join(", ", table.Tags) : "",
+               FontSize = 12
+            };
+            tagsBox.KeyDown += (s, e) =>
+            {
+               if (e.Key == VirtualKey.Enter)
+               {
+                  CommitTags(table, tagsBox);
+                  e.Handled = true;
+               }
+            };
+            tagsBox.LostFocus += (s, e) => CommitTags(table, tagsBox);
+            ContentPanel.Children.Add(tagsBox);
+         }
+         else if (table.Tags != null && table.Tags.Count > 0)
+         {
+            ContentPanel.Children.Add(new TextBlock
+            {
+               Text = "Tags: " + string.Join(", ", table.Tags),
                FontSize = 12,
                Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
                TextWrapping = TextWrapping.WrapWholeWords,
@@ -1016,6 +1102,40 @@ namespace ModelConsole.Controls
             ModelEdits.SetDescription(table, box.Text);
             ModelEdited?.Invoke(this, EventArgs.Empty);
          }
+      }
+
+      /// <summary>
+      /// Commit the comma-separated tags text through
+      /// <see cref="ModelEdits.SetTableTags"/> (normalization + identifier
+      /// validation) and ask for a re-render when the set changed. Rejected
+      /// names surface on the diagnostics log — never a crash — and the box is
+      /// rewritten to the applied (normalized) list.
+      /// </summary>
+      private void CommitTags(TableInfo table, TextBox box)
+      {
+         var parts = (box.Text ?? "").Split(',')
+            .Select(s => s.Trim())
+            .Where(s => s.Length > 0)
+            .ToArray();
+
+         bool unchanged =
+            table.Tags != null && table.Tags.Count == parts.Length &&
+            table.Tags.SequenceEqual(parts, StringComparer.OrdinalIgnoreCase);
+         if (unchanged)
+         {
+            return;
+         }
+
+         var applied = ModelEdits.SetTableTags(table, parts, out var rejected);
+         if (rejected.Count > 0)
+         {
+            m_Log?.WriteMessage("table '" + table.TableName + "': tag(s) '" +
+               string.Join("', '", rejected) +
+               "' rejected — use letters, digits, '_' or '-', no leading digit.");
+         }
+
+         box.Text = string.Join(", ", applied);
+         ModelEdited?.Invoke(this, EventArgs.Empty);
       }
 
       /// <summary>

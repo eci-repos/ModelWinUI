@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage.Pickers;
+using Windows.UI;
 
 using CommunityToolkit.Mvvm.DependencyInjection;
 
@@ -22,6 +23,8 @@ using Model.Interpretation;
 using Model.Validation;
 using ModelConsole.Diagnostics;
 using ModelConsole.ModelData;
+using ModelConsole.Controls.Helpers;
+using ModelConsole.Palette;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -33,6 +36,20 @@ namespace ModelWinUI
    /// </summary>
    public sealed partial class MainWindow : Window
    {
+      /// <summary>
+      /// Index of the currently applied "Base:" preset in the renderer-bar
+      /// drop-down (backlog 041); "Custom…" reverts to it while the color
+      /// picker is open.
+      /// </summary>
+      private int _backgroundPresetIndex = 0;
+
+      /// <summary>
+      /// The applied drawing-surface background color (the last preset or the
+      /// custom picker result); the picker opens seeded with it.
+      /// </summary>
+      private Color _currentBackgroundColor =
+         HexColor.FromHex(TablePalette.CanvasBackgroundHex);
+
       public MainWindow()
       {
          this.InitializeComponent();
@@ -68,6 +85,65 @@ namespace ModelWinUI
          SkiaToggle.IsChecked = skia;
          XamlEditor.Visibility = skia ? Visibility.Collapsed : Visibility.Visible;
          SkiaEditor.Visibility = skia ? Visibility.Visible : Visibility.Collapsed;
+      }
+
+      /// <summary>
+      /// Renderer-bar "Base:" drop-down (backlog 041): apply the selected
+      /// preset to both renderers. "Custom…" opens the WinUI color picker
+      /// (seeded with the current color) and applies its result; the combo
+      /// reverts to the last preset while the picker is open so its selection
+      /// stays meaningful.
+      /// </summary>
+      private void BackgroundCombo_SelectionChanged(
+         object sender, SelectionChangedEventArgs e)
+      {
+         var item = BackgroundComboBox.SelectedItem as ComboBoxItem;
+         if (item == null)
+         {
+            return;
+         }
+
+         string tag = item.Tag as string;
+         if (tag == "custom")
+         {
+            BackgroundComboBox.SelectedIndex = _backgroundPresetIndex;
+            var picker = new ColorPicker
+            {
+               Color = _currentBackgroundColor,
+               IsAlphaEnabled = false
+            };
+            var flyout = new Flyout
+            {
+               Content = picker,
+               XamlRoot = RootGrid.XamlRoot
+            };
+            picker.ColorChanged += (s, args) => ApplyBackgroundColor(args.NewColor);
+            flyout.ShowAt(BackgroundComboBox);
+            return;
+         }
+
+         if (tag != null)
+         {
+            _backgroundPresetIndex = BackgroundComboBox.SelectedIndex;
+            ApplyBackgroundColor(HexColor.FromHex(tag));
+         }
+      }
+
+      /// <summary>
+      /// Apply the drawing-surface base color to both renderers — the XAML
+      /// editor and the Skia render honor the same color (backlog 041). The
+      /// assignments are null-guarded because the "Base:" ComboBox's initial
+      /// <c>IsSelected</c> fires <see cref="ComboBox.SelectionChanged"/>
+      /// during <c>InitializeComponent</c>, before the row-2 editor controls
+      /// are constructed — the initial selection (White) matches their default
+      /// (<c>TablePalette.CanvasBackgroundHex</c>), so that early fire is a
+      /// safe no-op.
+      /// </summary>
+      private void ApplyBackgroundColor(Color color)
+      {
+         _currentBackgroundColor = color;
+         XamlEditor?.BackgroundColor = color;
+         SkiaEditor?.BackgroundColor = color;
       }
 
       /// <summary>

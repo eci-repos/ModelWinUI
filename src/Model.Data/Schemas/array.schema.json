@@ -43,6 +43,10 @@
         "SchemaName": { "type": [ "string", "null" ] },
         "TableName": { "type": "string" },
         "Description": { "type": [ "string", "null" ] },
+        "Tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
         "Columns": {
           "type": "array",
           "items": { "$ref": "#/$defs/column" }

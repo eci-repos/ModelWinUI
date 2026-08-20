@@ -54,6 +54,7 @@ namespace Model.Interpretation
                NameField = "TableName",
                SchemaField = "SchemaName",
                DescriptionField = "Description",
+               TagsField = "Tags",
                ElementsField = "Columns",
             },
             // The containerized database representation (backlog 023):
@@ -116,6 +117,7 @@ namespace Model.Interpretation
                NameField = "name",
                SchemaField = "schema",
                DescriptionField = "description",
+               TagsField = "tags",
                ProvenanceField = "provenance",
                ElementsField = "Elements",
                MetadataField = "metadata",

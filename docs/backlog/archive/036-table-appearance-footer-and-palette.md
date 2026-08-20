@@ -62,6 +62,6 @@ The ERD tables render as white rectangles with a thin pastel banner — flat and
 
 ## Status
 
-- **State:** Planned
-- **Sprint:** not yet scheduled
-- **Completed:** —
+- **State:** Completed
+- **Sprint:** sprint-2026-08-20-table-appearance-footer-and-palette
+- **Completed:** 2026-08-20 — footer band both renderers (shared F = 20, from the new `Model.Palette` `TablePalette`), kind-tinted banners + body stripes, one shared palette source; build 0/0, tests 181/181.

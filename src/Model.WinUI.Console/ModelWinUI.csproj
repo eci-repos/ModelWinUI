@@ -50,6 +50,7 @@
     <ProjectReference Include="..\Model.Data\Model.Data.csproj" />
     <ProjectReference Include="..\Model.Graph\Model.Graph.csproj" />
     <ProjectReference Include="..\Model.Graphics.WinUI\Model.Graphics.WinUI.csproj" />
+    <ProjectReference Include="..\Model.Palette\Model.Palette.csproj" />
     <ProjectReference Include="..\Model.Skia\Model.Skia.csproj" />
   </ItemGroup>
 

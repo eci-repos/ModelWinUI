@@ -48,6 +48,7 @@ namespace ModelConsole.Graph
       public bool CanEditType { get; }
       public bool CanEditKey { get; }
       public bool CanEditDescription { get; }
+      public bool CanEditTags { get; }
       public bool CanEditMetadata { get; }
       public bool CanAddForeignKey { get; }
       public bool CanEditTarget { get; }
@@ -59,7 +60,8 @@ namespace ModelConsole.Graph
          bool canRename = false, bool canAddColumn = false,
          bool canRemoveColumn = false, bool canEditType = false,
          bool canEditKey = false, bool canEditDescription = false,
-         bool canEditMetadata = false, bool canAddForeignKey = false,
+         bool canEditTags = false, bool canEditMetadata = false,
+         bool canAddForeignKey = false,
          bool canEditTarget = false, bool canEditCardinality = false,
          bool canEditRoles = false, bool canDelete = false)
       {
@@ -69,6 +71,7 @@ namespace ModelConsole.Graph
          CanEditType = canEditType;
          CanEditKey = canEditKey;
          CanEditDescription = canEditDescription;
+         CanEditTags = canEditTags;
          CanEditMetadata = canEditMetadata;
          CanAddForeignKey = canAddForeignKey;
          CanEditTarget = canEditTarget;
@@ -77,11 +80,11 @@ namespace ModelConsole.Graph
          CanDelete = canDelete;
       }
 
-      /// <summary>An entity: rename, add/remove columns, edit key/description, delete.</summary>
+      /// <summary>An entity: rename, add/remove columns, edit key/description/tags, delete.</summary>
       public static NodeVerbs Entity { get; } = new NodeVerbs(
          canRename: true, canAddColumn: true, canRemoveColumn: true,
-         canEditKey: true, canEditDescription: true, canEditMetadata: true,
-         canDelete: true);
+         canEditKey: true, canEditDescription: true, canEditTags: true,
+         canEditMetadata: true, canDelete: true);
 
       /// <summary>An element (column): rename, edit type/key/description, add an FK.</summary>
       public static NodeVerbs Element { get; } = new NodeVerbs(

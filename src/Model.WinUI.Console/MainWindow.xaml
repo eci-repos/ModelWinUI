@@ -41,8 +41,9 @@
       </Border>
 
       <!-- Slim renderer bar (backlog 003): switch the main view between the
-           XAML ERD (ModelEditorControl) and the Skia ERD (SkiaPanelControl).
-           Only one control is visible at a time. -->
+           XAML ERD (ModelEditorControl) and the Skia ERD (SkiaPanelControl). Only one
+           control is visible at a time. The "Base:" drop-down (backlog 041)
+           drives the drawing-surface background color on both renderers. -->
       <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8"
                   Margin="10,8"
                   Background="{ThemeResource RendererBarBackgroundBrush}">
@@ -51,6 +52,18 @@
                        IsChecked="True" Click="RendererToggle_Click" />
          <ToggleButton x:Name="SkiaToggle" Content="Skia render"
                        Click="RendererToggle_Click" />
+         <TextBlock Text="Base:" VerticalAlignment="Center" Margin="12,0,0,0" />
+         <ComboBox x:Name="BackgroundComboBox"
+                   MinWidth="110"
+                   VerticalAlignment="Center"
+                   ToolTipService.ToolTip="Drawing-surface (base) background color"
+                   SelectionChanged="BackgroundCombo_SelectionChanged">
+            <ComboBoxItem Content="White" Tag="#FFFFFF" IsSelected="True" />
+            <ComboBoxItem Content="Ivory" Tag="#FFFFF0" />
+            <ComboBoxItem Content="Mint" Tag="#F0FFF0" />
+            <ComboBoxItem Content="Light Gray" Tag="#E8EDF2" />
+            <ComboBoxItem Content="Custom…" Tag="custom" />
+         </ComboBox>
       </StackPanel>
 
       <Grid Grid.Row="2">

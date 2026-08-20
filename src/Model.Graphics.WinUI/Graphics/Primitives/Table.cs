@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 using Windows.Foundation;
 using Windows.UI;
@@ -10,6 +11,7 @@ using Microsoft.UI.Input;
 using Model.Data;
 using ModelConsole.Graphics.GLibrary;
 using ModelConsole.Graph;
+using ModelConsole.Palette;
 
 namespace ModelConsole.Graphics.Primitives
 {
@@ -30,6 +32,45 @@ namespace ModelConsole.Graphics.Primitives
 
       private TableInfo _table;
 
+      /// <summary>
+      /// True while the pointer is over this table (backlog 041): the border
+      /// draws the DodgerBlue accent, thicker, so the hovered card reads at a
+      /// glance (the same accent the selection outline and connector emphasis
+      /// use). Mutated live on the drawn instance — hover never re-renders.
+      /// </summary>
+      private bool _hovered;
+
+      /// <summary>
+      /// Whether this table is hovered (backlog 041); the setter repaints the
+      /// card border from the shared <see cref="TablePalette"/> — rest neutral
+      /// or hovered accent.
+      /// </summary>
+      public bool Hovered
+      {
+         get { return _hovered; }
+         set
+         {
+            _hovered = value;
+            ApplyBorderAppearance();
+         }
+      }
+
+      /// <summary>
+      /// Stroke the card border from the shared palette: a soft neutral line
+      /// at rest, the DodgerBlue accent — thicker — while hovered.
+      /// </summary>
+      private void ApplyBorderAppearance()
+      {
+         if (NativeInstance == null)
+         {
+            return;
+         }
+         NativeInstance.Stroke = new SolidColorBrush(FromHex(
+            _hovered ? TablePalette.HoveredBorderHex : TablePalette.BorderHex));
+         NativeInstance.StrokeThickness =
+            _hovered ? TablePalette.HoveredBorderWidth : TablePalette.BorderWidth;
+      }
+
       private StackPanel _rowsPanel = new StackPanel();
       public List<TableRowPanel> Rows { get; set; } = new List<TableRowPanel>();
 
@@ -41,13 +82,26 @@ namespace ModelConsole.Graphics.Primitives
       private Border _headerBorder;
 
       /// <summary>
-      /// Header colors by table kind: light blue for entity tables, light
-      /// green for reference-code lookups.
+      /// Closing footer band (backlog 036) — a kind-tinted strip at the bottom
+      /// of the card, rounded to mirror the banner. Hit-test transparent like
+      /// the header so presses reach the table rectangle.
       /// </summary>
-      private static readonly Color EntityHeaderColor =
-         Color.FromArgb(255, 220, 233, 247);
-      private static readonly Color ReferenceHeaderColor =
-         Color.FromArgb(255, 226, 239, 218);
+      private Border _footerBorder;
+
+      /// <summary>
+      /// Convert a #RRGGBB hex string (from the shared
+      /// <see cref="TablePalette"/>) to a <see cref="Color"/>. The hex strings
+      /// in Model.Palette are the one source of table colors for both
+      /// renderers.
+      /// </summary>
+      private static Color FromHex(string hex)
+      {
+         hex = hex.TrimStart('#');
+         return Color.FromArgb(255,
+            Convert.ToByte(hex.Substring(0, 2), 16),
+            Convert.ToByte(hex.Substring(2, 2), 16),
+            Convert.ToByte(hex.Substring(4, 2), 16));
+      }
 
       /// <summary>
       /// The metadata this table renders. The columns list is shared with the
@@ -112,6 +166,11 @@ namespace ModelConsole.Graphics.Primitives
          {
             Canvas.SetLeft(_headerBorder, X);
             Canvas.SetTop(_headerBorder, Y);
+         }
+         if (_footerBorder != null)
+         {
+            Canvas.SetLeft(_footerBorder, X);
+            Canvas.SetTop(_footerBorder, Y + ComputedHeight - TablePalette.FooterHeight);
          }
       }
 
@@ -219,14 +278,17 @@ namespace ModelConsole.Graphics.Primitives
          }
 
          // The render size depends only on the column content, so it is known
-         // right after the columns are added (no XAML layout required).
+         // right after the columns are added (no XAML layout required). The
+         // footer band (backlog 036) replaces the old dead +40 tail — one
+         // shared F for both renderers, so the XAML and Skia tables close
+         // identically.
          double totalHeight = _bannerHeight + CornerRadius * 2;
          foreach (var row in Rows)
          {
             totalHeight += row.Height;
          }
          ComputedWidth = _column1Width + _column2Width + _column3Width + 22;
-         ComputedHeight = totalHeight + 40;
+         ComputedHeight = totalHeight + TablePalette.FooterHeight;
 
          _rowsPanel.Children.Clear();
       }
@@ -257,6 +319,13 @@ namespace ModelConsole.Graphics.Primitives
       /// </summary>
       public void DrawTable(GlContext frame)
       {
+         // Kind-tinted body (backlog 036): the alternating stripe carries a
+         // whisper of the banner hue so entity vs reference reads from the
+         // body, not just the banner; the plain row stays white.
+         var kind = TableKindClassifier.Classify(_table);
+         var stripeColor = FromHex(TablePalette.StripeHex(kind));
+         var plainColor = FromHex(TablePalette.PlainRowHex);
+
          bool everyOther = true;
          double height = _bannerHeight + CornerRadius * 2;
 
@@ -265,9 +334,7 @@ namespace ModelConsole.Graphics.Primitives
             // fill everyother
             everyOther = !everyOther;
 
-            i.SetBackground(
-               everyOther ? Microsoft.UI.Colors.WhiteSmoke : 
-                  Microsoft.UI.Colors.White);
+            i.SetBackground(everyOther ? stripeColor : plainColor);
 
             // draw constraint
             string constraint = null;
@@ -307,16 +374,19 @@ namespace ModelConsole.Graphics.Primitives
 
          SetInstance(X, Y, Width, Height, GlContext.DefaultRoundCorderRadious);
 
+         // The card border (backlog 041) comes from the shared palette — a
+         // thicker, neutral line replacing GlRectangle's hairline default —
+         // and the hovered accent when the pointer is over the table.
+         ApplyBorderAppearance();
+
          NativeInstance.Tag = this;
          frame.Instance.Children.Add(NativeInstance);
 
          // Header band: a pastel rectangle behind the banner text, colored by
-         // the table kind (entity vs reference code). Rounded on top to match
-         // the table's corner radius, square on the bottom where the rows
-         // start.
-         var kind = TableKindClassifier.Classify(_table);
-         var headerColor = kind == TableKind.ReferenceCode
-            ? ReferenceHeaderColor : EntityHeaderColor;
+         // the table kind (entity vs reference code) from the shared palette.
+         // Rounded on top to match the table's corner radius, square on the
+         // bottom where the rows start.
+         var headerColor = FromHex(TablePalette.BannerHex(kind));
          _headerBorder = new Border
          {
             Width = ComputedWidth,
@@ -329,6 +399,25 @@ namespace ModelConsole.Graphics.Primitives
          Canvas.SetLeft(_headerBorder, X);
          Canvas.SetTop(_headerBorder, Y);
          frame.Instance.Children.Add(_headerBorder);
+
+         // Footer band (backlog 036): closes the card banner → columns →
+         // footer. A deeper tone from the same kind family, rounded on the
+         // bottom corners to mirror the banner, with a hairline top edge where
+         // the last row meets it.
+         var footerColor = FromHex(TablePalette.FooterHex(kind));
+         _footerBorder = new Border
+         {
+            Width = ComputedWidth,
+            Height = TablePalette.FooterHeight,
+            Background = new SolidColorBrush(footerColor),
+            CornerRadius = new CornerRadius(0, 0, CornerRadius, CornerRadius),
+            BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.LightGray),
+            BorderThickness = new Thickness(0, 1, 0, 0),
+            IsHitTestVisible = false
+         };
+         Canvas.SetLeft(_footerBorder, X);
+         Canvas.SetTop(_footerBorder, Y + ComputedHeight - TablePalette.FooterHeight);
+         frame.Instance.Children.Add(_footerBorder);
 
          frame.Instance.Children.Add(_rowsPanel);
 

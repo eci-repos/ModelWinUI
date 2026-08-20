@@ -55,7 +55,11 @@
            ScrollViewer, so it is positioned in viewport px (the overlay fills
            the same cell as the ScrollViewer's viewport) and never intercepts
            pointer events (backlog 027). -->
-      <Grid Grid.Row="1">
+      <!-- The drawing surface (backlog 041): this grid's background is the
+           "base" color of the drawing model area — it shows through the
+           transparent GlCanvas and paints the area around the paper at low
+           zoom. The renderer-bar drop-down drives BackgroundColor. -->
+      <Grid x:Name="DrawingSurface" Grid.Row="1">
          <ScrollViewer x:Name="ModelScrollViewer"
                        HorizontalScrollBarVisibility="Hidden"
                        VerticalScrollBarVisibility="Hidden"

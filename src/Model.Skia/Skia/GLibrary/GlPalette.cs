@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using ModelConsole.Palette;
+
 namespace ModelConsole.Skia.GLibrary
 {
 
@@ -17,7 +19,6 @@ namespace ModelConsole.Skia.GLibrary
     {
         public const string DARK_GREEN = "#97C1A9";
         public const string GREEN = "#B7CFB7";
-        public const string LIGHT_GREEN = "#CCE2CB";
         public const string LIGHT_GRAY = "#EAEAEA";
 
         public const string LIGHT_BLUE = "#C7DBDA";
@@ -34,7 +35,11 @@ namespace ModelConsole.Skia.GLibrary
         // the same #6A5ACD SlateBlue the XAML path applies).
         public const string CONNECTOR_HOVER_BLUE = "#6A5ACD";
 
-        public static SKColor LightGreen = SKColor.Parse(LIGHT_GREEN);
+        // Table-banner green, now sourced from the shared table palette
+        // (backlog 036) — the old #CCE2CB hex retired with the Skia table
+        // renderer's move to kind-based banner colors.
+        public static SKColor LightGreen = SKColor.Parse(
+            TablePalette.ReferenceBannerHex);
 
         public static SKColor ConnectorStroke = SKColor.Parse(CONNECTOR_BLUE);
         public static SKColor ConnectorFill = SKColor.Parse(CONNECTOR_BLUE);
