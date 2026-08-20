@@ -21,9 +21,9 @@ using Microsoft.Extensions.DependencyInjection;
 using ModelConsole.Diagnostics;
 using ModelConsole.Graphics.GLibrary;
 using ModelConsole.Graphics.Services;
-using ModelConsole.Services;
+using ModelConsole.Controls.Services;
 using ModelConsole.Skia.Services;
-using ModelConsole.ViewModels;
+using ModelConsole.Controls.ViewModels;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

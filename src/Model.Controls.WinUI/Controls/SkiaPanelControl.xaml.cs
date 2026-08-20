@@ -26,7 +26,7 @@ using ModelConsole.Geometry;
 using ModelConsole.Skia.GLibrary;
 using ModelConsole.Skia.Primitives;
 using ModelConsole.Skia.Services;
-using ModelConsole.Services;
+using ModelConsole.Controls.Services;
 using CommunityToolkit.Mvvm.DependencyInjection;
 
 namespace ModelConsole.Controls

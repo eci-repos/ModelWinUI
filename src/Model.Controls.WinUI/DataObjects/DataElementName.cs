@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ModelConsole.Model.DataObjects
+namespace ModelConsole.Controls.DataObjects
 {
 
    public class DataElementName

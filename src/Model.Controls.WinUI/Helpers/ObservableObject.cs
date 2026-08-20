@@ -12,9 +12,9 @@ using Windows.ApplicationModel.Core;
 using Windows.Foundation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Dispatching;
-using ModelConsole.Model.DataObjects;
+using ModelConsole.Controls.DataObjects;
 
-namespace ModelConsole.Model.Helpers
+namespace ModelConsole.Controls.Helpers
 {
 
    /// <summary>

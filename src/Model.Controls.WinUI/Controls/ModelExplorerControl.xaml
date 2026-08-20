@@ -8,16 +8,19 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-   <Grid BorderBrush="#EDEDED" BorderThickness=".5">
+   <Grid BorderBrush="{ThemeResource ControlBorderBrush}" BorderThickness=".5">
       <Grid.RowDefinitions>
          <RowDefinition Height="Auto" />
          <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-      <Border Grid.Row="0" Background="#fbfbfb" BorderBrush="LightGray"
+      <Border Grid.Row="0"
+              Background="{ThemeResource ExplorerHeaderBackgroundBrush}"
+              BorderBrush="{ThemeResource ControlBorderBrush}"
               BorderThickness="1" Padding="8,6">
          <TextBlock x:Name="HeaderText" Text="Model Explorer"
-                    FontWeight="SemiBold" FontSize="13" />
+                    FontWeight="SemiBold" FontSize="13"
+                    Foreground="{ThemeResource ControlHeaderForegroundBrush}" />
       </Border>
 
       <TreeView x:Name="ModelTree" Grid.Row="1"

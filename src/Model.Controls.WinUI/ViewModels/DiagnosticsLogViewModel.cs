@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using ModelConsole.Model.Helpers;
+using ModelConsole.Controls.Helpers;
 using ModelConsole.Diagnostics;
 
-namespace ModelConsole.ViewModels
+namespace ModelConsole.Controls.ViewModels
 {
 
    public class DiagnosticsLogViewModel : ObservableObject

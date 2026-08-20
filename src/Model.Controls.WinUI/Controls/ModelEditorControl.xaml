@@ -30,8 +30,8 @@
            points at the panel while open (left) and back at the reopen
            button while collapsed (right). -->
       <Border Grid.Column="1" Grid.Row="0"
-              Background="#fbfbfb"
-              BorderBrush="LightGray"
+              Background="{ThemeResource EditorToggleStripBackgroundBrush}"
+              BorderBrush="{ThemeResource ControlBorderBrush}"
               BorderThickness="0,0,1,0">
          <Button x:Name="LeftPanelToggle" Click="ToggleLeftPanel_Click"
                  VerticalAlignment="Center"
@@ -62,8 +62,8 @@
            drawing reflows into the freed space. It lives in its own column
            so the button stays reachable while the panel is collapsed. -->
       <Border Grid.Column="3" Grid.Row="0"
-              Background="#fbfbfb"
-              BorderBrush="LightGray"
+              Background="{ThemeResource EditorToggleStripBackgroundBrush}"
+              BorderBrush="{ThemeResource ControlBorderBrush}"
               BorderThickness="1,0,0,0">
          <Button x:Name="RightPanelToggle" Click="ToggleRightPanel_Click"
                  VerticalAlignment="Center"

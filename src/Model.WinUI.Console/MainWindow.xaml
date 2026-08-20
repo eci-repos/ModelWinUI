@@ -20,7 +20,9 @@
            JSON file and renders it in both renderers. File → Open Sample
            (backlog 005) lists the shipped sample models; the submenu items
            are built in code-behind from SampleModels.All. -->
-      <MenuBar Grid.Row="0">
+      <MenuBar Grid.Row="0"
+               Background="{ThemeResource MenuBarBackgroundBrush}"
+               Foreground="{ThemeResource MenuBarForegroundBrush}">
          <MenuBarItem Title="File">
             <MenuFlyoutItem Text="Open Model…" Click="OpenModel_Click" />
             <MenuFlyoutSeparator />
@@ -32,7 +34,8 @@
            XAML ERD (ModelEditorControl) and the Skia ERD (SkiaPanelControl).
            Only one control is visible at a time. -->
       <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8"
-                  Margin="10,8">
+                  Margin="10,8"
+                  Background="{ThemeResource RendererBarBackgroundBrush}">
          <TextBlock Text="Renderer:" VerticalAlignment="Center" />
          <ToggleButton x:Name="XamlToggle" Content="XAML model"
                        IsChecked="True" Click="RendererToggle_Click" />

@@ -8,7 +8,13 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <!-- Other merged dictionaries here -->
+                <!-- Control chrome palette (backlog 035): the pastel header /
+                     menu / toolbar brushes the controls reference via
+                     {ThemeResource}. Lives in the controls library (backlog
+                     034) and is merged here from the library's compiled
+                     content (a referenced library's XAML lands in the app
+                     package under its project name). -->
+                <ResourceDictionary Source="ms-appx:///Model.Controls.WinUI/Themes/ControlTheme.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->
         </ResourceDictionary>

@@ -9,7 +9,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-   <Grid BorderBrush="#EDEDED" BorderThickness=".5">
+   <Grid BorderBrush="{ThemeResource ControlBorderBrush}" BorderThickness=".5">
       <Grid.ColumnDefinitions>
          <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
@@ -18,7 +18,8 @@
          <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
-      <StackPanel Background="#fbfbfb" BorderBrush="LightGray" BorderThickness="1"
+      <StackPanel Background="{ThemeResource DiagnosticsHeaderBackgroundBrush}"
+             BorderBrush="{ThemeResource ControlBorderBrush}" BorderThickness="1"
              Grid.Row="0" Grid.Column="0">
          <AppBarButton Icon="Clear" LabelPosition="Collapsed" Width="34"
                        Click="ClearViewButton_Click" ToolTipService.ToolTip="Clean all Entries"/>
@@ -29,7 +30,7 @@
              ScrollViewer.VerticalScrollBarVisibility="Visible"
              ScrollViewer.VerticalScrollMode="Auto"
              ScrollViewer.HorizontalScrollMode="Auto" CanBeScrollAnchor="True"
-             BorderBrush="LightGray" BorderThickness="1"
+             BorderBrush="{ThemeResource ControlBorderBrush}" BorderThickness="1"
              Grid.Row="1" Grid.Column="0"
              MaxWidth="600" 
              >

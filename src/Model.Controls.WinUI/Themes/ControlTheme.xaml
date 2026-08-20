@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+   <!-- EDAM Studio control theme (backlog 035): named pastel brushes for the
+        control headers, panel toggle strips, zoom toolbars, menu bar, and
+        renderer bar. One file to change the whole chrome. The tints are
+        deliberately outside the ERD table families (entity #DCE9F7,
+        reference #E2EFDA) so the panels and the tables stay visually
+        separable. Controls reference the keys via {ThemeResource}, so a host
+        can shadow any key in its own merged dictionary and a future
+        light/dark split drops into ThemeDictionaries without touching a
+        control. -->
+
+   <!-- Panel headers: a distinct pastel per panel so the chrome reads apart
+        at a glance. -->
+   <SolidColorBrush x:Key="ExplorerHeaderBackgroundBrush" Color="#ECE7F6" />
+   <SolidColorBrush x:Key="InspectorHeaderBackgroundBrush" Color="#FBE9E0" />
+   <SolidColorBrush x:Key="DiagnosticsHeaderBackgroundBrush" Color="#FDF4DC" />
+
+   <!-- Editor toggle strips (left/right collapse): neutral, thin. -->
+   <SolidColorBrush x:Key="EditorToggleStripBackgroundBrush" Color="#F1EFF7" />
+
+   <!-- Zoom toolbars: soft neutral gray keeps the drawing area calm. -->
+   <SolidColorBrush x:Key="ModelToolbarBackgroundBrush" Color="#F3F3F7" />
+   <SolidColorBrush x:Key="SkiaToolbarBackgroundBrush" Color="#F3F3F7" />
+
+   <!-- App chrome: top menu bar + renderer bar. -->
+   <SolidColorBrush x:Key="MenuBarBackgroundBrush" Color="#F0EEF4" />
+   <SolidColorBrush x:Key="MenuBarForegroundBrush" Color="#1F1F1F" />
+   <SolidColorBrush x:Key="RendererBarBackgroundBrush" Color="#F0EEF4" />
+
+   <!-- Shared text and borders. -->
+   <SolidColorBrush x:Key="ControlHeaderForegroundBrush" Color="#1F1F1F" />
+   <SolidColorBrush x:Key="ControlBorderBrush" Color="#D9D9E3" />
+</ResourceDictionary>
