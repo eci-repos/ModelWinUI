@@ -143,7 +143,9 @@ namespace ModelConsole.Controls
             {
                Text = table.Description ?? "",
                FontSize = 12,
-               TextWrapping = TextWrapping.WrapWholeWords
+               // WinUI 3's TextBox accepts only NoWrap/Wrap — WrapWholeWords
+               // throws E_RUNTIME_SETVALUE at property-set time.
+               TextWrapping = TextWrapping.Wrap
             };
             descBox.KeyDown += (s, e) =>
             {
