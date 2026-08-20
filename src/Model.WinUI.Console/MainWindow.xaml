@@ -9,26 +9,36 @@
     xmlns:ct="using:ModelConsole.Controls"
     mc:Ignorable="d">
 
-   <Grid x:Name="RootGrid">
+   <Grid x:Name="RootGrid" Background="{ThemeResource WindowBackgroundBrush}">
       <Grid.RowDefinitions>
          <RowDefinition Height="Auto" />
          <RowDefinition Height="Auto" />
          <RowDefinition Height="*" />
+         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
       <!-- Menu bar (backlog 004): File → Open Model… loads a model from a
            JSON file and renders it in both renderers. File → Open Sample
            (backlog 005) lists the shipped sample models; the submenu items
-           are built in code-behind from SampleModels.All. -->
-      <MenuBar Grid.Row="0"
-               Background="{ThemeResource MenuBarBackgroundBrush}"
-               Foreground="{ThemeResource MenuBarForegroundBrush}">
-         <MenuBarItem Title="File">
-            <MenuFlyoutItem Text="Open Model…" Click="OpenModel_Click" />
-            <MenuFlyoutSeparator />
-            <MenuFlyoutSubItem x:Name="OpenSampleMenu" Text="Open Sample" />
-         </MenuBarItem>
-      </MenuBar>
+           are built in code-behind from SampleModels.All. The Border owns the
+           color full-bleed (so the WinUI MenuBar's own chrome never shows a
+           white margin around it) and draws the soft separator line beneath
+           that visually separates the menu from the renderer bar. -->
+      <Border Grid.Row="0"
+              Background="{ThemeResource MenuBarBackgroundBrush}"
+              BorderBrush="{ThemeResource MenuBarBorderBrush}"
+              BorderThickness="0,0,0,1">
+         <MenuBar Background="Transparent"
+                  BorderBrush="Transparent"
+                  BorderThickness="0"
+                  Foreground="{ThemeResource MenuBarForegroundBrush}">
+            <MenuBarItem Title="File">
+               <MenuFlyoutItem Text="Open Model…" Click="OpenModel_Click" />
+               <MenuFlyoutSeparator />
+               <MenuFlyoutSubItem x:Name="OpenSampleMenu" Text="Open Sample" />
+            </MenuBarItem>
+         </MenuBar>
+      </Border>
 
       <!-- Slim renderer bar (backlog 003): switch the main view between the
            XAML ERD (ModelEditorControl) and the Skia ERD (SkiaPanelControl).
@@ -47,5 +57,21 @@
          <ct:ModelEditorControl x:Name="XamlEditor" />
          <ct:SkiaPanelControl x:Name="SkiaEditor" Visibility="Collapsed" />
       </Grid>
+
+      <!-- Slim window footer (ad-hoc): a thin chrome strip whose top line
+           separates the controls from the bottom of the window. Holds a
+           muted status line for now. -->
+      <Border Grid.Row="3"
+              Height="26"
+              Background="{ThemeResource WindowFooterBackgroundBrush}"
+              BorderBrush="{ThemeResource MenuBarBorderBrush}"
+              BorderThickness="0,1,0,0">
+         <TextBlock Text="Ready"
+                    FontSize="11"
+                    Foreground="{ThemeResource MenuBarForegroundBrush}"
+                    Opacity="0.6"
+                    Margin="10,0"
+                    VerticalAlignment="Center" />
+      </Border>
    </Grid>
 </Window>

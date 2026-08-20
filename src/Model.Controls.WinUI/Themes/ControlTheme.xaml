@@ -26,10 +26,19 @@
    <SolidColorBrush x:Key="ModelToolbarBackgroundBrush" Color="#F3F3F7" />
    <SolidColorBrush x:Key="SkiaToolbarBackgroundBrush" Color="#F3F3F7" />
 
-   <!-- App chrome: top menu bar + renderer bar. -->
-   <SolidColorBrush x:Key="MenuBarBackgroundBrush" Color="#F0EEF4" />
+   <!-- App chrome: top menu bar + renderer bar. The menu is a touch
+        stronger lavender so it reads as a bar; the window base matches the
+        chrome so no white shows in the margins around it. -->
+   <SolidColorBrush x:Key="MenuBarBackgroundBrush" Color="#E0DAEE" />
    <SolidColorBrush x:Key="MenuBarForegroundBrush" Color="#1F1F1F" />
+   <SolidColorBrush x:Key="MenuBarBorderBrush" Color="#C9C2DE" />
    <SolidColorBrush x:Key="RendererBarBackgroundBrush" Color="#F0EEF4" />
+
+   <!-- Window base + slim footer: soft neutral chrome base (so element
+        margins blend instead of showing white) and the thin footer strip
+        that separates the controls from the bottom of the window. -->
+   <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F0EEF4" />
+   <SolidColorBrush x:Key="WindowFooterBackgroundBrush" Color="#F0EEF4" />
 
    <!-- Shared text and borders. -->
    <SolidColorBrush x:Key="ControlHeaderForegroundBrush" Color="#1F1F1F" />
