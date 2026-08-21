@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
@@ -75,6 +76,15 @@ namespace ModelConsole.Controls
       /// </summary>
       public event EventHandler<TableInfo> StructureChanged;
 
+      /// <summary>
+      /// Raised when the user pins/unpins the shown table (backlog 038). The
+      /// <see cref="EntityVisibility.PinState"/> intent: true = pinned-show,
+      /// false = pinned-hide, null = unpinned (back to the group rule). The
+      /// inspector does not mutate — the host applies the pin to the shared
+      /// visibility and re-renders.
+      /// </summary>
+      public event EventHandler<(string TableName, bool? Pinned)> VisibilityPinChanged;
+
       /// <summary>The table currently shown (or the connector's child table).</summary>
       private TableInfo _currentTable;
 
@@ -86,6 +96,34 @@ namespace ModelConsole.Controls
 
       /// <summary>The model's enumerations, for the value-set readout (backlog 021).</summary>
       private IReadOnlyDictionary<string, Enumeration> _enumerations;
+
+      /// <summary>
+      /// The shared view-side visibility (backlog 038); drives the Show/Hide
+      /// pin toggles' checked state. The host passes the same instance it
+      /// gives the drawing and the explorer.
+      /// </summary>
+      private EntityVisibility _visibility;
+
+      /// <summary>Guards programmatic toggle updates from re-entering the handlers.</summary>
+      private bool _syncingPins;
+
+      /// <summary>The Show/Hide pin toggles of the table currently shown (null until built).</summary>
+      private ToggleButton _showPinButton;
+      private ToggleButton _hidePinButton;
+
+      /// <summary>
+      /// View/edit mode (backlog 042): false (default) shows the read-only
+      /// readout; true reveals the 029 edit surface. The header's Edit/Done
+      /// button flips it and re-renders the content.
+      /// </summary>
+      private bool _editMode;
+
+      /// <summary>
+      /// True while the edit surface is shown (backlog 042). A host opening
+      /// the details window can default it read-only and let the Edit button
+      /// switch.
+      /// </summary>
+      public bool IsEditMode => _editMode;
 
       /// <summary>
       /// The inspector's panel color (backlog 041) — the body follows the
@@ -132,13 +170,206 @@ namespace ModelConsole.Controls
          }
       }
 
+      // -------------------------------------------------------------------
+      // Card layout (backlog 042): the inspector content is built as bordered
+      // "cards" — one per logical section (entity, columns, foreign keys,
+      // properties) — and the per-column rows/sub-cards alternate between the
+      // body background (white by default) and a very light gray band, so the
+      // eye can follow one column down the list. Pure presentation: every
+      // control, gate, and commit handler is unchanged.
+      // -------------------------------------------------------------------
+
+      /// <summary>PK badge text color — a deep blue from the entity family.</summary>
+      private const string PkBadgeTextHex = "#1E5F9A";
+
+      /// <summary>FK badge text color — a deep green from the reference family.</summary>
+      private const string FkBadgeTextHex = "#2E6B24";
+
+      /// <summary>The muted "secondary" text brush used across the readouts.</summary>
+      private static readonly Brush MutedForeground =
+         new SolidColorBrush(Microsoft.UI.Colors.Gray);
+
+      private SolidColorBrush _cardBorderBrush;
+      private SolidColorBrush _alternateBandBrush;
+
       /// <summary>
-      /// Show a table's metadata and edit surface: schema::table header, the
-      /// entity's name/description editors, one section per column (name,
-      /// editable type + size, PK toggle, make-FK row, remove), add-column /
-      /// add-entity / remove-entity actions, and the read-only provenance +
-      /// metadata sections. Each control is gated by the node's edit verbs
-      /// (backlog 028), so the surface matches what the node kind supports.
+      /// The card hairline border (backlog 042) — the shared control border
+      /// from the theme dictionary, resolved lazily.
+      /// </summary>
+      private SolidColorBrush CardBorderBrush()
+      {
+         return _cardBorderBrush ??=
+            Application.Current.Resources["ControlBorderBrush"] as SolidColorBrush;
+      }
+
+      /// <summary>
+      /// The alternating light-gray band (backlog 042) — the "gray" of the
+      /// white/gray zebra, from the theme dictionary so a host can retune it.
+      /// </summary>
+      private SolidColorBrush AlternateBandBrush()
+      {
+         return _alternateBandBrush ??=
+            Application.Current.Resources["InspectorAlternateBandBrush"]
+               as SolidColorBrush;
+      }
+
+      /// <summary>
+      /// Wrap a section's content in a bordered, rounded card (backlog 042).
+      /// </summary>
+      private Border MakeCard(UIElement content)
+      {
+         return new Border
+         {
+            BorderBrush = CardBorderBrush(),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(10, 8, 10, 8),
+            Child = content
+         };
+      }
+
+      /// <summary>A section title line inside a card.</summary>
+      private static TextBlock MakeSectionTitle(string text)
+      {
+         return new TextBlock
+         {
+            Text = text,
+            FontWeight = FontWeights.SemiBold,
+            FontSize = 12,
+            Margin = new Thickness(0, 0, 0, 4)
+         };
+      }
+
+      /// <summary>
+      /// A zebra band: the gray/white alternating row background. The
+      /// non-alternating (white) row is transparent so the body's base color
+      /// shows through.
+      /// </summary>
+      private Border MakeBand(bool alternate, UIElement content)
+      {
+         return new Border
+         {
+            Background = alternate ? AlternateBandBrush() : null,
+            CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(8, 5, 8, 5),
+            Margin = new Thickness(0, 2, 0, 2),
+            Child = content
+         };
+      }
+
+      /// <summary>
+      /// A small PK/FK badge chip — tinted from the model's own color
+      /// families (entity blue / reference green) so the key marking echoes
+      /// the drawing.
+      /// </summary>
+      private static Border MakeChip(string text, string backgroundHex, string foregroundHex)
+      {
+         return new Border
+         {
+            Background = new SolidColorBrush(HexColor.FromHex(backgroundHex)),
+            CornerRadius = new CornerRadius(7),
+            Padding = new Thickness(6, 1, 6, 1),
+            Margin = new Thickness(4, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = new TextBlock
+            {
+               Text = text,
+               FontSize = 10,
+               FontWeight = FontWeights.SemiBold,
+               Foreground = new SolidColorBrush(HexColor.FromHex(foregroundHex)),
+               VerticalAlignment = VerticalAlignment.Center
+            }
+         };
+      }
+
+      /// <summary>
+      /// A read-only column row (backlog 042): line 1 = column name (bold) +
+      /// PK/FK chips on the right; line 2 = type·size, muted and indented,
+      /// then optional description/enum/provenance readouts. The row is a
+      /// zebra band so columns read as alternating panels down the list.
+      /// </summary>
+      private UIElement BuildReadOnlyColumnRow(
+         ColumnInfo column,
+         bool alternate,
+         IReadOnlyDictionary<string, Enumeration> enumerations)
+      {
+         var panel = new StackPanel { Spacing = 2 };
+
+         var head = new Grid { ColumnSpacing = 6 };
+         head.ColumnDefinitions.Add(new ColumnDefinition
+         {
+            Width = new GridLength(1, GridUnitType.Star)
+         });
+         head.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+         var nameText = new TextBlock
+         {
+            Text = column.ColumnName,
+            FontSize = 12,
+            FontWeight = FontWeights.SemiBold,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center
+         };
+         var chipRow = new StackPanel { Orientation = Orientation.Horizontal };
+         if (column.IsKey)
+         {
+            chipRow.Children.Add(MakeChip(
+               "PK", TablePalette.EntityBannerHex, PkBadgeTextHex));
+         }
+         if (column.IsForeignKey)
+         {
+            chipRow.Children.Add(MakeChip(
+               "FK", TablePalette.ReferenceBannerHex, FkBadgeTextHex));
+         }
+         Grid.SetColumn(nameText, 0);
+         Grid.SetColumn(chipRow, 1);
+         head.Children.Add(nameText);
+         head.Children.Add(chipRow);
+         panel.Children.Add(head);
+
+         string typeText = column.Type;
+         if (column.Size > 0)
+         {
+            typeText += "(" + column.Size + ")";
+         }
+         panel.Children.Add(new TextBlock
+         {
+            Text = typeText,
+            FontSize = 11,
+            Foreground = MutedForeground,
+            Margin = new Thickness(2, 0, 0, 0),
+            TextTrimming = TextTrimming.CharacterEllipsis
+         });
+
+         var description = BuildDescriptionReadout(column);
+         if (description != null)
+         {
+            panel.Children.Add(description);
+         }
+         var enumReadout = BuildEnumReadout(column, enumerations);
+         if (enumReadout != null)
+         {
+            panel.Children.Add(enumReadout);
+         }
+         var provenanceReadout = BuildProvenanceReadout(column);
+         if (provenanceReadout != null)
+         {
+            panel.Children.Add(provenanceReadout);
+         }
+
+         return MakeBand(alternate, panel);
+      }
+
+      /// <summary>
+      /// Show a table's metadata — read-only by default, or the full 029 edit
+      /// surface when <see cref="IsEditMode"/> is set (backlog 042): the
+      /// schema::table header, the entity's name/description editors, one
+      /// section per column (name, editable type + size, PK toggle, make-FK
+      /// row, remove), add-column / add-entity / remove-entity actions, and
+      /// the read-only provenance + metadata readouts. Each control is gated
+      /// by the node's edit verbs (backlog 028), so the surface matches what
+      /// the node kind supports. Both surfaces read the same live model — the
+      /// readout can never drift from the drawing.
       /// </summary>
       public void ShowTable(
          TableInfo table,
@@ -150,14 +381,43 @@ namespace ModelConsole.Controls
          _enumerations = enumerations;
          HeaderText.Text = table.SchemaName + "::" + table.TableName;
          ContentPanel.Children.Clear();
+         _showPinButton = null;
+         _hidePinButton = null;
 
+         if (_editMode)
+         {
+            BuildEditTable(table, tables, enumerations);
+         }
+         else
+         {
+            BuildReadOnlyTable(table, tables, enumerations);
+         }
+         UpdateModeButton();
+      }
+
+      /// <summary>
+      /// The 029 edit surface for a table, gated by the entity's edit verbs
+      /// (backlog 028). Shown only in edit mode (backlog 042). Built as cards
+      /// (backlog 042): one for the entity-level editors (name, description,
+      /// tags, visibility), one for the columns (each a zebra-banded sub-card
+      /// holding all of that column's controls), one for the actions, and the
+      /// read-only properties card.
+      /// </summary>
+      private void BuildEditTable(
+         TableInfo table,
+         IReadOnlyList<TableInfo> tables,
+         IReadOnlyDictionary<string, Enumeration> enumerations)
+      {
          var verbs = GraphNodes.Entity(table).Verbs;
+
+         // Entity card — all the entity-level editors in one bordered panel.
+         var entityCard = new StackPanel { Spacing = 4 };
 
          // Name editor (rename) — the inspector does not mutate; the host
          // cascades the rename across referencing FKs and re-keys the layout.
          if (verbs.CanRename)
          {
-            ContentPanel.Children.Add(new TextBlock
+            entityCard.Children.Add(new TextBlock
             {
                Text = "Name",
                FontWeight = FontWeights.SemiBold,
@@ -173,13 +433,13 @@ namespace ModelConsole.Controls
                }
             };
             nameBox.LostFocus += (s, e) => CommitTableName(table, nameBox);
-            ContentPanel.Children.Add(nameBox);
+            entityCard.Children.Add(nameBox);
          }
 
          // Description editor (backlog 024's readout becomes editable).
          if (verbs.CanEditDescription)
          {
-            ContentPanel.Children.Add(new TextBlock
+            entityCard.Children.Add(new TextBlock
             {
                Text = "Description",
                FontWeight = FontWeights.SemiBold,
@@ -202,27 +462,26 @@ namespace ModelConsole.Controls
                }
             };
             descBox.LostFocus += (s, e) => CommitDescription(table, descBox);
-            ContentPanel.Children.Add(descBox);
+            entityCard.Children.Add(descBox);
          }
          else if (!string.IsNullOrEmpty(table.Description))
          {
-            ContentPanel.Children.Add(new TextBlock
+            entityCard.Children.Add(new TextBlock
             {
                Text = table.Description,
                FontSize = 12,
-               Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
-               TextWrapping = TextWrapping.WrapWholeWords,
-               Margin = new Thickness(0, 0, 0, 6)
+               Foreground = MutedForeground,
+               TextWrapping = TextWrapping.WrapWholeWords
             });
          }
 
          // Tags editor (backlog 037): a comma-separated list of UML-ready
-         // labels, committed through ModelEdits.SetTableTags (normalization +
+         // identifiers, committed through ModelEdits.SetTableTags (normalization +
          // identifier validation; rejected names surface on the diagnostics
          // log, never a crash).
          if (verbs.CanEditTags)
          {
-            ContentPanel.Children.Add(new TextBlock
+            entityCard.Children.Add(new TextBlock
             {
                Text = "Tags (comma-separated)",
                FontWeight = FontWeights.SemiBold,
@@ -242,46 +501,73 @@ namespace ModelConsole.Controls
                }
             };
             tagsBox.LostFocus += (s, e) => CommitTags(table, tagsBox);
-            ContentPanel.Children.Add(tagsBox);
+            entityCard.Children.Add(tagsBox);
          }
          else if (table.Tags != null && table.Tags.Count > 0)
          {
-            ContentPanel.Children.Add(new TextBlock
+            entityCard.Children.Add(new TextBlock
             {
                Text = "Tags: " + string.Join(", ", table.Tags),
                FontSize = 12,
-               Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
-               TextWrapping = TextWrapping.WrapWholeWords,
-               Margin = new Thickness(0, 0, 0, 6)
+               Foreground = MutedForeground,
+               TextWrapping = TextWrapping.WrapWholeWords
             });
          }
 
-         ContentPanel.Children.Add(new TextBlock
+         // Visibility pins (backlog 038): Show forces the table visible even
+         // when its group is hidden; Hide forces it hidden even when its group
+         // is visible; toggling a pin off returns the table to its group's
+         // rule. The host applies the pin to the shared visibility.
+         if (verbs.CanToggleVisibility)
          {
-            Text = "Column / Type / Size / Constraints",
-            FontWeight = FontWeights.SemiBold,
-            FontSize = 12,
-            Margin = new Thickness(0, 0, 0, 4)
-         });
+            entityCard.Children.Add(new TextBlock
+            {
+               Text = "Visibility",
+               FontWeight = FontWeights.SemiBold,
+               FontSize = 12
+            });
+            var showButton = new ToggleButton
+            {
+               Content = "Show",
+               MinWidth = 0,
+               Padding = new Thickness(10, 2, 10, 2)
+            };
+            var hideButton = new ToggleButton
+            {
+               Content = "Hide",
+               MinWidth = 0,
+               Padding = new Thickness(10, 2, 10, 2),
+               Margin = new Thickness(6, 0, 0, 0)
+            };
+            bool? pin = _visibility?.PinState(table.TableName);
+            showButton.IsChecked = pin == true;
+            hideButton.IsChecked = pin == false;
+            showButton.Click += (s, e) =>
+               CommitPin(table, showButton.IsChecked == true ? true : (bool?)null);
+            hideButton.Click += (s, e) =>
+               CommitPin(table, hideButton.IsChecked == true ? false : (bool?)null);
+            entityCard.Children.Add(new StackPanel
+            {
+               Orientation = Orientation.Horizontal,
+               Spacing = 0,
+               Children = { showButton, hideButton }
+            });
+            _showPinButton = showButton;
+            _hidePinButton = hideButton;
+         }
 
+         ContentPanel.Children.Add(MakeCard(entityCard));
+
+         // Columns card — one zebra-banded sub-card per column, holding all of
+         // that column's edit controls (name, type/size, PK, make-FK, remove).
+         var columnsCard = new StackPanel();
+         columnsCard.Children.Add(MakeSectionTitle("Columns"));
+         bool alternate = false;
          foreach (var column in table.Columns)
          {
-            ContentPanel.Children.Add(BuildColumnSection(table, column));
-            var description = BuildDescriptionReadout(column);
-            if (description != null)
-            {
-               ContentPanel.Children.Add(description);
-            }
-            var enumReadout = BuildEnumReadout(column, enumerations);
-            if (enumReadout != null)
-            {
-               ContentPanel.Children.Add(enumReadout);
-            }
-            var provenanceReadout = BuildProvenanceReadout(column);
-            if (provenanceReadout != null)
-            {
-               ContentPanel.Children.Add(provenanceReadout);
-            }
+            columnsCard.Children.Add(
+               BuildColumnSection(table, column, alternate, enumerations));
+            alternate = !alternate;
          }
 
          // Add column (scaffold a new column and append it).
@@ -305,13 +591,14 @@ namespace ModelConsole.Controls
                StructureChanged?.Invoke(this, table);
                ShowTable(_currentTable, _tables, _enumerations);
             };
-            ContentPanel.Children.Add(addColumnButton);
+            columnsCard.Children.Add(addColumnButton);
          }
+         ContentPanel.Children.Add(MakeCard(columnsCard));
 
-         // Add entity (scaffold a new table with an Id PK column).
-         ContentPanel.Children.Add(BuildAddEntityRow());
-
-         // Remove entity.
+         // Actions card — add entity (scaffold a new table with an Id PK
+         // column) and remove entity.
+         var actionsCard = new StackPanel { Spacing = 4 };
+         actionsCard.Children.Add(BuildAddEntityRow());
          if (verbs.CanDelete)
          {
             var removeButton = new Button
@@ -326,62 +613,173 @@ namespace ModelConsole.Controls
                HeaderText.Text = "Entity";
                ContentPanel.Children.Clear();
             };
-            ContentPanel.Children.Add(removeButton);
+            actionsCard.Children.Add(removeButton);
          }
+         ContentPanel.Children.Add(MakeCard(actionsCard));
 
-         // Backlog 026: the entity's provenance, when the source declared one.
-         // Shown next to the metadata section, mirroring the 022 readout.
-         var provenanceText = ReadoutFormatter.Provenance(table.Provenance);
-         if (provenanceText != null)
+         // The read-only properties card (026 provenance + 022 metadata).
+         var properties = BuildPropertiesCard(table);
+         if (properties != null)
          {
-            ContentPanel.Children.Add(new TextBlock
-            {
-               Text = "Provenance",
-               FontWeight = FontWeights.SemiBold,
-               FontSize = 12,
-               Margin = new Thickness(0, 8, 0, 2)
-            });
-            ContentPanel.Children.Add(new TextBlock
-            {
-               Text = provenanceText,
-               FontSize = 11,
-               Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
-               Margin = new Thickness(12, 0, 0, 0),
-               TextWrapping = TextWrapping.WrapWholeWords
-            });
-         }
-
-         // Backlog 022: the entity's metadata annotations, when the model
-         // carried any. Read-only by design (the bag is session-only).
-         var metadataLines = ReadoutFormatter.MetadataLines(table.Metadata);
-         if (metadataLines.Count > 0)
-         {
-            ContentPanel.Children.Add(new TextBlock
-            {
-               Text = "Metadata",
-               FontWeight = FontWeights.SemiBold,
-               FontSize = 12,
-               Margin = new Thickness(0, 8, 0, 2)
-            });
-            foreach (var line in metadataLines)
-            {
-               ContentPanel.Children.Add(new TextBlock
-               {
-                  Text = line,
-                  FontSize = 11,
-                  Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
-                  Margin = new Thickness(12, 0, 0, 0)
-               });
-            }
+            ContentPanel.Children.Add(properties);
          }
       }
 
       /// <summary>
-      /// Show a connector's FK relationship with target/cardinality/roles
-      /// editors (gated by the dependency's verbs) and a delete action. When
-      /// the edge carries its source constraint (backlog 022), the
-      /// dependency's per-side cardinality/optionality and role names are
-      /// shown beneath and edited in place.
+      /// The read-only table readout (backlog 042): description, tags, the
+      /// column list (two-line rows with PK/FK chips), a foreign-key list, and
+      /// the provenance + metadata sections. No edit controls — the Edit
+      /// button switches to the 029 surface. Built as cards: an entity
+      /// summary, the zebra-banded columns, the foreign keys, and the
+      /// properties.
+      /// </summary>
+      private void BuildReadOnlyTable(
+         TableInfo table,
+         IReadOnlyList<TableInfo> tables,
+         IReadOnlyDictionary<string, Enumeration> enumerations)
+      {
+         // Entity card: a one-line stats summary, then description + tags.
+         var entityCard = new StackPanel { Spacing = 4 };
+         int fkCount = table.Columns.Count(c => c.IsForeignKey);
+         entityCard.Children.Add(new TextBlock
+         {
+            Text = table.Columns.Count + " column" +
+               (table.Columns.Count == 1 ? "" : "s") + " · " +
+               fkCount + " foreign key" + (fkCount == 1 ? "" : "s"),
+            FontSize = 11,
+            Foreground = MutedForeground
+         });
+         if (!string.IsNullOrEmpty(table.Description))
+         {
+            entityCard.Children.Add(new TextBlock
+            {
+               Text = table.Description,
+               FontSize = 12,
+               Foreground = MutedForeground,
+               TextWrapping = TextWrapping.WrapWholeWords
+            });
+         }
+         if (table.Tags != null && table.Tags.Count > 0)
+         {
+            entityCard.Children.Add(new TextBlock
+            {
+               Text = "Tags: " + string.Join(", ", table.Tags),
+               FontSize = 12,
+               Foreground = MutedForeground,
+               TextWrapping = TextWrapping.WrapWholeWords
+            });
+         }
+         ContentPanel.Children.Add(MakeCard(entityCard));
+
+         // Columns card: one zebra-banded two-line row per column.
+         var columnsCard = new StackPanel();
+         columnsCard.Children.Add(MakeSectionTitle("Columns"));
+         bool alternate = false;
+         foreach (var column in table.Columns)
+         {
+            columnsCard.Children.Add(
+               BuildReadOnlyColumnRow(column, alternate, enumerations));
+            alternate = !alternate;
+         }
+         ContentPanel.Children.Add(MakeCard(columnsCard));
+
+         // A read-only foreign-key card: every column's outgoing FK(s).
+         var fkLines = new List<string>();
+         foreach (var column in table.Columns.Where(c => c.IsForeignKey))
+         {
+            foreach (var constraint in column.Constraints ??
+               Enumerable.Empty<ConstraintInfo>())
+            {
+               if (!constraint.IsForeignKey)
+               {
+                  continue;
+               }
+               string target = constraint.ReferencedTableName +
+                  (constraint.ReferencedColumnName != null
+                     ? "." + constraint.ReferencedColumnName : "");
+               fkLines.Add(column.ColumnName + "  →  " + target);
+            }
+         }
+         if (fkLines.Count > 0)
+         {
+            var fkCard = new StackPanel { Spacing = 2 };
+            fkCard.Children.Add(MakeSectionTitle("Foreign keys"));
+            foreach (var line in fkLines)
+            {
+               fkCard.Children.Add(new TextBlock
+               {
+                  Text = line,
+                  FontSize = 12,
+                  Margin = new Thickness(2, 0, 0, 0),
+                  TextWrapping = TextWrapping.WrapWholeWords
+               });
+            }
+            ContentPanel.Children.Add(MakeCard(fkCard));
+         }
+
+         // The read-only properties card (026 provenance + 022 metadata).
+         var properties = BuildPropertiesCard(table);
+         if (properties != null)
+         {
+            ContentPanel.Children.Add(properties);
+         }
+      }
+
+      /// <summary>
+      /// The read-only properties card shared by both modes (backlog 042):
+      /// the entity's provenance (026) and metadata annotations (022), when
+      /// the model carried any. Returns null when neither is present.
+      /// </summary>
+      private Border BuildPropertiesCard(TableInfo table)
+      {
+         var card = new StackPanel { Spacing = 2 };
+         bool any = false;
+
+         var provenanceText = ReadoutFormatter.Provenance(table.Provenance);
+         if (provenanceText != null)
+         {
+            card.Children.Add(MakeSectionTitle("Properties"));
+            card.Children.Add(new TextBlock
+            {
+               Text = provenanceText,
+               FontSize = 11,
+               Foreground = MutedForeground,
+               Margin = new Thickness(2, 0, 0, 0),
+               TextWrapping = TextWrapping.WrapWholeWords
+            });
+            any = true;
+         }
+
+         var metadataLines = ReadoutFormatter.MetadataLines(table.Metadata);
+         if (metadataLines.Count > 0)
+         {
+            if (!any)
+            {
+               card.Children.Add(MakeSectionTitle("Properties"));
+            }
+            foreach (var line in metadataLines)
+            {
+               card.Children.Add(new TextBlock
+               {
+                  Text = line,
+                  FontSize = 11,
+                  Foreground = MutedForeground,
+                  Margin = new Thickness(2, 0, 0, 0),
+                  TextWrapping = TextWrapping.WrapWholeWords
+               });
+            }
+            any = true;
+         }
+
+         return any ? MakeCard(card) : null;
+      }
+
+      /// <summary>
+      /// Show a connector's FK relationship — read-only by default, or the
+      /// target/cardinality/roles editors and delete action in edit mode
+      /// (backlog 042). When the edge carries its source constraint (backlog
+      /// 022), the dependency's per-side cardinality/optionality and role
+      /// names are shown beneath (and edited in place in edit mode).
       /// </summary>
       public void ShowConnector(FkRelation edge, IReadOnlyList<TableInfo> tables)
       {
@@ -391,20 +789,43 @@ namespace ModelConsole.Controls
          HeaderText.Text = "Foreign Key";
          ContentPanel.Children.Clear();
 
-         ContentPanel.Children.Add(new TextBlock
+         if (_editMode)
+         {
+            BuildEditConnector(edge, tables);
+         }
+         else
+         {
+            BuildReadOnlyConnector(edge);
+         }
+         UpdateModeButton();
+      }
+
+      /// <summary>
+      /// The 029 edit surface for a connector: target/cardinality/roles
+      /// editors (gated by the dependency's verbs) and a delete action.
+      /// Shown only in edit mode (backlog 042).
+      /// </summary>
+      private void BuildEditConnector(FkRelation edge, IReadOnlyList<TableInfo> tables)
+      {
+         // Relationship card: the dependency line + the live readout lines the
+         // per-editor cards below update in place.
+         var relationship = new StackPanel { Spacing = 4 };
+         relationship.Children.Add(new TextBlock
          {
             Text = edge.ChildTable + "." + edge.ChildColumn +
                    "  →  " + edge.ParentTable + "." + edge.ParentColumn,
             FontSize = 12,
+            FontWeight = FontWeights.SemiBold,
             TextWrapping = TextWrapping.WrapWholeWords
          });
 
          var constraint = edge.Constraint;
          var verbs = GraphNodes.Dependency(edge).Verbs;
 
+         TextBlock cardinalityText = null;
+         TextBlock rolesText = null;
          if (constraint != null)
          {
-            TextBlock cardinalityText = null;
             string cardinality = ReadoutFormatter.Cardinality(constraint);
             if (cardinality != null)
             {
@@ -412,13 +833,11 @@ namespace ModelConsole.Controls
                {
                   Text = "Cardinality: " + cardinality,
                   FontSize = 12,
-                  Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
-                  Margin = new Thickness(0, 4, 0, 0)
+                  Foreground = MutedForeground
                };
-               ContentPanel.Children.Add(cardinalityText);
+               relationship.Children.Add(cardinalityText);
             }
 
-            TextBlock rolesText = null;
             string roles = ReadoutFormatter.Roles(constraint);
             if (roles != null)
             {
@@ -426,23 +845,30 @@ namespace ModelConsole.Controls
                {
                   Text = "Roles: " + roles,
                   FontSize = 12,
-                  Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
-                  Margin = new Thickness(0, 2, 0, 0)
+                  Foreground = MutedForeground
                };
-               ContentPanel.Children.Add(rolesText);
+               relationship.Children.Add(rolesText);
             }
+         }
+         ContentPanel.Children.Add(MakeCard(relationship));
 
+         // Each verb-gated editor gets its own card.
+         if (constraint != null)
+         {
             if (verbs.CanEditTarget)
             {
-               ContentPanel.Children.Add(BuildTargetEditor(edge, constraint));
+               ContentPanel.Children.Add(
+                  MakeCard(BuildTargetEditor(edge, constraint)));
             }
             if (verbs.CanEditCardinality)
             {
-               ContentPanel.Children.Add(BuildCardinalityEditor(constraint, cardinalityText));
+               ContentPanel.Children.Add(
+                  MakeCard(BuildCardinalityEditor(constraint, cardinalityText)));
             }
             if (verbs.CanEditRoles)
             {
-               ContentPanel.Children.Add(BuildRolesEditor(constraint, rolesText));
+               ContentPanel.Children.Add(
+                  MakeCard(BuildRolesEditor(constraint, rolesText)));
             }
          }
 
@@ -457,6 +883,80 @@ namespace ModelConsole.Controls
       }
 
       /// <summary>
+      /// The read-only connector readout (backlog 042): the dependency line,
+      /// then cardinality/roles when the edge carries its source constraint.
+      /// No delete action — that lives behind the Edit button.
+      /// </summary>
+      private void BuildReadOnlyConnector(FkRelation edge)
+      {
+         var card = new StackPanel { Spacing = 4 };
+         card.Children.Add(new TextBlock
+         {
+            Text = edge.ChildTable + "." + edge.ChildColumn +
+                   "  →  " + edge.ParentTable + "." + edge.ParentColumn,
+            FontSize = 12,
+            FontWeight = FontWeights.SemiBold,
+            TextWrapping = TextWrapping.WrapWholeWords
+         });
+
+         var constraint = edge.Constraint;
+         if (constraint != null)
+         {
+            string cardinality = ReadoutFormatter.Cardinality(constraint);
+            if (cardinality != null)
+            {
+               card.Children.Add(new TextBlock
+               {
+                  Text = "Cardinality: " + cardinality,
+                  FontSize = 12,
+                  Foreground = MutedForeground
+               });
+            }
+
+            string roles = ReadoutFormatter.Roles(constraint);
+            if (roles != null)
+            {
+               card.Children.Add(new TextBlock
+               {
+                  Text = "Roles: " + roles,
+                  FontSize = 12,
+                  Foreground = MutedForeground
+               });
+            }
+         }
+         ContentPanel.Children.Add(MakeCard(card));
+      }
+
+      /// <summary>
+      /// The header's Edit/Done toggle (backlog 042): flips the view/edit
+      /// mode and re-renders the current content. A table re-enters the 029
+      /// edit surface (or the read-only readout); a connector likewise.
+      /// </summary>
+      private void ModeButton_Click(object sender, RoutedEventArgs e)
+      {
+         _editMode = !_editMode;
+         if (_currentTable != null)
+         {
+            ShowTable(_currentTable, _tables, _enumerations);
+         }
+         else if (_currentEdge != null)
+         {
+            ShowConnector(_currentEdge, _tables);
+         }
+      }
+
+      /// <summary>
+      /// Keep the header button honest: "Edit" in read-only mode, "Done"
+      /// while the edit surface is up. Shown only when an entity/connector is
+      /// selected (the model-level readout has nothing to edit).
+      /// </summary>
+      private void UpdateModeButton()
+      {
+         ModeButton.Visibility = Visibility.Visible;
+         ModeButton.Content = _editMode ? "Done" : "Edit";
+      }
+
+      /// <summary>
       /// Show the model-level readout (provenance + model metadata) — the
       /// inspector's idle state, shown when a model is loaded (backlog 022).
       /// Reads the live <see cref="Provenance"/> and metadata dictionary, so
@@ -467,11 +967,14 @@ namespace ModelConsole.Controls
       {
          HeaderText.Text = "Model";
          ContentPanel.Children.Clear();
+         ModeButton.Visibility = Visibility.Collapsed;
+
+         var card = new StackPanel { Spacing = 4 };
 
          string provenanceText = ReadoutFormatter.Provenance(provenance);
          if (provenanceText != null)
          {
-            ContentPanel.Children.Add(new TextBlock
+            card.Children.Add(new TextBlock
             {
                Text = provenanceText,
                FontSize = 12,
@@ -479,12 +982,11 @@ namespace ModelConsole.Controls
             });
             if (!string.IsNullOrEmpty(provenance.Notes))
             {
-               ContentPanel.Children.Add(new TextBlock
+               card.Children.Add(new TextBlock
                {
                   Text = "notes: " + provenance.Notes,
                   FontSize = 11,
-                  Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
-                  Margin = new Thickness(0, 2, 0, 0),
+                  Foreground = MutedForeground,
                   TextWrapping = TextWrapping.WrapWholeWords
                });
             }
@@ -493,62 +995,52 @@ namespace ModelConsole.Controls
          var metadataLines = ReadoutFormatter.MetadataLines(metadata);
          if (metadataLines.Count > 0)
          {
-            ContentPanel.Children.Add(new TextBlock
-            {
-               Text = "Model metadata",
-               FontWeight = FontWeights.SemiBold,
-               FontSize = 12,
-               Margin = new Thickness(0, 8, 0, 2)
-            });
+            card.Children.Add(MakeSectionTitle("Model metadata"));
             foreach (var line in metadataLines)
             {
-               ContentPanel.Children.Add(new TextBlock
+               card.Children.Add(new TextBlock
                {
                   Text = line,
                   FontSize = 11,
-                  Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
-                  Margin = new Thickness(12, 0, 0, 0)
+                  Foreground = MutedForeground,
+                  Margin = new Thickness(2, 0, 0, 0)
                });
             }
          }
 
          if (provenanceText == null && metadataLines.Count == 0)
          {
-            ContentPanel.Children.Add(new TextBlock
+            card.Children.Add(new TextBlock
             {
                Text = "No model-level metadata or provenance.",
                FontSize = 12,
-               Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray)
+               Foreground = MutedForeground
             });
          }
+         ContentPanel.Children.Add(MakeCard(card));
       }
 
       /// <summary>
-      /// The per-column edit section: a name/type/size/remove row, a PK
-      /// toggle + constraint readout row, and a make-FK row (when the column
-      /// is not already a foreign key). Each control is gated by the
-      /// element's edit verbs (backlog 028).
+      /// The per-column edit sub-card (backlog 042): a name/remove head row,
+      /// a type/size + PK row, and a make-FK row (when the column is not
+      /// already a foreign key), plus the description/enum/provenance
+      /// readouts. Each control is gated by the element's edit verbs (backlog
+      /// 028). The sub-cards alternate zebra bands down the columns card.
       /// </summary>
-      private UIElement BuildColumnSection(TableInfo table, ColumnInfo column)
+      private UIElement BuildColumnSection(
+         TableInfo table, ColumnInfo column, bool alternate,
+         IReadOnlyDictionary<string, Enumeration> enumerations)
       {
          var verbs = GraphNodes.Element(table, column).Verbs;
-         var panel = new StackPanel { Margin = new Thickness(0, 4, 0, 4) };
+         var panel = new StackPanel { Spacing = 4 };
 
-         // Row: name | type | size | remove.
-         var row = new Grid { ColumnSpacing = 4 };
-         row.ColumnDefinitions.Add(new ColumnDefinition
+         // Head row: name editor (or text) + remove.
+         var head = new Grid { ColumnSpacing = 6 };
+         head.ColumnDefinitions.Add(new ColumnDefinition
          {
             Width = new GridLength(1, GridUnitType.Star)
          });
-         row.ColumnDefinitions.Add(new ColumnDefinition
-         {
-            Width = new GridLength(1, GridUnitType.Star)
-         });
-         row.ColumnDefinitions.Add(new ColumnDefinition
-         {
-            Width = new GridLength(1, GridUnitType.Star)
-         });
-         row.ColumnDefinitions.Add(new ColumnDefinition
+         head.ColumnDefinitions.Add(new ColumnDefinition
          {
             Width = GridLength.Auto
          });
@@ -574,20 +1066,57 @@ namespace ModelConsole.Controls
             {
                Text = column.ColumnName,
                FontSize = 12,
+               FontWeight = FontWeights.SemiBold,
                VerticalAlignment = VerticalAlignment.Center,
                TextTrimming = TextTrimming.CharacterEllipsis
             };
          }
+         Grid.SetColumn(nameControl, 0);
+         head.Children.Add(nameControl);
+
+         if (verbs.CanRemoveColumn)
+         {
+            var removeButton = new Button
+            {
+               Content = "✕",
+               FontSize = 10,
+               Padding = new Thickness(6, 2, 6, 2),
+               VerticalAlignment = VerticalAlignment.Center
+            };
+            ToolTipService.SetToolTip(removeButton, "Remove column");
+            removeButton.Click += (s, e) =>
+            {
+               ModelEdits.RemoveColumn(table, column);
+               StructureChanged?.Invoke(this, table);
+               ShowTable(_currentTable, _tables, _enumerations);
+            };
+            Grid.SetColumn(removeButton, 1);
+            head.Children.Add(removeButton);
+         }
+         panel.Children.Add(head);
+
+         // Type/size + PK row.
+         var flagsRow = new StackPanel
+         {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6
+         };
 
          FrameworkElement typeControl;
          FrameworkElement sizeControl;
          if (verbs.CanEditType)
          {
-            var typeBox = new TextBox { Text = column.Type, FontSize = 12 };
+            var typeBox = new TextBox
+            {
+               Text = column.Type,
+               FontSize = 12,
+               MinWidth = 100
+            };
             var sizeBox = new TextBox
             {
                Text = column.Size > 0 ? column.Size.ToString() : "",
                FontSize = 12,
+               Width = 56,
                PlaceholderText = "size"
             };
             Action commit = () => CommitTypeAndSize(column, typeBox, sizeBox);
@@ -619,42 +1148,9 @@ namespace ModelConsole.Controls
                VerticalAlignment = VerticalAlignment.Center
             };
          }
+         flagsRow.Children.Add(typeControl);
+         flagsRow.Children.Add(sizeControl);
 
-         Grid.SetColumn(nameControl, 0);
-         Grid.SetColumn(typeControl, 1);
-         Grid.SetColumn(sizeControl, 2);
-         row.Children.Add(nameControl);
-         row.Children.Add(typeControl);
-         row.Children.Add(sizeControl);
-
-         if (verbs.CanRemoveColumn)
-         {
-            var removeButton = new Button
-            {
-               Content = "✕",
-               FontSize = 10,
-               Padding = new Thickness(6, 2, 6, 2),
-               VerticalAlignment = VerticalAlignment.Center
-            };
-            ToolTipService.SetToolTip(removeButton, "Remove column");
-            removeButton.Click += (s, e) =>
-            {
-               ModelEdits.RemoveColumn(table, column);
-               StructureChanged?.Invoke(this, table);
-               ShowTable(_currentTable, _tables, _enumerations);
-            };
-            Grid.SetColumn(removeButton, 3);
-            row.Children.Add(removeButton);
-         }
-
-         panel.Children.Add(row);
-
-         // Flags row: PK toggle + constraint readout.
-         var flagsRow = new StackPanel
-         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8
-         };
          if (verbs.CanEditKey)
          {
             var pkCheck = new CheckBox
@@ -671,8 +1167,8 @@ namespace ModelConsole.Controls
          flagsRow.Children.Add(new TextBlock
          {
             Text = GetConstraintText(column),
-            FontSize = 12,
-            Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+            FontSize = 11,
+            Foreground = MutedForeground,
             VerticalAlignment = VerticalAlignment.Center
          });
          panel.Children.Add(flagsRow);
@@ -683,7 +1179,24 @@ namespace ModelConsole.Controls
             panel.Children.Add(BuildAddForeignKeyRow(table, column));
          }
 
-         return panel;
+         // Read-only description / enum / provenance readouts.
+         var description = BuildDescriptionReadout(column);
+         if (description != null)
+         {
+            panel.Children.Add(description);
+         }
+         var enumReadout = BuildEnumReadout(column, enumerations);
+         if (enumReadout != null)
+         {
+            panel.Children.Add(enumReadout);
+         }
+         var provenanceReadout = BuildProvenanceReadout(column);
+         if (provenanceReadout != null)
+         {
+            panel.Children.Add(provenanceReadout);
+         }
+
+         return MakeBand(alternate, panel);
       }
 
       /// <summary>
@@ -1005,7 +1518,7 @@ namespace ModelConsole.Controls
             Text = column.Description,
             FontSize = 11,
             Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
-            Margin = new Thickness(12, 0, 0, 4),
+            Margin = new Thickness(12, 0, 0, 0),
             TextWrapping = TextWrapping.WrapWholeWords
          };
       }
@@ -1024,7 +1537,7 @@ namespace ModelConsole.Controls
             Text = text,
             FontSize = 11,
             Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
-            Margin = new Thickness(12, 0, 0, 4),
+            Margin = new Thickness(12, 0, 0, 0),
             TextWrapping = TextWrapping.WrapWholeWords
          };
       }
@@ -1047,7 +1560,7 @@ namespace ModelConsole.Controls
             Text = "enum " + enumeration.Name + ": " + enumeration.ValueList,
             FontSize = 11,
             Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
-            Margin = new Thickness(12, 0, 0, 4),
+            Margin = new Thickness(12, 0, 0, 0),
             TextWrapping = TextWrapping.WrapWholeWords
          };
       }
@@ -1136,6 +1649,41 @@ namespace ModelConsole.Controls
 
          box.Text = string.Join(", ", applied);
          ModelEdited?.Invoke(this, EventArgs.Empty);
+      }
+
+      /// <summary>
+      /// Sync the Show/Hide pin toggles to a (possibly mutated) shared
+      /// visibility (backlog 038). Called by the host after every visibility
+      /// change so the buttons reflect the current pin state of the shown
+      /// table.
+      /// </summary>
+      public void SetVisibility(EntityVisibility visibility)
+      {
+         _visibility = visibility;
+         if (_showPinButton == null || _hidePinButton == null ||
+             _currentTable == null)
+         {
+            return;
+         }
+         bool? pin = visibility?.PinState(_currentTable.TableName);
+         _syncingPins = true;
+         _showPinButton.IsChecked = pin == true;
+         _hidePinButton.IsChecked = pin == false;
+         _syncingPins = false;
+      }
+
+      /// <summary>
+      /// Raise a pin change for the shown table (backlog 038): true =
+      /// pinned-show, false = pinned-hide, null = unpinned. The host applies
+      /// it to the shared visibility and re-renders.
+      /// </summary>
+      private void CommitPin(TableInfo table, bool? pinned)
+      {
+         if (_syncingPins)
+         {
+            return;
+         }
+         VisibilityPinChanged?.Invoke(this, (table.TableName, pinned));
       }
 
       /// <summary>

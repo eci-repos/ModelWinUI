@@ -1,0 +1,2241 @@
+{
+  "schemas": [
+    {
+      "name": "Sales",
+      "tables": [
+        {
+          "TableName": "RefOrderStatus",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "OrderStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "RefOrderStatus",
+                  "ColumnName": "OrderStatusCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefPaymentMethod",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "PaymentMethodCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "RefPaymentMethod",
+                  "ColumnName": "PaymentMethodCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefShipMethod",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ShipMethodCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "RefShipMethod",
+                  "ColumnName": "ShipMethodCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefProductStatus",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ProductStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "RefProductStatus",
+                  "ColumnName": "ProductStatusCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "ProductCategory",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ProductCategoryID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "ProductCategory",
+                  "ColumnName": "ProductCategoryID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "CategoryName",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ParentCategoryID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "ProductCategory",
+                  "ColumnName": "ParentCategoryID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "ProductCategory",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "Product",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ProductID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "Product",
+                  "ColumnName": "ProductID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ProductName",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ProductCategoryID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "Product",
+                  "ColumnName": "ProductCategoryID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "ProductCategory",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ProductStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "Product",
+                  "ColumnName": "ProductStatusCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefProductStatus",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "UnitPrice",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Customer",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "CustomerID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "Customer",
+                  "ColumnName": "CustomerID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "NameGiven",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "NameSurname",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "Email",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "Phone",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Salesperson",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "SalespersonID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "Salesperson",
+                  "ColumnName": "SalespersonID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "NameGiven",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "NameSurname",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "TerritoryCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "SalesOrder",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "SalesOrderID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "SalesOrder",
+                  "ColumnName": "SalesOrderID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "CustomerID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "SalesOrder",
+                  "ColumnName": "CustomerID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Customer",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "SalespersonID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "SalesOrder",
+                  "ColumnName": "SalespersonID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Salesperson",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "OrderDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "OrderStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "SalesOrder",
+                  "ColumnName": "OrderStatusCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefOrderStatus",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "PaymentMethodCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "SalesOrder",
+                  "ColumnName": "PaymentMethodCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefPaymentMethod",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ShipMethodCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "SalesOrder",
+                  "ColumnName": "ShipMethodCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefShipMethod",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "SalesOrderLine",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "SalesOrderLineID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "SalesOrderLine",
+                  "ColumnName": "SalesOrderLineID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "SalesOrderID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "SalesOrderLine",
+                  "ColumnName": "SalesOrderID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "SalesOrder",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ProductID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "SalesOrderLine",
+                  "ColumnName": "ProductID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Product",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "Quantity",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "UnitPrice",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ProductStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "SalesOrderLine",
+                  "ColumnName": "ProductStatusCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefProductStatus",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "Payment",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "PaymentID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "Payment",
+                  "ColumnName": "PaymentID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "SalesOrderID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "Payment",
+                  "ColumnName": "SalesOrderID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "SalesOrder",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "PaymentMethodCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "Payment",
+                  "ColumnName": "PaymentMethodCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefPaymentMethod",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "Amount",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "PaymentDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Shipment",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ShipmentID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "Shipment",
+                  "ColumnName": "ShipmentID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "SalesOrderID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "Shipment",
+                  "ColumnName": "SalesOrderID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "SalesOrder",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ShipMethodCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Sales",
+                  "TableName": "Shipment",
+                  "ColumnName": "ShipMethodCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefShipMethod",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "ShipDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Sales",
+              "ColumnName": "TrackingNumber",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "tables": [
+        {
+          "TableName": "RefStockStatus",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "StockStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "RefStockStatus",
+                  "ColumnName": "StockStatusCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefMovementType",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "MovementTypeCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "RefMovementType",
+                  "ColumnName": "MovementTypeCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefPurchaseStatus",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "PurchaseStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "RefPurchaseStatus",
+                  "ColumnName": "PurchaseStatusCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Warehouse",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "WarehouseID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "Warehouse",
+                  "ColumnName": "WarehouseID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "WarehouseName",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "AddressLine",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "City",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Supplier",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "SupplierID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "Supplier",
+                  "ColumnName": "SupplierID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "SupplierName",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "ContactEmail",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "Phone",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 40,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "PurchaseOrder",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "PurchaseOrderID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "PurchaseOrder",
+                  "ColumnName": "PurchaseOrderID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "SupplierID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "PurchaseOrder",
+                  "ColumnName": "SupplierID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Supplier",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "WarehouseID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "PurchaseOrder",
+                  "ColumnName": "WarehouseID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Warehouse",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "OrderDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "PurchaseStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "PurchaseOrder",
+                  "ColumnName": "PurchaseStatusCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefPurchaseStatus",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "StockItem",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "StockItemID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "StockItem",
+                  "ColumnName": "StockItemID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "ProductID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "StockItem",
+                  "ColumnName": "ProductID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Product",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "WarehouseID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "StockItem",
+                  "ColumnName": "WarehouseID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Warehouse",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "QuantityOnHand",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "StockStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "StockItem",
+                  "ColumnName": "StockStatusCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefStockStatus",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "StockMovement",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "StockMovementID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "StockMovement",
+                  "ColumnName": "StockMovementID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "StockItemID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "StockMovement",
+                  "ColumnName": "StockItemID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "StockItem",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "WarehouseID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "StockMovement",
+                  "ColumnName": "WarehouseID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Warehouse",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "MovementTypeCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Inventory",
+                  "TableName": "StockMovement",
+                  "ColumnName": "MovementTypeCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefMovementType",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "Quantity",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Inventory",
+              "ColumnName": "MovementDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Finance",
+      "tables": [
+        {
+          "TableName": "RefInvoiceStatus",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "InvoiceStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "RefInvoiceStatus",
+                  "ColumnName": "InvoiceStatusCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefTaxCode",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "TaxCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "RefTaxCode",
+                  "ColumnName": "TaxCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "Rate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "RefAccountType",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "AccountTypeCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "RefAccountType",
+                  "ColumnName": "AccountTypeCode",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "Description",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 60,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Account",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "AccountID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "Account",
+                  "ColumnName": "AccountID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "AccountName",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 80,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "AccountTypeCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "Account",
+                  "ColumnName": "AccountTypeCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefAccountType",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "OpeningBalance",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        },
+        {
+          "TableName": "Invoice",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "InvoiceID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "Invoice",
+                  "ColumnName": "InvoiceID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "CustomerID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "Invoice",
+                  "ColumnName": "CustomerID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Customer",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "InvoiceDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "InvoiceStatusCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "Invoice",
+                  "ColumnName": "InvoiceStatusCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefInvoiceStatus",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "InvoiceLine",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "InvoiceLineID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "InvoiceLine",
+                  "ColumnName": "InvoiceLineID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "InvoiceID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "InvoiceLine",
+                  "ColumnName": "InvoiceID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Invoice",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "ProductID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "InvoiceLine",
+                  "ColumnName": "ProductID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Product",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "Quantity",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "UnitPrice",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "TaxCode",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "InvoiceLine",
+                  "ColumnName": "TaxCode",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "RefTaxCode",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "LedgerEntry",
+          "Description": null,
+          "Columns": [
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "LedgerEntryID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": true,
+              "IsForeignKey": false,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "LedgerEntry",
+                  "ColumnName": "LedgerEntryID",
+                  "Description": null,
+                  "Type": "PK",
+                  "ReferencedTableName": null,
+                  "ReferencedColumnName": null,
+                  "IsKey": true,
+                  "IsForeignKey": false
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "AccountID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "LedgerEntry",
+                  "ColumnName": "AccountID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Account",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "InvoiceID",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": true,
+              "Constraints": [
+                {
+                  "SchemaName": "Finance",
+                  "TableName": "LedgerEntry",
+                  "ColumnName": "InvoiceID",
+                  "Description": null,
+                  "Type": "FK",
+                  "ReferencedTableName": "Invoice",
+                  "ReferencedColumnName": null,
+                  "IsKey": false,
+                  "IsForeignKey": true
+                }
+              ]
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "Amount",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "VARCHAR",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            },
+            {
+              "SchemaName": "Finance",
+              "ColumnName": "EntryDate",
+              "Description": null,
+              "OrdinalPosition": 0,
+              "Type": "DATETIMEOFFSET",
+              "Size": 20,
+              "IsNullable": true,
+              "IsIdentity": false,
+              "IsKey": false,
+              "IsForeignKey": false,
+              "Constraints": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

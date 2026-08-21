@@ -50,10 +50,51 @@ namespace ModelWinUI
       private Color _currentBackgroundColor =
          HexColor.FromHex(TablePalette.CanvasBackgroundHex);
 
+      /// <summary>
+      /// The one modeless entity-details window (backlog 042), created lazily
+      /// on the first double-click and reused across double-clicks and File →
+      /// Model info. Its inspector is wired to <see cref="XamlEditor"/> on
+      /// creation.
+      /// </summary>
+      private EntityDetailsWindow _detailsWindow;
+
       public MainWindow()
       {
          this.InitializeComponent();
          Title = "EDAM Studio";
+
+         // Backlog 038: the XAML explorer drives the shared EntityVisibility;
+         // every change there must re-compose the Skia renderer over the same
+         // instance so both paths agree on the visible set (parity, backlog 003).
+         XamlEditor.VisibilityChanged += (s, visibility) =>
+            SkiaEditor.SetVisibility(visibility);
+
+         // Backlog 039: the same relay for the shared GroupCollapseState —
+         // explorer toggles and box clicks on the XAML drawing must re-compose
+         // the Skia renderer over the identical collapsed set.
+         XamlEditor.CollapseChanged += (s, collapse) =>
+            SkiaEditor.SetCollapse(collapse);
+
+         // Backlog 043: the same relay for the grouping theme — the explorer's
+         // "Group by:" selector must re-compose the Skia renderer over the
+         // identical groups. (The theme change also re-created the shared
+         // visibility + collapse instances, which the two relays above already
+         // forward.)
+         XamlEditor.ThemeChanged += (s, name) =>
+            SkiaEditor.SetTheme(name);
+
+         // Backlog 042: double-clicking a table (or FK connector) opens the
+         // modeless entity-details window; an already-open window follows
+         // subsequent single-click selection (the first click of a
+         // double-click updates it too, harmlessly).
+         XamlEditor.EntityDoubleClicked += (s, entity) => OpenDetails(entity);
+         XamlEditor.EntitySelected += (s, entity) =>
+         {
+            if (_detailsWindow != null)
+            {
+               _detailsWindow.ShowEntity(entity);
+            }
+         };
 
          // File → Open Sample (backlog 005): one item per shipped sample,
          // built from the registry so the menu and the shipped files can
@@ -144,6 +185,42 @@ namespace ModelWinUI
          _currentBackgroundColor = color;
          XamlEditor?.BackgroundColor = color;
          SkiaEditor?.BackgroundColor = color;
+      }
+
+      /// <summary>
+      /// File → Model info (backlog 042): open the modeless details window in
+      /// model mode — the provenance + model-metadata readout.
+      /// </summary>
+      private void ModelInfo_Click(object sender, RoutedEventArgs e)
+      {
+         EnsureDetailsWindow();
+         _detailsWindow.ShowModelInfo();
+         _detailsWindow.Activate();
+      }
+
+      /// <summary>
+      /// Open the modeless details window on a double-clicked entity (backlog
+      /// 042). The window is created once and reused; its inspector is wired
+      /// to the XAML editor so edits re-render both renderers.
+      /// </summary>
+      private void OpenDetails(object entity)
+      {
+         EnsureDetailsWindow();
+         _detailsWindow.ShowEntity(entity);
+         _detailsWindow.Activate();
+      }
+
+      private void EnsureDetailsWindow()
+      {
+         if (_detailsWindow == null)
+         {
+            _detailsWindow = new EntityDetailsWindow();
+            // A closed WinUI 3 window cannot be re-activated; forget it so the
+            // next double-click builds a fresh one (and re-wires the new
+            // inspector).
+            _detailsWindow.Closed += (s, e) => _detailsWindow = null;
+            _detailsWindow.Attach(XamlEditor);
+         }
       }
 
       /// <summary>
@@ -241,6 +318,13 @@ namespace ModelWinUI
       {
          XamlEditor.SetModel(tables, enumerations, provenance, metadata);
          SkiaEditor.SetModel(tables);
+         // Backlog 038: a fresh model starts show-everything; share the XAML
+         // panel's visibility instance with the Skia renderer so both draw the
+         // identical visible set from the first paint.
+         SkiaEditor.SetVisibility(XamlEditor.CurrentVisibility);
+         // Backlog 039: likewise share the collapse state (a fresh model starts
+         // all-expanded), so both renderers collapse the same groups.
+         SkiaEditor.SetCollapse(XamlEditor.CurrentCollapse);
          LogModelLoad(provenance, tables, issues, schemaIssues);
       }
 

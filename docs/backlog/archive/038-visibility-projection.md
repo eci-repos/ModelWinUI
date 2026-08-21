@@ -6,12 +6,12 @@ With tags in the model (037), build the visibility layer that makes large models
 
 ## Goals
 
-- [ ] Pure `EntityVisibility` (the composition rule) + `ModelProjection.Project(tables, edges, visibility)` in `Model.Graph`, unit-tested.
-- [ ] Three levers compose: per-entity pin, per-group toggle, focus mode.
-- [ ] Both renderers draw only the visible projection — `ModelPanelControl.Render()` and `ErdComposer.Compose` feed the same projection (parity, backlog 003).
-- [ ] Explorer gains a **Groups** section (checkbox per group, focus selection, "Show all" reset); inspector gains per-table show/hide verb (gated by `NodeVerbs`).
-- [ ] Hidden entities remain in the explorer, never dropped from the model; integrity diagnostics (R8) still computed on the full model.
-- [ ] **UML:** the visible projection is expressible as a package-diagram viewpoint (the shown packages), so it drives the UML view unchanged.
+- [x] Pure `EntityVisibility` (the composition rule) + `ModelProjection.Project(tables, edges, visibility)` in `Model.Graph`, unit-tested.
+- [x] Three levers compose: per-entity pin, per-group toggle, focus mode.
+- [x] Both renderers draw only the visible projection — `ModelPanelControl.Render()` and `ErdComposer.Compose` feed the same projection (parity, backlog 003).
+- [x] Explorer gains a **Groups** section (checkbox per group, focus selection, "Show all" reset); inspector gains per-table show/hide verb (gated by `NodeVerbs`).
+- [x] Hidden entities remain in the explorer, never dropped from the model; integrity diagnostics (R8) still computed on the full model.
+- [x] **UML:** the visible projection is expressible as a package-diagram viewpoint (the shown packages), so it drives the UML view unchanged.
 
 ## Scope
 
@@ -40,15 +40,15 @@ With tags in the model (037), build the visibility layer that makes large models
 
 ## Definition of Done
 
-- [ ] `dotnet build ModelWinUI.sln -p:Platform=x64` → 0 errors / 0 warnings; `dotnet test tests/ModelConsole.Tests` → all pass.
-- [ ] Hiding a group in the app removes its tables and their connectors; the remaining tables re-layout; pins beat groups; "Show all" restores everything; hidden tables still in the explorer.
-- [ ] Both renderers agree on the visible set (toggle the renderer bar with a group hidden → identical contents).
-- [ ] Unresolved-FK diagnostics still surface for hidden edges.
-- [ ] Manual run: tag a few tables (037), hide one group, verify the drawing narrows to the shown subset; untagged models behave exactly as before.
-- [ ] `docs/WORKLOG.md` updated (and `CLAUDE.md` "Pure graph modules": `EntityVisibility`/`ModelProjection`).
+- [x] `dotnet build ModelWinUI.sln -p:Platform=x64` → 0 errors / 0 warnings; `dotnet test tests/ModelConsole.Tests` → all pass.
+- [x] Hiding a group in the app removes its tables and their connectors; the remaining tables re-layout; pins beat groups; "Show all" restores everything; hidden tables still in the explorer.
+- [x] Both renderers agree on the visible set (toggle the renderer bar with a group hidden → identical contents).
+- [x] Unresolved-FK diagnostics still surface for hidden edges.
+- [ ] Manual run: tag a few tables (037), hide one group, verify the drawing narrows to the shown subset; untagged models behave exactly as before. (Needs a human run — CLI launch runs on the agent's non-interactive desktop.)
+- [x] `docs/WORKLOG.md` updated (and `CLAUDE.md` "Pure graph modules": `EntityVisibility`/`ModelProjection`).
 
 ## Status
 
-- **State:** Planned
-- **Sprint:** not yet scheduled
-- **Completed:** —
+- **State:** Completed
+- **Sprint:** 2026-08-20 (`docs/sprints/archive/sprint-2026-08-20-visibility-projection.md`)
+- **Completed:** 2026-08-20

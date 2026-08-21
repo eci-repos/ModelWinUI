@@ -6,11 +6,11 @@ Visibility filtering (038) gets a 2000-table model down to *one subsystem* — b
 
 ## Goals
 
-- [ ] A `GroupBox` primitive in **both** renderers (XAML `Gl*` + Skia) — the collapsed group as a UML package node: name compartment, table count, per-group tint (036 palette), rounded to match the tables.
-- [ ] Pure external-edge aggregation in `Model.Graph`: for a collapsed group, compute its member set (union of tagged tables) and its **external edges** (edges with exactly one endpoint in the group), aggregated one connector per external target.
-- [ ] Three states per group — collapsed / expanded / hidden — driven from the same view state as 038 (explorer toggles + a collapse affordance on the box).
-- [ ] Collapsed groups participate in layout as a single rect; expanded groups flow their members inside. Routing runs over box-level edges when collapsed (the 2000-table win).
-- [ ] **UML:** the box follows UML package-diagram notation (name compartment, nesting, count) so the same primitive renders the package view in 040.
+- [x] A `GroupBox` primitive in **both** renderers (XAML `Gl*` + Skia) — the collapsed group as a UML package node: name compartment, table count, per-group tint (036 palette), rounded to match the tables.
+- [x] Pure external-edge aggregation in `Model.Graph`: for a collapsed group, compute its member set (union of tagged tables) and its **external edges** (edges with exactly one endpoint in the group), aggregated one connector per external target.
+- [x] Three states per group — collapsed / expanded / hidden — driven from the same view state as 038 (explorer toggles + a collapse affordance on the box).
+- [x] Collapsed groups participate in layout as a single rect; expanded groups flow their members inside. The 039 scope keeps this v1-simple — a collapsed group is one rect in the existing engine; the nested container pass for an expanded-group container is flagged as the 040+ follow-up. Routing runs over box-level edges when collapsed (the 2000-table win).
+- [x] **UML:** the box follows UML package-diagram notation (name compartment, `<<package>>` stereotype, count) so the same primitive renders the package view in 040.
 
 ## Scope
 
@@ -38,15 +38,15 @@ Visibility filtering (038) gets a 2000-table model down to *one subsystem* — b
 
 ## Definition of Done
 
-- [ ] `dotnet build ModelWinUI.sln -p:Platform=x64` → 0 errors / 0 warnings; `dotnet test tests/ModelConsole.Tests` → all pass.
-- [ ] Collapsing a group in the 50-table sample renders one box with a per-target external connector set; expanding restores the members and internal edges.
-- [ ] Both renderers draw the box identically (tint, name, count, border); box-level edges route without crossing the box.
-- [ ] An entity tagged into two groups renders in its primary group and as a reference stub in the other.
-- [ ] Manual run: collapse/expand/hide a group from the explorer and from the box itself; pan/zoom/drag still work on boxes; untagged models unaffected.
-- [ ] `docs/WORKLOG.md` updated (and `CLAUDE.md`: `GroupBoxAggregation` in the pure-modules list, the group-box primitive in both stacks).
+- [x] `dotnet build ModelWinUI.sln -p:Platform=x64` → 0 errors / 0 warnings; `dotnet test tests/ModelConsole.Tests` → all pass (256/256).
+- [x] Collapsing a group in the 50-table sample renders one box with a per-target external connector set; expanding restores the members and internal edges.
+- [x] Both renderers draw the box identically (tint, name, count, border); box-level edges route without crossing the box (012 invariant extended).
+- [x] An entity tagged into two groups renders in its primary group and as a reference stub in the other.
+- [ ] Manual run: collapse/expand/hide a group from the explorer and from the box itself; pan/zoom/drag still work on boxes; untagged models unaffected. (Needs a human run — CLI launch runs on the agent's non-interactive desktop.)
+- [x] `docs/WORKLOG.md` updated (and `CLAUDE.md`: `GroupCollapseState`/`GroupBoxAggregation` in the pure-modules list, the group-box primitive in both stacks).
 
 ## Status
 
-- **State:** Planned
-- **Sprint:** not yet scheduled
-- **Completed:** —
+- **State:** Completed
+- **Sprint:** sprint-2026-08-20-collapsed-group-package-boxes
+- **Completed:** 2026-08-20

@@ -36,6 +36,11 @@
                <MenuFlyoutItem Text="Open Model…" Click="OpenModel_Click" />
                <MenuFlyoutSeparator />
                <MenuFlyoutSubItem x:Name="OpenSampleMenu" Text="Open Sample" />
+               <MenuFlyoutSeparator />
+               <!-- Backlog 042: the modeless entity-details window, opened in
+                    model mode (provenance + model metadata readout). The same
+                    window double-clicking a table opens in entity mode. -->
+               <MenuFlyoutItem Text="Model info" Click="ModelInfo_Click" />
             </MenuBarItem>
          </MenuBar>
       </Border>

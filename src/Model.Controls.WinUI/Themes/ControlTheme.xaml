@@ -13,11 +13,13 @@
         light/dark split drops into ThemeDictionaries without touching a
         control. -->
 
-   <!-- Panel headers: a distinct pastel per panel so the chrome reads apart
-        at a glance. -->
-   <SolidColorBrush x:Key="ExplorerHeaderBackgroundBrush" Color="#ECE7F6" />
-   <SolidColorBrush x:Key="InspectorHeaderBackgroundBrush" Color="#FBE9E0" />
-   <SolidColorBrush x:Key="DiagnosticsHeaderBackgroundBrush" Color="#FDF4DC" />
+   <!-- Panel headers (left explorer + right diagnostics): the same soft
+        neutral gray as the center zoom toolbar, so every banner in the
+        editor reads as one chrome strip (backlog 042). The old per-panel
+        pastels (lavender/peach/cream) were retired. -->
+   <SolidColorBrush x:Key="ExplorerHeaderBackgroundBrush" Color="#F3F3F7" />
+   <SolidColorBrush x:Key="InspectorHeaderBackgroundBrush" Color="#F3F3F7" />
+   <SolidColorBrush x:Key="DiagnosticsHeaderBackgroundBrush" Color="#F3F3F7" />
 
    <!-- Editor toggle strips (left/right collapse): neutral, thin. -->
    <SolidColorBrush x:Key="EditorToggleStripBackgroundBrush" Color="#F1EFF7" />
@@ -44,4 +46,11 @@
    <!-- Shared text and borders. -->
    <SolidColorBrush x:Key="ControlHeaderForegroundBrush" Color="#1F1F1F" />
    <SolidColorBrush x:Key="ControlBorderBrush" Color="#D9D9E3" />
+
+   <!-- Entity details window (backlog 042): the alternating content band
+        behind every other column row (and every other column edit sub-card)
+        — the "gray" of the white/gray zebra, so the eye can follow one column
+        down the list. A touch deeper than the chrome gray #F3F3F7 so it reads
+        as a content band, not another header strip. -->
+   <SolidColorBrush x:Key="InspectorAlternateBandBrush" Color="#EEEEF2" />
 </ResourceDictionary>

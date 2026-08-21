@@ -141,6 +141,7 @@ namespace ModelConsole.Tests
          Assert.True(verbs.CanEditTags);
          Assert.True(verbs.CanEditMetadata);
          Assert.True(verbs.CanDelete);
+         Assert.True(verbs.CanToggleVisibility); // backlog 038
          Assert.False(verbs.CanAddForeignKey);
          Assert.False(verbs.CanEditType);
          Assert.False(verbs.CanEditTarget);
@@ -167,6 +168,7 @@ namespace ModelConsole.Tests
          Assert.False(verbs.CanEditCardinality);
          Assert.False(verbs.CanEditRoles);
          Assert.False(verbs.CanDelete);
+         Assert.False(verbs.CanToggleVisibility);
       }
 
       [Fact]
@@ -188,6 +190,7 @@ namespace ModelConsole.Tests
          Assert.False(verbs.CanEditTags);
          Assert.False(verbs.CanEditMetadata);
          Assert.False(verbs.CanAddForeignKey);
+         Assert.False(verbs.CanToggleVisibility);
       }
 
       [Fact]
@@ -209,6 +212,7 @@ namespace ModelConsole.Tests
          Assert.False(verbs.CanEditCardinality);
          Assert.False(verbs.CanEditRoles);
          Assert.False(verbs.CanDelete);
+         Assert.False(verbs.CanToggleVisibility);
       }
 
    }

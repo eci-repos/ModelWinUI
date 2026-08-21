@@ -44,18 +44,15 @@
 
       <local:ModelPanelControl x:Name="ModelPanel" Grid.Column="2" />
 
-      <!-- Right panel: log on top, entity inspector below. Declared first
-           so its view model subscribes to the log before ModelPanelControl
-           writes its startup message (backlog 014). -->
+      <!-- Right panel: the diagnostics log only (backlog 042). The entity
+           inspector moved out of the editor — double-clicking a table now
+           opens the modeless EntityDetailsWindow (hosted by the app), and the
+           editor just exposes the wiring for it. Declared first so its view
+           model subscribes to the log before ModelPanelControl writes its
+           startup message (backlog 014). -->
       <Grid x:Name="RightPanel" Grid.Column="4" Grid.Row="0" MinWidth="250">
-         <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-         </Grid.RowDefinitions>
          <local:DiagnosticsLogControl x:Name="DiagnosticsPanel" Margin="0"
-            Grid.Column="0" Grid.Row="0" VerticalAlignment="Stretch"/>
-         <local:EntityInspectorControl x:Name="InspectorPanel" Margin="0"
-            Grid.Column="0" Grid.Row="1" VerticalAlignment="Stretch"/>
+            VerticalAlignment="Stretch"/>
       </Grid>
 
       <!-- Right toggle strip: collapses/expands the right panel so the

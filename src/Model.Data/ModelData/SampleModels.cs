@@ -75,6 +75,13 @@ namespace ModelConsole.ModelData
          },
          new SampleModel
          {
+            Name = "Enterprise",
+            Description = "27-table multi-schema retail schema (31 FKs)",
+            FileName = "Enterprise.json",
+            Tables = EnterpriseSchema.Tables
+         },
+         new SampleModel
+         {
             Name = "Healthcare",
             Description = "12-entity clinic schema, grouped JSON (16 FKs)",
             FileName = "Healthcare.json",

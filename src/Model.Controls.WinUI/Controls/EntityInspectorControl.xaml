@@ -18,14 +18,25 @@
               Background="{ThemeResource InspectorHeaderBackgroundBrush}"
               BorderBrush="{ThemeResource ControlBorderBrush}"
               BorderThickness="1" Padding="8,6">
-         <TextBlock x:Name="HeaderText" Text="Inspector"
-                    FontWeight="SemiBold" FontSize="13"
-                    Foreground="{ThemeResource ControlHeaderForegroundBrush}" />
+         <Grid>
+            <Grid.ColumnDefinitions>
+               <ColumnDefinition Width="*" />
+               <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="HeaderText" Text="Entity details"
+                       FontWeight="SemiBold" FontSize="13"
+                       VerticalAlignment="Center"
+                       Foreground="{ThemeResource ControlHeaderForegroundBrush}" />
+            <Button x:Name="ModeButton" Grid.Column="1" Content="Edit"
+                    MinWidth="0" Padding="10,3" FontSize="11"
+                    Click="ModeButton_Click"
+                    ToolTipService.ToolTip="Edit this entity (reveals the edit surface)" />
+         </Grid>
       </Border>
 
       <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
                     VerticalScrollMode="Auto">
-         <StackPanel x:Name="ContentPanel" Padding="8" Spacing="4" />
+         <StackPanel x:Name="ContentPanel" Padding="8" Spacing="8" />
       </ScrollViewer>
    </Grid>
 </UserControl>

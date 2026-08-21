@@ -56,6 +56,12 @@ namespace ModelConsole.Graph
       public bool CanEditRoles { get; }
       public bool CanDelete { get; }
 
+      /// <summary>
+      /// Whether the node can be hidden/shown on the drawing (backlog 038) —
+      /// a per-entity pin that overrides its group's visibility.
+      /// </summary>
+      public bool CanToggleVisibility { get; }
+
       private NodeVerbs(
          bool canRename = false, bool canAddColumn = false,
          bool canRemoveColumn = false, bool canEditType = false,
@@ -63,7 +69,8 @@ namespace ModelConsole.Graph
          bool canEditTags = false, bool canEditMetadata = false,
          bool canAddForeignKey = false,
          bool canEditTarget = false, bool canEditCardinality = false,
-         bool canEditRoles = false, bool canDelete = false)
+         bool canEditRoles = false, bool canDelete = false,
+         bool canToggleVisibility = false)
       {
          CanRename = canRename;
          CanAddColumn = canAddColumn;
@@ -78,13 +85,15 @@ namespace ModelConsole.Graph
          CanEditCardinality = canEditCardinality;
          CanEditRoles = canEditRoles;
          CanDelete = canDelete;
+         CanToggleVisibility = canToggleVisibility;
       }
 
-      /// <summary>An entity: rename, add/remove columns, edit key/description/tags, delete.</summary>
+      /// <summary>An entity: rename, add/remove columns, edit key/description/tags, hide/show, delete.</summary>
       public static NodeVerbs Entity { get; } = new NodeVerbs(
          canRename: true, canAddColumn: true, canRemoveColumn: true,
          canEditKey: true, canEditDescription: true, canEditTags: true,
-         canEditMetadata: true, canDelete: true);
+         canEditMetadata: true, canDelete: true,
+         canToggleVisibility: true);
 
       /// <summary>An element (column): rename, edit type/key/description, add an FK.</summary>
       public static NodeVerbs Element { get; } = new NodeVerbs(

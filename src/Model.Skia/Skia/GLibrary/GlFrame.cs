@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
+using ModelConsole.Palette;
+
 namespace ModelConsole.Skia.GLibrary
 {
 
@@ -89,7 +91,12 @@ namespace ModelConsole.Skia.GLibrary
             DefaultTextPaint = new SKPaint
             {
                 IsAntialias = true,
-                Color = SKColors.Black
+                // The drawing-surface text is always on the light pastel
+                // cards, so it renders in the shared palette's near-black —
+                // the same pin the XAML stack applies (backlog 041 regression
+                // fix: the XAML cards were using the theme-default foreground,
+                // which goes white in dark OS mode and vanished).
+                Color = SKColor.Parse(TablePalette.TextHex)
             };
 
             DefaultFont = new SKFont(

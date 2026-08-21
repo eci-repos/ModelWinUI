@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
+using Model.Data;
 using ModelConsole.Geometry;
+using ModelConsole.Graph;
 using ModelConsole.ModelData;
 using ModelConsole.Skia.GLibrary;
 using ModelConsole.Skia.Primitives;
@@ -109,12 +112,124 @@ namespace ModelConsole.Tests
          Assert.True(anyColored, "the rendered diagram should not be blank");
       }
 
+      [Fact]
+      public void ComposeDrawsOnlyTheVisibleProjection()
+      {
+         var tables = TaggedSchema();
+         var visibility = new EntityVisibility(new[] { "Core", "Audit" });
+         visibility.SetGroupVisible("Audit", false);
+
+         using var surface = SKSurface.Create(new SKImageInfo(4, 4));
+         var frame = new GlFrame(surface);
+         var diagram = ErdComposer.Compose(tables, frame, new ErdOptions(), visibility);
+
+         Assert.Equal(2, diagram.Layout.Count);
+         Assert.Contains("Orders", diagram.Layout.Keys);
+         Assert.Contains("Customer", diagram.Layout.Keys);
+         Assert.DoesNotContain("AuditLog", diagram.Layout.Keys);
+         Assert.Single(diagram.Edges); // only Orders → Customer draws
+         Assert.Single(diagram.Routes);
+      }
+
+      [Fact]
+      public void ComposeWithoutVisibilityDrawsEverything()
+      {
+         var tables = TaggedSchema();
+
+         using var surface = SKSurface.Create(new SKImageInfo(4, 4));
+         var frame = new GlFrame(surface);
+         var diagram = ErdComposer.Compose(tables, frame, new ErdOptions());
+
+         Assert.Equal(3, diagram.Layout.Count);
+         Assert.Equal(2, diagram.Edges.Count);
+         Assert.Equal(2, diagram.Routes.Count);
+      }
+
+      [Fact]
+      public void ComposeReportsIssuesForHiddenEdges()
+      {
+         // A dangling FK (R8) must still surface even when its tables would be
+         // hidden — visibility never masks integrity (backlog 038 DoD).
+         var tables = new[]
+         {
+            TableWithFk("Orders", "Customer", "Core"),
+            TableWithFk("AuditLog", "Missing", "Audit"),
+            TableWithFk("Customer", null, "Core")
+         };
+         var visibility = new EntityVisibility(new[] { "Core", "Audit" });
+         visibility.SetGroupVisible("Audit", false);
+
+         using var surface = SKSurface.Create(new SKImageInfo(4, 4));
+         var frame = new GlFrame(surface);
+         var diagram = ErdComposer.Compose(tables, frame, new ErdOptions(), visibility);
+
+         Assert.DoesNotContain("AuditLog", diagram.Layout.Keys);
+         Assert.Contains(diagram.Issues,
+            i => i.Contains("Missing") || i.Contains("AuditLog"));
+      }
+
       private static ErdDiagram ComposeDiagram()
       {
          using var surface = SKSurface.Create(new SKImageInfo(4, 4));
          var frame = new GlFrame(surface);
          return ErdComposer.Compose(PublicSafetySchema.Tables, frame,
             new ErdOptions());
+      }
+
+      /// <summary>
+      /// A tiny tagged schema: Orders → Customer (Core), AuditLog → Orders
+      /// (Audit). The visibility tests need real tags + FK constraints.
+      /// </summary>
+      private static IReadOnlyList<TableInfo> TaggedSchema()
+      {
+         return new[]
+         {
+            TableWithFk("Orders", "Customer", "Core"),
+            TableWithFk("AuditLog", "Orders", "Audit"),
+            TableWithFk("Customer", null, "Core")
+         };
+      }
+
+      private static TableInfo TableWithFk(string name, string parent, string tag)
+      {
+         var table = new TableInfo
+         {
+            TableName = name,
+            Tags = new List<string> { tag },
+            Columns = new List<ColumnInfo>
+            {
+               new ColumnInfo
+               {
+                  ColumnName = "Id",
+                  Type = DataInfo.VARCHAR,
+                  IsKey = true,
+                  Constraints = new List<ConstraintInfo>
+                  {
+                     new ConstraintInfo { Type = DataInfo.PRIMARY_KEY }
+                  }
+               }
+            }
+         };
+         if (parent != null)
+         {
+            var fk = new ColumnInfo
+            {
+               ColumnName = parent + "Id",
+               Type = DataInfo.VARCHAR,
+               IsForeignKey = true,
+               Constraints = new List<ConstraintInfo>
+               {
+                  new ConstraintInfo
+                  {
+                     Type = DataInfo.FOREIGN_KEY,
+                     ReferencedTableName = parent,
+                     ReferencedColumnName = "Id"
+                  }
+               }
+            };
+            table.Columns.Add(fk);
+         }
+         return table;
       }
 
       private static SKSurface CreateSurface(int w, int h, out SKBitmap bitmap)

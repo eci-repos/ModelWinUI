@@ -74,6 +74,37 @@ namespace ModelConsole.Tests
          Assert.True(edges.Count >= 15, "Library sample has too few FKs.");
       }
 
+      [Fact]
+      public void EnterpriseSampleHasMultipleSchemas()
+      {
+         // Backlog 043: the Enterprise sample is the multi-schema fixture the
+         // schema theme needs to be visible — it must load with ≥ 2 distinct
+         // schemas, cross-schema FKs, and no resolution issues.
+         var tables = ModelFile.Load(ShippedPath(Sample("Enterprise.json")));
+         var (edges, issues) = FkEdgeExtractor.Extract(tables);
+
+         var schemas = tables
+            .Select(t => t.SchemaName)
+            .Where(s => !string.IsNullOrEmpty(s))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+         Assert.True(schemas.Count >= 2,
+            "Enterprise sample must span multiple schemas.");
+         Assert.Contains("Sales", schemas);
+
+         // Cross-schema FK: at least one edge whose endpoints live in
+         // different schemas.
+         var byName = tables.ToDictionary(t => t.TableName, t => t);
+         bool hasCrossSchema = edges.Any(e =>
+            byName.TryGetValue(e.ChildTable, out var child) &&
+            byName.TryGetValue(e.ParentTable, out var parent) &&
+            !string.Equals(child.SchemaName, parent.SchemaName, StringComparison.Ordinal));
+         Assert.True(hasCrossSchema,
+            "Enterprise sample must have cross-schema FKs.");
+
+         Assert.Empty(issues);
+      }
+
       private static SampleModel Sample(string fileName)
       {
          return SampleModels.All.First(s => s.FileName == fileName);

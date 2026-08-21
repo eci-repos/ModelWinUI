@@ -33,6 +33,13 @@ using ModelConsole.Controls.Services;
 using ModelConsole.Controls.Helpers;
 using ModelConsole.Palette;
 
+// The collapsed-group box model lives in Model.Graph; the drawable primitive
+// in Model.Graphics.WinUI.Primitives — alias the model so the panel's box
+// list holds the metadata (Group/Members/ExternalEdges) while the factory
+// draws the primitive.
+using GroupBoxModel = ModelConsole.Graph.GroupBox;
+using XamlGroupBox = ModelConsole.Graphics.Primitives.GroupBox;
+
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -60,6 +67,7 @@ namespace ModelConsole.Controls
       private readonly GlContext _context;
       private readonly IModelDataProvider _dataProvider;
       private readonly ITableFactory _tableFactory;
+      private readonly IBoxFactory _boxFactory;
       private readonly IConnectorFactory _connectorFactory;
       private readonly IRectangleFactory _rectangleFactory;
 
@@ -76,6 +84,58 @@ namespace ModelConsole.Controls
       /// array-format models, which carry no enumerations.
       /// </summary>
       private IReadOnlyDictionary<string, Enumeration> _enumerations;
+
+      /// <summary>
+      /// View-side visibility state (backlog 038): which groups (tags) draw
+      /// and which tables are pinned show/hide. Created from the model on
+      /// <see cref="SetModel"/>; the host shares the same instance with the
+      /// Skia renderer so both paths agree on the visible set. Layout and
+      /// routing always run over the visible projection.
+      /// </summary>
+      private EntityVisibility _visibility;
+
+      /// <summary>
+      /// View-side collapse state (backlog 039): which visible groups draw as
+      /// one package-style box. A collapsed group's members are replaced by
+      /// the box in the layout grid, the drawn set, and the router obstacle
+      /// set — one rect for the group, and no connector crosses a box (the
+      /// 012 invariant extended). Composes with <see cref="_visibility"/>: a
+      /// hidden group collapses to nothing.
+      /// </summary>
+      private GroupCollapseState _collapse;
+
+      /// <summary>
+      /// The active grouping theme's name (backlog 043). The theme is
+      /// model-dependent (connectivity needs the FK graph), so shared state is
+      /// the <b>name</b> and the concrete <see cref="GroupingTheme"/> is
+      /// derived from <c>_tables + name</c> at each use site — a model change
+      /// (File → Open) re-derives it automatically and never leaves a stale
+      /// connectivity theme behind.
+      /// </summary>
+      private string _themeName = GroupingThemes.TagsName;
+
+      /// <summary>
+      /// The collapsed groups' box models (backlog 039), in collapsed-set
+      /// order — rebuilt over the visible projection on layout and render.
+      /// </summary>
+      private List<(string Key, GroupBoxModel Box)> _boxes =
+         new List<(string Key, GroupBoxModel Box)>();
+
+      /// <summary>
+      /// Every table hidden behind a collapsed box (union of the boxes'
+      /// members). A boxed table neither draws nor routes its own edges — the
+      /// box's aggregated external edges replace them.
+      /// </summary>
+      private HashSet<string> _boxed =
+         new HashSet<string>(StringComparer.Ordinal);
+
+      /// <summary>
+      /// The collapsed boxes' external connectors from the last render,
+      /// parallel to <see cref="_boxRoutes"/> — the group↔target edges that
+      /// route after the table FKs so no connector crosses a box.
+      /// </summary>
+      private List<(GroupBoxEdge Edge, IReadOnlyList<Point2> Points)> _boxRoutes =
+         new List<(GroupBoxEdge Edge, IReadOnlyList<Point2> Points)>();
 
       /// <summary>
       /// Current table positions, keyed by table name. Initialized by the
@@ -166,10 +226,33 @@ namespace ModelConsole.Controls
       private Table _hoverTable;
 
       /// <summary>
+      /// The collapsed group box (<see cref="XamlGroupBox"/>) currently
+      /// hovered (backlog 039), or null. Its border draws the same DodgerBlue
+      /// accent, so a hovered box reads like a hovered table card.
+      /// </summary>
+      private XamlGroupBox _hoverBox;
+
+      /// <summary>
       /// Raised when the user clicks a graphic entity. The payload is the
       /// entity's <see cref="TableInfo"/> or <see cref="FkRelation"/>.
       /// </summary>
       public event EventHandler<object> EntitySelected;
+
+      /// <summary>
+      /// Raised when the user double-clicks a graphic entity (backlog 042).
+      /// The payload is the entity's <see cref="TableInfo"/> or
+      /// <see cref="FkRelation"/>. The first click already raised
+      /// <see cref="EntitySelected"/> (selection), so a double-click is
+      /// select + open-details, never open-instead-of-select.
+      /// </summary>
+      public event EventHandler<object> EntityDoubleTapped;
+
+      /// <summary>
+      /// Raised when a collapsed group's box is clicked (backlog 039): the
+      /// host expands the group on the shared collapse state — click a box →
+      /// show its members again (the box's own collapse/expand affordance).
+      /// </summary>
+      public event EventHandler<string> GroupExpandRequested;
 
       /// <summary>
       /// Raised when the model is replaced (via <see cref="SetModel"/>); the
@@ -188,6 +271,7 @@ namespace ModelConsole.Controls
 
          _dataProvider = Ioc.Default.GetRequiredService<IModelDataProvider>();
          _tableFactory = Ioc.Default.GetRequiredService<ITableFactory>();
+         _boxFactory = Ioc.Default.GetRequiredService<IBoxFactory>();
          _connectorFactory = Ioc.Default.GetRequiredService<IConnectorFactory>();
          _rectangleFactory = Ioc.Default.GetRequiredService<IRectangleFactory>();
          _context = new GlContext(
@@ -195,6 +279,7 @@ namespace ModelConsole.Controls
 
          _context.ShapeReleased += OnShapeReleased;
          _context.ShapeClicked += OnShapeClicked;
+         _context.ShapeDoubleClicked += OnShapeDoubleClicked;
          _context.PanRequested += OnPanRequested;
          _context.HoverChanged += OnHoverChanged;
 
@@ -206,6 +291,8 @@ namespace ModelConsole.Controls
          _hoverTimer.Tick += (s, e) => ShowHover();
 
          _tables = _dataProvider.GetPublicSafetyTables();
+         _visibility = EntityVisibility.Create(_tables, CurrentTheme);
+         _collapse = new GroupCollapseState();
          InitializeLayout();
 
          AddZoomAccelerators();
@@ -246,6 +333,86 @@ namespace ModelConsole.Controls
       public IReadOnlyDictionary<string, Enumeration> Enumerations
       {
          get { return _enumerations; }
+      }
+
+      /// <summary>
+      /// The view-side visibility state (backlog 038). The host creates it for
+      /// a model and shares the same instance with the Skia renderer, so both
+      /// paths draw the identical visible set.
+      /// </summary>
+      public EntityVisibility CurrentVisibility
+      {
+         get { return _visibility; }
+      }
+
+      /// <summary>
+      /// Apply a (possibly mutated) visibility and re-render: the layout
+      /// re-flows over the visible subset and the routes regenerate, so a
+      /// group toggle or pin change narrows the drawing immediately.
+      /// </summary>
+      public void SetVisibility(EntityVisibility visibility)
+      {
+         _visibility = visibility ?? EntityVisibility.Create(_tables, CurrentTheme);
+         InitializeLayout();
+         Render();
+      }
+
+      /// <summary>
+      /// The view-side collapse state (backlog 039). The host creates it for a
+      /// model and shares the same instance with the Skia renderer, so both
+      /// paths draw the identical collapsed boxes.
+      /// </summary>
+      public GroupCollapseState CurrentCollapse
+      {
+         get { return _collapse; }
+      }
+
+      /// <summary>
+      /// Apply a (possibly mutated) collapse state and re-render: the collapsed
+      /// groups' members become one box in the layout, the drawing, and the
+      /// router obstacles, so a toggle narrows the drawing immediately
+      /// (mirroring <see cref="SetVisibility"/>).
+      /// </summary>
+      public void SetCollapse(GroupCollapseState collapse)
+      {
+         _collapse = collapse ?? new GroupCollapseState();
+         InitializeLayout();
+         Render();
+      }
+
+      /// <summary>
+      /// The active grouping theme's name (backlog 043) — the explorer's
+      /// "Group by:" value. The host keeps the Skia renderer in parity via
+      /// <see cref="SetTheme"/>.
+      /// </summary>
+      public string CurrentThemeName
+      {
+         get { return _themeName; }
+      }
+
+      /// <summary>
+      /// The active grouping theme, derived from the current model + theme name
+      /// (backlog 043). Never cached — the connectivity theme depends on the
+      /// FK graph, so it is re-derived at each use site.
+      /// </summary>
+      public GroupingTheme CurrentTheme
+      {
+         get { return GroupingThemes.FromName(_themeName, _tables); }
+      }
+
+      /// <summary>
+      /// Switch the grouping theme and re-render (backlog 043): the group
+      /// universe changes, so the visibility is re-created over the new theme
+      /// (every new group starts visible) and the collapse state resets (a
+      /// collapsed group from the old theme may not exist in the new one).
+      /// </summary>
+      public void SetTheme(string themeName)
+      {
+         _themeName = themeName ?? GroupingThemes.TagsName;
+         _visibility = EntityVisibility.Create(_tables, CurrentTheme);
+         _collapse = new GroupCollapseState();
+         InitializeLayout();
+         Render();
       }
 
       /// <summary>
@@ -519,22 +686,51 @@ namespace ModelConsole.Controls
       }
 
       /// <summary>
-      /// Compute the initial grid layout of the tables and store it as the
-      /// current state (dragging updates it).
+      /// Compute the initial grid layout of the tables + collapsed boxes and
+      /// store it as the current state (dragging updates it).
       /// </summary>
       private void InitializeLayout()
       {
-         // Measure each table without drawing so every grid slot fits the
-         // widest/tallest table and no table overlaps its neighbour.
+         // Backlog 038: layout runs over the visible projection only, so hiding
+         // a group re-flows the shown tables into a compact grid (the hidden
+         // tables are simply not laid out; they come back on "Show all").
+         // Backlog 039: a collapsed group's members are REPLACED by one box (the
+         // 2000-table win) — a synthetic table per box feeds the grid engine
+         // unchanged (it reads only TableName), so a boxed member neither draws
+         // nor blocks the router.
+         var (allEdges, _) = FkEdgeExtractor.Extract(_tables);
+         var (visibleTables, visibleEdges) =
+            ModelProjection.Project(_tables, allEdges, _visibility);
+         (_boxes, _boxed) = BuildBoxes(visibleTables, visibleEdges);
+
+         // Measure each table + box without drawing so every grid slot fits the
+         // widest/tallest table or box and no table overlaps its neighbour.
          double maxWidth = 0, maxHeight = 0;
-         foreach (var t in _tables)
+         foreach (var t in visibleTables)
          {
+            if (_boxed.Contains(t.TableName))
+            {
+               continue;
+            }
             var probe = new Table(_context, 0, 0, BannerHeight, t);
             maxWidth = Math.Max(maxWidth, probe.ComputedWidth);
             maxHeight = Math.Max(maxHeight, probe.ComputedHeight);
          }
+         foreach (var (key, box) in _boxes)
+         {
+            var probe = new XamlGroupBox(_context, 0, 0, box.Group, box.Members);
+            maxWidth = Math.Max(maxWidth, probe.ComputedWidth);
+            maxHeight = Math.Max(maxHeight, probe.ComputedHeight);
+         }
 
-         var layout = TableLayoutEngine.Layout(_tables, new GridLayoutOptions
+         var layoutTables = visibleTables
+            .Where(t => !_boxed.Contains(t.TableName))
+            .ToList();
+         foreach (var (key, _) in _boxes)
+         {
+            layoutTables.Add(new TableInfo { TableName = key });
+         }
+         var layout = TableLayoutEngine.Layout(layoutTables, new GridLayoutOptions
          {
             Columns = 7,
             SlotWidth = maxWidth + SlotPadding,
@@ -564,6 +760,46 @@ namespace ModelConsole.Controls
       }
 
       /// <summary>
+      /// Build the collapsed boxes over the visible projection (backlog 039):
+      /// one box per collapsed group with visible members, and the set of
+      /// tables hidden behind them. A group hidden by 038 visibility
+      /// collapses to nothing (zero visible members — no box draws).
+      /// </summary>
+      private (List<(string Key, GroupBoxModel Box)> Boxes, HashSet<string> Boxed)
+         BuildBoxes(IReadOnlyList<TableInfo> visibleTables,
+            IReadOnlyList<FkRelation> visibleEdges)
+      {
+         var collapsed = _collapse == null
+            ? new HashSet<string>(StringComparer.Ordinal)
+            : new HashSet<string>(_collapse.CollapsedGroups, StringComparer.Ordinal);
+
+         var boxes = new List<(string Key, GroupBoxModel Box)>();
+         if (collapsed.Count > 0)
+         {
+            foreach (var group in collapsed)
+            {
+               var model = GroupBoxAggregation.Build(
+                  visibleTables, visibleEdges, group, collapsed, CurrentTheme);
+               if (model.MemberCount == 0)
+               {
+                  continue; // no visible members — nothing to collapse
+               }
+               boxes.Add((GroupBoxAggregation.BoxKey(group), model));
+            }
+         }
+
+         var boxed = new HashSet<string>(StringComparer.Ordinal);
+         foreach (var (_, box) in boxes)
+         {
+            foreach (var m in box.Members)
+            {
+               boxed.Add(m.TableName);
+            }
+         }
+         return (boxes, boxed);
+      }
+
+      /// <summary>
       /// Re-render the whole drawing from the current model state. The
       /// drawing is always derived from the state (table positions + FK
       /// constraints), never a frozen artifact, so any change - a drag, a
@@ -588,21 +824,58 @@ namespace ModelConsole.Controls
          _hoverConnector = null;
          _hoverCircles = null;
          _hoverTable = null;
+         _hoverBox = null;
 
          IGlModel model = Ioc.Default.GetRequiredService<IGlModel>();
 
+         // Backlog 038: extract the FULL edge set first so unresolved-FK
+         // diagnostics still resolve for edges coming back from hidden tables,
+         // then project to the visible subset both renderers agree on. Layout
+         // and routing consume only the projection (parity with the Skia path).
+         var (allEdges, issues) = FkEdgeExtractor.Extract(_tables);
+         var (visibleTables, visibleEdges) =
+            ModelProjection.Project(_tables, allEdges, _visibility);
+
+         // Backlog 039: rebuild the collapsed boxes over the visible
+         // projection — a collapsed group's members are replaced by one box in
+         // the drawn set and the router obstacle set, so the box is the only
+         // shape a connector must avoid (the 012 invariant extended).
+         (_boxes, _boxed) = BuildBoxes(visibleTables, visibleEdges);
+
          var drawn = new Dictionary<string, Table>();
-         foreach (var t in _tables)
+         foreach (var t in visibleTables)
          {
-            var rect = _layout[t.TableName];
+            if (_boxed.Contains(t.TableName))
+            {
+               continue;
+            }
+            if (!_layout.TryGetValue(t.TableName, out var rect))
+            {
+               continue;
+            }
             var table = _tableFactory.Create(
                _context, (float)rect.X, (float)rect.Y, BannerHeight, t);
             drawn[t.TableName] = table;
             model.Add(table);
          }
 
-         // Content bounds (the bounding box of all drawn tables) drive the
-         // fit button and the router region.
+         // Draw every collapsed box — a first-class drawable, draggable,
+         // hoverable, and clickable like a table.
+         var drawnBoxes = new Dictionary<string, XamlGroupBox>();
+         foreach (var (key, box) in _boxes)
+         {
+            if (!_layout.TryGetValue(key, out var rect))
+            {
+               continue;
+            }
+            var g = _boxFactory.Create(
+               _context, (float)rect.X, (float)rect.Y, box.Group, box.Members);
+            drawnBoxes[key] = g;
+            model.Add(g);
+         }
+
+         // Content bounds (the bounding box of all drawn tables + boxes) drive
+         // the fit button and the router region.
          double minX = double.MaxValue, minY = double.MaxValue;
          double maxX = 0, maxY = 0;
          foreach (var t in drawn.Values)
@@ -612,7 +885,14 @@ namespace ModelConsole.Controls
             maxX = Math.Max(maxX, t.X + t.ComputedWidth);
             maxY = Math.Max(maxY, t.Y + t.ComputedHeight);
          }
-         if (drawn.Count == 0)
+         foreach (var b in drawnBoxes.Values)
+         {
+            minX = Math.Min(minX, b.X);
+            minY = Math.Min(minY, b.Y);
+            maxX = Math.Max(maxX, b.X + b.ComputedWidth);
+            maxY = Math.Max(maxY, b.Y + b.ComputedHeight);
+         }
+         if (drawn.Count == 0 && drawnBoxes.Count == 0)
          {
             minX = 0; minY = 0; maxX = 0; maxY = 0;
          }
@@ -627,10 +907,13 @@ namespace ModelConsole.Controls
             minX - ExtentMargin, minY - ExtentMargin,
             (maxX - minX) + 2 * ExtentMargin, (maxY - minY) + 2 * ExtentMargin);
 
-         // Route every FK around the drawn tables, sequentially so no
-         // connector crosses another.
+         // Route every connector around the drawn tables + boxes, sequentially
+         // so no connector crosses another (nor a collapsed box — the box is
+         // in the obstacle set).
          var obstacles = drawn.Values
             .Select(t => new Rect2(t.X, t.Y, t.ComputedWidth, t.ComputedHeight))
+            .Concat(drawnBoxes.Values.Select(b =>
+               new Rect2(b.X, b.Y, b.ComputedWidth, b.ComputedHeight)))
             .ToList();
          var routerOptions = new RouterOptions
          {
@@ -639,19 +922,24 @@ namespace ModelConsole.Controls
             StubLength = 20
          };
 
-         var (edges, issues) = FkEdgeExtractor.Extract(_tables);
-
          // Resolve anchors (departure side chosen from the relative position
-         // of the two tables) and fan out connectors that share a column.
-         var startGroups = edges
+         // of the two tables) and fan out connectors that share a column —
+         // over the table-level edges only (an edge touching a collapsed box
+         // is represented by the box's aggregated external edge instead).
+         var tableEdges = visibleEdges
+            .Where(e => !_boxed.Contains(e.ChildTable) &&
+                        !_boxed.Contains(e.ParentTable))
+            .ToList();
+
+         var startGroups = tableEdges
             .GroupBy(e => e.ChildTable + "::" + e.ChildColumn)
             .ToDictionary(g => g.Key, g => g.ToList());
-         var endGroups = edges
+         var endGroups = tableEdges
             .GroupBy(e => e.ParentTable + "::" + e.ParentColumn)
             .ToDictionary(g => g.Key, g => g.ToList());
 
          var anchorEdges = new List<(Point2 Start, Point2 End, FkRelation Edge)>();
-         foreach (var edge in edges)
+         foreach (var edge in tableEdges)
          {
             if (!drawn.TryGetValue(edge.ChildTable, out var child) ||
                 !drawn.TryGetValue(edge.ParentTable, out var parent))
@@ -675,21 +963,74 @@ namespace ModelConsole.Controls
             anchorEdges.Add((start, end, edge));
          }
 
-         if (onlyTable == null)
+         // Backlog 039: the boxes' external connectors — one anchor pair per
+         // external target, the box side facing the target resolved from the
+         // relative position of the two rects (the box anchors at its vertical
+         // midpoint — it has no column rows). Target rects are the drawn
+         // tables/boxes (actual sizes, not slots), so the connector touches
+         // the box's real boundary.
+         var boxAnchors = new List<(Point2 Start, Point2 End, GroupBoxEdge Edge)>();
+         foreach (var (key, box) in _boxes)
          {
-            // Full re-route (initial render, delete, POCO edit).
+            if (!drawnBoxes.TryGetValue(key, out var boxObj))
+            {
+               continue;
+            }
+            var boxRect = new Rect2(
+               boxObj.X, boxObj.Y, boxObj.ComputedWidth, boxObj.ComputedHeight);
+            foreach (var be in box.ExternalEdges)
+            {
+               string targetKey = be.TargetGroup != null
+                  ? GroupBoxAggregation.BoxKey(be.TargetGroup)
+                  : be.TargetTable;
+               Rect2 targetRect;
+               if (drawn.TryGetValue(targetKey, out var targetTable))
+               {
+                  targetRect = new Rect2(targetTable.X, targetTable.Y,
+                     targetTable.ComputedWidth, targetTable.ComputedHeight);
+               }
+               else if (drawnBoxes.TryGetValue(targetKey, out var targetBox))
+               {
+                  targetRect = new Rect2(targetBox.X, targetBox.Y,
+                     targetBox.ComputedWidth, targetBox.ComputedHeight);
+               }
+               else
+               {
+                  continue; // target box collapsed to nothing (all hidden)
+               }
+
+               var (start, end, _, _) = ConnectorAnchors.Resolve(
+                  boxRect, targetRect, boxRect.Center.Y, targetRect.Center.Y);
+               boxAnchors.Add((start, end, be));
+            }
+         }
+
+         if (onlyTable == null || onlyTable.StartsWith("group::"))
+         {
+            // Full re-route (initial render, delete, POCO edit, box drag):
+            // table FKs first, then the boxes' external connectors,
+            // sequentially so no connector crosses another — nor any box,
+            // which is in the obstacle set.
+            var allAnchors = anchorEdges
+               .Select(a => (a.Start, a.End))
+               .Concat(boxAnchors.Select(a => (a.Start, a.End)))
+               .ToList();
             var routes = SequentialRouter.RouteAll(
-               anchorEdges.Select(a => (a.Start, a.End)).ToList(),
-               obstacles, bounds, routerOptions);
+               allAnchors, obstacles, bounds, routerOptions);
             _routes = anchorEdges
                .Select((a, i) => (a.Edge, (IReadOnlyList<Point2>)routes[i]))
+               .ToList();
+            _boxRoutes = boxAnchors
+               .Select((a, i) => (a.Edge,
+                  (IReadOnlyList<Point2>)routes[anchorEdges.Count + i]))
                .ToList();
          }
          else
          {
             // Drag release: re-route only the moved table's edges, keeping
             // the stored routes for the rest as thin obstacles so the new
-            // routes avoid them.
+            // routes avoid them. Box connectors touching the moved table
+            // re-route too (their anchors moved with it).
             var toRoute = anchorEdges
                .Where(a => a.Edge.ChildTable == onlyTable ||
                            a.Edge.ParentTable == onlyTable)
@@ -699,6 +1040,14 @@ namespace ModelConsole.Controls
             foreach (var (edge, pts) in _routes)
             {
                if (edge.ChildTable == onlyTable || edge.ParentTable == onlyTable)
+               {
+                  continue;
+               }
+               AddSegmentObstacles(thin, pts, 4);
+            }
+            foreach (var (edge, pts) in _boxRoutes)
+            {
+               if (edge.TargetTable == onlyTable)
                {
                   continue;
                }
@@ -719,21 +1068,31 @@ namespace ModelConsole.Controls
                            r.Edge.ParentTable != onlyTable)
                .Concat(newRoutes)
                .ToList();
+
+            var toBoxRoute = boxAnchors
+               .Where(a => a.Edge.TargetTable == onlyTable)
+               .ToList();
+            var newBoxRoutes = new List<(GroupBoxEdge Edge, IReadOnlyList<Point2> Points)>();
+            foreach (var a in toBoxRoute)
+            {
+               var pts = OrthogonalRouter.RouteBest(
+                  a.Start, a.End, obstacles, bounds, routerOptions, thin);
+               newBoxRoutes.Add((a.Edge, pts));
+               AddSegmentObstacles(thin, pts, 4);
+            }
+            _boxRoutes = _boxRoutes
+               .Where(r => r.Edge.TargetTable != onlyTable)
+               .Concat(newBoxRoutes)
+               .ToList();
          }
 
          foreach (var (edge, pts) in _routes)
          {
-            var connector = _connectorFactory.CreateRouted(_context, pts);
-            connector.Data = edge;
-
-            // Endpoint markers; tag them with the connector so clicking a
-            // circle also inspects the relationship.
-            var startCircle = GlEllipse.Draw(
-               _context, pts[0].X, pts[0].Y, 8, Colors.DodgerBlue);
-            startCircle.NativeInstance.Tag = connector;
-            var endCircle = GlEllipse.Draw(
-               _context, pts[pts.Count - 1].X, pts[pts.Count - 1].Y, 8, Colors.DodgerBlue);
-            endCircle.NativeInstance.Tag = connector;
+            DrawRoutedConnector(pts, edge);
+         }
+         foreach (var (edge, pts) in _boxRoutes)
+         {
+            DrawRoutedConnector(pts, edge);
          }
 
          // Selection highlight: an accent outline around the selected table,
@@ -756,8 +1115,29 @@ namespace ModelConsole.Controls
          {
             WriteMessage("FK issue: " + issue);
          }
-         WriteMessage("Drew " + _tables.Count + " tables and " +
-            edges.Count + " FK connectors.");
+         WriteMessage("Drew " + drawn.Count + " tables, " +
+            drawnBoxes.Count + " collapsed groups and " +
+            (_routes.Count + _boxRoutes.Count) + " FK connectors.");
+      }
+
+
+      /// <summary>
+      /// Draw one routed connector: the polyline plus its endpoint markers,
+      /// tagged with the route's data (an <see cref="FkRelation"/> for a table
+      /// edge, a <see cref="GroupBoxEdge"/> for a collapsed box's connector)
+      /// so clicking a circle also inspects the relationship.
+      /// </summary>
+      private void DrawRoutedConnector(IReadOnlyList<Point2> pts, object data)
+      {
+         var connector = _connectorFactory.CreateRouted(_context, pts);
+         connector.Data = data;
+
+         var startCircle = GlEllipse.Draw(
+            _context, pts[0].X, pts[0].Y, 8, Colors.DodgerBlue);
+         startCircle.NativeInstance.Tag = connector;
+         var endCircle = GlEllipse.Draw(
+            _context, pts[pts.Count - 1].X, pts[pts.Count - 1].Y, 8, Colors.DodgerBlue);
+         endCircle.NativeInstance.Tag = connector;
       }
 
       /// <summary>
@@ -774,6 +1154,16 @@ namespace ModelConsole.Controls
             _layout[name] = new Rect2(
                table.X, table.Y, table.ComputedWidth, table.ComputedHeight);
             Render(onlyTable: name);
+         }
+         else if (obj is XamlGroupBox box)
+         {
+            // A collapsed box dragged like a table: move the whole group by
+            // moving its one rect (a full re-route — the box's external
+            // connectors follow).
+            string key = GroupBoxAggregation.BoxKey(box.Group);
+            _layout[key] = new Rect2(
+               box.X, box.Y, box.ComputedWidth, box.ComputedHeight);
+            Render(onlyTable: key);
          }
       }
 
@@ -816,10 +1206,38 @@ namespace ModelConsole.Controls
       /// </summary>
       private void OnShapeClicked(GlObject obj)
       {
+         // A collapsed group's box has no inspector surface yet — clicking it
+         // expands the group (backlog 039's box affordance).
+         if (obj is XamlGroupBox box)
+         {
+            GroupExpandRequested?.Invoke(this, box.Group);
+            return;
+         }
+
          var node = obj?.Node;
          if (node != null)
          {
             EntitySelected?.Invoke(this, node.Model);
+         }
+      }
+
+      /// <summary>
+      /// A shape was double-clicked (backlog 042): raise
+      /// <see cref="EntityDoubleTapped"/> with the node's live model object (a
+      /// <see cref="TableInfo"/> or an <see cref="FkRelation"/>) so the host
+      /// can open the details window. Double-clicking a collapsed box does
+      /// nothing extra — a single click already expands it.
+      /// </summary>
+      private void OnShapeDoubleClicked(GlObject obj)
+      {
+         if (obj is XamlGroupBox)
+         {
+            return;
+         }
+         var node = obj?.Node;
+         if (node != null)
+         {
+            EntityDoubleTapped?.Invoke(this, node.Model);
          }
       }
 
@@ -840,6 +1258,7 @@ namespace ModelConsole.Controls
          {
             ClearConnectorHighlight();
             ClearTableHover();
+            ClearBoxHover();
             _hoverNode = null;
             _hoverTimer.Stop();
             HideHover();
@@ -849,10 +1268,11 @@ namespace ModelConsole.Controls
          if (!ReferenceEquals(node.Model, _hoverNode?.Model))
          {
             // A different node is hovered: drop any connector emphasis and
-            // any table-border emphasis, then apply the new node's — a
-            // connector (GlOrthoPath) thickens + enlarges its markers so the
-            // dependency's start and end are unambiguous; a table (backlog
-            // 041) draws its thicker DodgerBlue accent border.
+            // any card-border emphasis (table or collapsed box), then apply
+            // the new node's — a connector (GlOrthoPath) thickens + enlarges
+            // its markers so the dependency's start and end are unambiguous; a
+            // table or a collapsed group box (backlog 041/039) draws its
+            // thicker DodgerBlue accent border.
             if (!ReferenceEquals(obj, _hoverConnector))
             {
                ClearConnectorHighlight();
@@ -868,6 +1288,15 @@ namespace ModelConsole.Controls
                {
                   _hoverTable = table;
                   table.Hovered = true;
+               }
+            }
+            if (!ReferenceEquals(obj, _hoverBox))
+            {
+               ClearBoxHover();
+               if (obj is XamlGroupBox box)
+               {
+                  _hoverBox = box;
+                  box.Hovered = true;
                }
             }
 
@@ -897,7 +1326,35 @@ namespace ModelConsole.Controls
          connector.Path.Stroke = new SolidColorBrush(Colors.SlateBlue);
          connector.Path.StrokeThickness = 3.5;
 
-         var pts = _routes.First(r => ReferenceEquals(r.Edge, connector.Data)).Points;
+         // The highlighted route is a table FK or a collapsed box's external
+         // connector — look in both route lists (the data is the route's
+         // FkRelation / GroupBoxEdge).
+         IReadOnlyList<Point2> pts = null;
+         foreach (var (edge, routePts) in _routes)
+         {
+            if (ReferenceEquals(edge, connector.Data))
+            {
+               pts = routePts;
+               break;
+            }
+         }
+         if (pts == null)
+         {
+            foreach (var (edge, routePts) in _boxRoutes)
+            {
+               if (ReferenceEquals(edge, connector.Data))
+               {
+                  pts = routePts;
+                  break;
+               }
+            }
+         }
+         if (pts == null || pts.Count == 0)
+         {
+            ClearConnectorHighlight();
+            return;
+         }
+
          _hoverCircles = new List<GlEllipse>
          {
             GlEllipse.Draw(_context, pts[0].X, pts[0].Y, 12, Colors.DodgerBlue),
@@ -944,6 +1401,19 @@ namespace ModelConsole.Controls
          {
             _hoverTable.Hovered = false;
             _hoverTable = null;
+         }
+      }
+
+      /// <summary>
+      /// Restore the hovered collapsed box's border to its rest state (the
+      /// shared neutral border). Safe to call when no box is emphasized.
+      /// </summary>
+      private void ClearBoxHover()
+      {
+         if (_hoverBox != null)
+         {
+            _hoverBox.Hovered = false;
+            _hoverBox = null;
          }
       }
 
@@ -1045,6 +1515,12 @@ namespace ModelConsole.Controls
          _tables = tables;
          _enumerations = enumerations;
          _selectedTable = null;
+         // A fresh model starts with every group visible and no pins (backlog
+         // 038) and every group expanded (backlog 039); the host may share its
+         // own instances via SetVisibility / SetCollapse after. The grouping
+         // theme (backlog 043) re-derives from the new tables + theme name.
+         _visibility = EntityVisibility.Create(tables, CurrentTheme);
+         _collapse = new GroupCollapseState();
          InitializeLayout();
          Render();
          ModelChanged?.Invoke(this, EventArgs.Empty);

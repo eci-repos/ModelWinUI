@@ -11,6 +11,7 @@
    <Grid x:Name="RootGrid" BorderBrush="{ThemeResource ControlBorderBrush}" BorderThickness=".5">
       <Grid.RowDefinitions>
          <RowDefinition Height="Auto" />
+         <RowDefinition Height="Auto" />
          <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
@@ -18,13 +19,116 @@
               Background="{ThemeResource ExplorerHeaderBackgroundBrush}"
               BorderBrush="{ThemeResource ControlBorderBrush}"
               BorderThickness="1" Padding="8,6">
-         <TextBlock x:Name="HeaderText" Text="Model Explorer"
-                    FontWeight="SemiBold" FontSize="13"
-                    Foreground="{ThemeResource ControlHeaderForegroundBrush}" />
+         <Grid>
+            <Grid.ColumnDefinitions>
+               <ColumnDefinition Width="*" />
+               <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="HeaderText" Text="Model Explorer"
+                       FontWeight="SemiBold" FontSize="13"
+                       Foreground="{ThemeResource ControlHeaderForegroundBrush}"
+                       VerticalAlignment="Center" />
+            <!-- Groups panel toggle (backlog 043 UX): the grouping options
+                 live behind this header button — shown on request, hidden by
+                 default so the tree stays uncluttered. -->
+            <Button x:Name="GroupsToggleButton" Grid.Column="1"
+                    MinWidth="0" Padding="8,2" FontSize="12"
+                    Click="GroupsToggleButton_Click"
+                    ToolTipService.ToolTip="Show or hide the grouping panel" />
+         </Grid>
       </Border>
 
-      <TreeView x:Name="ModelTree" Grid.Row="1"
+      <!-- Groups section (backlog 038 + 043): a "Group by:" theme selector, a
+           checkbox per group, an explicit "Show only:" focus combo, and a
+           labeled Package overview (Collapse all / Expand all). Built in code
+           from the active theme's group universe; shown behind the header
+           button, never forced open. -->
+      <Border x:Name="GroupsPanel" Grid.Row="1" Visibility="Collapsed"
+              BorderBrush="{ThemeResource ControlBorderBrush}"
+              BorderThickness="0,0,0,1" Padding="8,6">
+         <StackPanel Spacing="8">
+            <!-- How the groups are derived. -->
+            <StackPanel Orientation="Horizontal" Spacing="6">
+               <TextBlock Text="Group by:" FontSize="12"
+                          VerticalAlignment="Center"
+                          Foreground="{ThemeResource ControlHeaderForegroundBrush}" />
+               <ComboBox x:Name="ThemeCombo" MinWidth="0" FontSize="12"
+                         SelectionChanged="ThemeCombo_SelectionChanged"
+                         ToolTipService.ToolTip="How the groups are formed: Tags you author, or Schema / Kind / FK connectivity (derived)" />
+            </StackPanel>
+
+            <!-- The groups: a checkbox shows/hides each group; its ▣ button
+                 collapses that group into one package box. -->
+            <StackPanel Spacing="4">
+               <Grid>
+                  <Grid.ColumnDefinitions>
+                     <ColumnDefinition Width="*" />
+                     <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock x:Name="GroupsHeader" Text="Groups (0)"
+                             FontWeight="SemiBold" FontSize="12"
+                             Foreground="{ThemeResource ControlHeaderForegroundBrush}"
+                             VerticalAlignment="Center" />
+                  <Button x:Name="ShowAllButton" Grid.Column="1" Content="Show all"
+                          MinWidth="0" Padding="8,2" FontSize="11"
+                          Click="ShowAllButton_Click"
+                          ToolTipService.ToolTip="Show every group's tables again" />
+               </Grid>
+               <TextBlock Text="Check a group to show its tables; ▣ collapses it into a package box."
+                          FontSize="10" TextWrapping="Wrap"
+                          Foreground="{ThemeResource ControlHeaderForegroundBrush}"
+                          Opacity="0.6" />
+               <ItemsControl x:Name="GroupsList" />
+            </StackPanel>
+
+            <!-- Focus: show one group's tables. -->
+            <StackPanel Orientation="Horizontal" Spacing="6">
+               <TextBlock Text="Show only:" FontSize="12"
+                          VerticalAlignment="Center"
+                          Foreground="{ThemeResource ControlHeaderForegroundBrush}" />
+               <ComboBox x:Name="SoloCombo" MinWidth="0" FontSize="12"
+                         SelectionChanged="SoloCombo_SelectionChanged"
+                         ToolTipService.ToolTip="Draw only one group's tables (or all groups)" />
+            </StackPanel>
+
+            <!-- The package overview: every group becomes one box. -->
+            <StackPanel Spacing="4">
+               <TextBlock Text="Package overview"
+                          FontWeight="SemiBold" FontSize="12"
+                          Foreground="{ThemeResource ControlHeaderForegroundBrush}" />
+               <TextBlock Text="Collapse each group into a single package box — the overview for very large models."
+                          FontSize="10" TextWrapping="Wrap"
+                          Foreground="{ThemeResource ControlHeaderForegroundBrush}"
+                          Opacity="0.6" />
+               <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button x:Name="CollapseAllButton" Content="Collapse all"
+                          Padding="8,2" Click="CollapseAllButton_Click"
+                          ToolTipService.ToolTip="Collapse every group into one package box (the overview)" />
+                  <Button x:Name="ExpandAllButton" Content="Expand all"
+                          Padding="8,2" Click="ExpandAllButton_Click"
+                          ToolTipService.ToolTip="Expand every collapsed group back to its members" />
+               </StackPanel>
+            </StackPanel>
+         </StackPanel>
+      </Border>
+
+      <TreeView x:Name="ModelTree" Grid.Row="2"
                 SelectionMode="Single"
-                ItemInvoked="ModelTree_ItemInvoked" />
+                Loaded="ModelTree_Loaded"
+                Expanding="ModelTree_Expanding"
+                ItemInvoked="ModelTree_ItemInvoked">
+         <TreeView.Resources>
+            <!-- The tree sits on the light "Base:" background (backlog 041), so
+                 the theme's text brushes are pinned to the shared near-black
+                 here — the theme-default foreground goes white in dark OS mode
+                 and vanishes against the light panel (the 041 regression, the
+                 same pin the drawing-surface text uses). This covers containers
+                 realized after load (a table's columns on expansion); the
+                 code-behind pins the realized containers too (TreeTextForeground).
+                 Values mirror TablePalette.TextHex (#1F1F1F). -->
+            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#1F1F1F" />
+            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#1F1F1F" />
+         </TreeView.Resources>
+      </TreeView>
    </Grid>
 </UserControl>

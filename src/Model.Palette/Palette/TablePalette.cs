@@ -40,7 +40,15 @@ namespace ModelConsole.Palette
       /// </summary>
       public const float FooterHeight = 20;
 
-      // Table card border (backlog 041): a soft neutral line at rest; the
+      // Table card text: the near-black the banner and column text render in.
+      // The cards are always light-pastel on a light drawing surface, so the
+      // text color is pinned here — never the theme-default TextBlock
+      // foreground, which flips to white in dark OS mode and vanishes against
+      // the light cards (the Skia renderer and the XAML hover readout already
+      // pinned their text dark; this is the same pin, from the one palette).
+      public const string TextHex = "#1F1F1F";
+
+      // Table card border (backlog 041): a soft neutral stroke at rest; the
       // hovered table draws the DodgerBlue accent, thicker, so it reads at a
       // glance under the pointer (the same accent the selection outline and
       // connector emphasis use). One width/color pair for both renderers so

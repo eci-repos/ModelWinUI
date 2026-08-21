@@ -113,14 +113,20 @@ namespace ModelConsole.Geometry
          //    (already-routed connectors) form a barrier that makes the grid
          //    unreachable, retry without them: the hard invariant is "no
          //    connector crosses a table interior", so crossing a connector is
-         //    acceptable when the alternative is crossing a table.
+         //    acceptable when the alternative is crossing a table. The table
+         //    walkability grid is built once and shared by both runs — the
+         //    thin connectors are stamped onto a per-run copy.
+         var walk = new WalkGrid(
+            Math.Max(1, (int)Math.Ceiling(bounds.Width / grid)),
+            Math.Max(1, (int)Math.Ceiling(bounds.Height / grid)));
+         walk.Stamp(inflated, bounds, grid);
+
          List<Point2> gridPath = AStar(
-            startStub, endStub, inflated, thin, bounds, grid, maxExpansions);
+            startStub, endStub, walk, thin, bounds, grid, maxExpansions);
          if (gridPath == null)
          {
             gridPath = AStar(
-               startStub, endStub, inflated, new List<Rect2>(), bounds, grid,
-               maxExpansions);
+               startStub, endStub, walk, null, bounds, grid, maxExpansions);
          }
          if (gridPath == null)
          {
@@ -447,12 +453,141 @@ namespace ModelConsole.Geometry
       }
 
       /// <summary>
+      /// Precomputed walkability for one A* run: a flat grid of blocked cells
+      /// (the cell centre is strictly inside an inflated/thin obstacle) and a
+      /// flat grid of blocked directed steps (the segment between two adjacent
+      /// cell centres crosses an obstacle interior). A* reads these O(1)
+      /// instead of scanning the obstacle list on every expansion — the hot
+      /// path that made a large-model compose take minutes, since the list
+      /// grows to ~800 rects (every routed connector segment) by the end of a
+      /// routing pass.
+      /// </summary>
+      private sealed class WalkGrid
+      {
+         private readonly int _cols;
+         private readonly int _rows;
+         private readonly bool[] _blocked;
+         private readonly bool[] _stepX; // step (c, r) -> (c + 1, r) blocked
+         private readonly bool[] _stepY; // step (c, r) -> (c, r + 1) blocked
+
+         public WalkGrid(int cols, int rows)
+         {
+            _cols = cols;
+            _rows = rows;
+            _blocked = new bool[cols * rows];
+            _stepX = new bool[cols * rows];
+            _stepY = new bool[cols * rows];
+         }
+
+         public bool IsBlocked(int col, int row)
+         {
+            return _blocked[row * _cols + col];
+         }
+
+         public bool IsStepXBlocked(int col, int row)
+         {
+            return _stepX[row * _cols + col];
+         }
+
+         public bool IsStepYBlocked(int col, int row)
+         {
+            return _stepY[row * _cols + col];
+         }
+
+         /// <summary>
+         /// A copy of the walkability grid, so a caller can share one base
+         /// (the static tables) and stamp the per-route thin connectors onto
+         /// a private copy without rebuilding the base each time.
+         /// </summary>
+         public WalkGrid Clone()
+         {
+            var copy = new WalkGrid(_cols, _rows);
+            Array.Copy(_blocked, copy._blocked, _blocked.Length);
+            Array.Copy(_stepX, copy._stepX, _stepX.Length);
+            Array.Copy(_stepY, copy._stepY, _stepY.Length);
+            return copy;
+         }
+
+         /// <summary>
+         /// Stamp every rect into the grid. The predicates are exactly the
+         /// tests they replace — <see cref="Rect2.ContainsStrict"/> on the cell
+         /// centre and <see cref="Rect2.SegmentCrossesInterior"/> between
+         /// adjacent centres — so the walkable set is identical to the old
+         /// per-expansion scans (the win is skipping the rects that cannot
+         /// possibly match).
+         /// </summary>
+         public void Stamp(IReadOnlyList<Rect2> rects, Rect2 bounds, double grid)
+         {
+            for (int i = 0; i < rects.Count; i++)
+            {
+               Stamp(rects[i], bounds, grid);
+            }
+         }
+
+         private void Stamp(Rect2 rect, Rect2 bounds, double grid)
+         {
+            // Enumerate the cells whose centre lies within the rect expanded
+            // by one cell. Every adjacent pair whose centre-segment crosses
+            // the rect has at least one endpoint cell in this range (the
+            // crossing midpoint's cell centre is within half a cell of the
+            // rect), so stamping both directions from each enumerated cell
+            // covers every crossing pair exactly once.
+            int c0 = ToCol(rect.Left - grid, bounds.Left, grid, _cols);
+            int c1 = ToCol(rect.Right + grid, bounds.Left, grid, _cols);
+            int r0 = ToRow(rect.Top - grid, bounds.Top, grid, _rows);
+            int r1 = ToRow(rect.Bottom + grid, bounds.Top, grid, _rows);
+
+            for (int r = r0; r <= r1; r++)
+            {
+               for (int c = c0; c <= c1; c++)
+               {
+                  Point2 center = CellCenter(c, r, bounds, grid);
+                  if (rect.ContainsStrict(center))
+                  {
+                     _blocked[r * _cols + c] = true;
+                  }
+
+                  // Directed steps, indexed by the "from" cell — a -x move
+                  // from (col, row) reads the step stored at (col - 1, row).
+                  if (c + 1 < _cols &&
+                      Rect2.SegmentCrossesInterior(
+                         center, CellCenter(c + 1, r, bounds, grid), rect))
+                  {
+                     _stepX[r * _cols + c] = true;
+                  }
+                  if (c - 1 >= 0 &&
+                      Rect2.SegmentCrossesInterior(
+                         center, CellCenter(c - 1, r, bounds, grid), rect))
+                  {
+                     _stepX[r * _cols + (c - 1)] = true;
+                  }
+                  if (r + 1 < _rows &&
+                      Rect2.SegmentCrossesInterior(
+                         center, CellCenter(c, r + 1, bounds, grid), rect))
+                  {
+                     _stepY[r * _cols + c] = true;
+                  }
+                  if (r - 1 >= 0 &&
+                      Rect2.SegmentCrossesInterior(
+                         center, CellCenter(c, r - 1, bounds, grid), rect))
+                  {
+                     _stepY[(r - 1) * _cols + c] = true;
+                  }
+               }
+            }
+         }
+      }
+
+      /// <summary>
       /// A* between two points on a coarse grid. Returns the cell-center
-      /// polyline, or null when the grid is unreachable.
+      /// polyline, or null when the grid is unreachable. The caller's base
+      /// walkability grid (the static tables) is stamped with the route's
+      /// thin connectors onto a private copy, so the A* hot loop reads arrays
+      /// instead of scanning the obstacle list per expansion.
       /// </summary>
       private static List<Point2> AStar(
-         Point2 start, Point2 end, IReadOnlyList<Rect2> inflated,
-         IReadOnlyList<Rect2> thin, Rect2 bounds, double grid, long maxExpansions)
+         Point2 start, Point2 end, WalkGrid baseWalk, IReadOnlyList<Rect2> thin,
+         Rect2 bounds, double grid, long maxExpansions)
       {
          int cols = Math.Max(1, (int)Math.Ceiling(bounds.Width / grid));
          int rows = Math.Max(1, (int)Math.Ceiling(bounds.Height / grid));
@@ -461,6 +596,12 @@ namespace ModelConsole.Geometry
          int sr = ToRow(start.Y, bounds.Top, grid, rows);
          int ec = ToCol(end.X, bounds.Left, grid, cols);
          int er = ToRow(end.Y, bounds.Top, grid, rows);
+
+         var walk = baseWalk.Clone();
+         if (thin != null && thin.Count > 0)
+         {
+            walk.Stamp(thin, bounds, grid);
+         }
 
          var gScore = new Dictionary<(int, int), double>();
          var cameFrom = new Dictionary<(int, int), (int, int)>();
@@ -509,20 +650,24 @@ namespace ModelConsole.Geometry
                }
 
                bool startEnd = (ncol == sc && nrow == sr) || (ncol == ec && nrow == er);
-               if (!startEnd && IsBlocked(ncol, nrow, inflated, thin, bounds, grid))
+               if (!startEnd)
                {
-                  continue;
-               }
+                  if (walk.IsBlocked(ncol, nrow))
+                  {
+                     continue;
+                  }
 
-               // Don't step across an obstacle between two cell centers. This
-               // stops a single grid step from jumping over a thin obstacle
-               // (e.g. an already-routed connector) whose centerline lies
-               // between the two cell centers.
-               if (!startEnd && SegmentCrossesAny(
-                  CellCenter(col, row, bounds, grid),
-                  CellCenter(ncol, nrow, bounds, grid), inflated, thin))
-               {
-                  continue;
+                  // Don't step across an obstacle between two cell centers. This
+                  // stops a single grid step from jumping over a thin obstacle
+                  // (e.g. an already-routed connector) whose centerline lies
+                  // between the two cell centers.
+                  if ((dc == 1 && walk.IsStepXBlocked(col, row)) ||
+                      (dc == -1 && walk.IsStepXBlocked(ncol, nrow)) ||
+                      (dr == 1 && walk.IsStepYBlocked(col, row)) ||
+                      (dr == -1 && walk.IsStepYBlocked(ncol, nrow)))
+                  {
+                     continue;
+                  }
                }
 
                double ng = g + 1.0;

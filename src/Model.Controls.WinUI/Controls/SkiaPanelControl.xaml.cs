@@ -23,6 +23,7 @@ using SkiaSharp;
 using Model.Data;
 using ModelConsole.Diagnostics;
 using ModelConsole.Geometry;
+using ModelConsole.Graph;
 using ModelConsole.Skia.GLibrary;
 using ModelConsole.Skia.Primitives;
 using ModelConsole.Skia.Services;
@@ -67,6 +68,7 @@ namespace ModelConsole.Controls
 
       private readonly IModelDataProvider _dataProvider;
       private readonly ISkiaTableFactory _tableFactory;
+      private readonly ISkiaBoxFactory _boxFactory;
       private readonly ISkiaConnectorFactory _connectorFactory;
       private IReadOnlyList<TableInfo> _tables;
       private Dictionary<string, TableInfo> _tablesByName;
@@ -118,12 +120,12 @@ namespace ModelConsole.Controls
       private int _hoveredRoute = -1;
 
       /// <summary>
-      /// Name of the table under the pointer, or null; drives the accent
-      /// border on the hovered table (backlog 041). Reset when the diagram is
-      /// replaced and when the pointer leaves/pan ends (mirrors
-      /// <see cref="_hoveredRoute"/>).
+      /// The layout key under the pointer — a table name or a collapsed-box
+      /// key (backlog 039) — or null; drives the accent border on the hovered
+      /// table / box (backlog 041). Reset when the diagram is replaced and
+      /// when the pointer moves/pan ends (mirrors <see cref="_hoveredRoute"/>).
       /// </summary>
-      private string _hoveredTable;
+      private string _hoveredKey;
 
       /// <summary>
       /// The drawing-surface background color (backlog 041): each paint clears
@@ -133,12 +135,38 @@ namespace ModelConsole.Controls
       private Color _backgroundColor =
          HexColor.FromHex(TablePalette.CanvasBackgroundHex);
 
+      /// <summary>
+      /// View-side entity visibility (backlog 038): the host shares the same
+      /// instance with the panel so both renderers compose the identical
+      /// visible set. Captured per compose; a change clears the cached diagram
+      /// so the next paint re-composes over the visible subset.
+      /// </summary>
+      private EntityVisibility _visibility;
+
+      /// <summary>
+      /// View-side collapse state (backlog 039): the host shares the same
+      /// instance with the panel so both renderers collapse the identical
+      /// groups. Captured per compose; a change clears the cached diagram so
+      /// the next paint re-composes the collapsed boxes.
+      /// </summary>
+      private GroupCollapseState _collapse;
+
+      /// <summary>
+      /// The active grouping theme's name (backlog 043). The theme is
+      /// model-dependent (connectivity needs the FK graph), so shared state is
+      /// the <b>name</b> and the concrete <see cref="GroupingTheme"/> is
+      /// derived from the composed tables + name inside <see cref="StartCompose"/>
+      /// — a model change re-derives it automatically.
+      /// </summary>
+      private string _themeName = GroupingThemes.TagsName;
+
       public SkiaPanelControl()
       {
          this.InitializeComponent();
 
          _dataProvider = Ioc.Default.GetRequiredService<IModelDataProvider>();
          _tableFactory = Ioc.Default.GetRequiredService<ISkiaTableFactory>();
+         _boxFactory = Ioc.Default.GetRequiredService<ISkiaBoxFactory>();
          _connectorFactory = Ioc.Default.GetRequiredService<ISkiaConnectorFactory>();
          _tables = _dataProvider.GetPublicSafetyTables();
          _tablesByName = _tables.ToDictionary(t => t.TableName, t => t);
@@ -162,8 +190,55 @@ namespace ModelConsole.Controls
          _tablesByName = tables.ToDictionary(t => t.TableName, t => t);
          _diagram = null;
          _hoveredRoute = -1;
-         _hoveredTable = null;
+         _hoveredKey = null;
          SkiaCanvas.Invalidate();
+      }
+
+      /// <summary>
+      /// Apply view-side visibility (backlog 038): clear the cached diagram so
+      /// the next paint re-composes over the visible subset (a group toggle or
+      /// pin change re-flows the drawing, mirroring the XAML path's
+      /// <c>SetVisibility</c> re-layout). The host passes the same instance it
+      /// gave the XAML path, so both renderers agree on the visible set.
+      /// </summary>
+      public void SetVisibility(EntityVisibility visibility)
+      {
+         _visibility = visibility;
+         _diagram = null;
+         _hoveredRoute = -1;
+         _hoveredKey = null;
+         SkiaCanvas?.Invalidate();
+      }
+
+      /// <summary>
+      /// Apply view-side collapse (backlog 039): clear the cached diagram so
+      /// the next paint re-composes the collapsed boxes (a group collapse or
+      /// expand re-flows the drawing, mirroring <c>SetVisibility</c>). The
+      /// host passes the same instance it gave the XAML path, so both
+      /// renderers collapse the identical groups.
+      /// </summary>
+      public void SetCollapse(GroupCollapseState collapse)
+      {
+         _collapse = collapse;
+         _diagram = null;
+         _hoveredRoute = -1;
+         _hoveredKey = null;
+         SkiaCanvas?.Invalidate();
+      }
+
+      /// <summary>
+      /// Apply the grouping theme (backlog 043): clear the cached diagram so
+      /// the next paint re-composes over the new theme's groups (mirroring
+      /// <c>SetVisibility</c>/<c>SetCollapse</c>). The host passes the same
+      /// name it gave the XAML path, so both renderers group identically.
+      /// </summary>
+      public void SetTheme(string themeName)
+      {
+         _themeName = themeName ?? GroupingThemes.TagsName;
+         _diagram = null;
+         _hoveredRoute = -1;
+         _hoveredKey = null;
+         SkiaCanvas?.Invalidate();
       }
 
       /// <summary>
@@ -243,11 +318,20 @@ namespace ModelConsole.Controls
 
          foreach (var kv in _diagram.Layout)
          {
-            // The hovered table draws its accent border (backlog 041) — the
-            // same emphasis the XAML path applies live on hover.
-            bool hovered = kv.Key == _hoveredTable;
-            _tableFactory.Create(frame, (float)kv.Value.X, (float)kv.Value.Y,
-               BannerHeight, _tablesByName[kv.Key], hovered);
+            // The hovered table or collapsed box draws its accent border
+            // (backlog 041 + 039) — the same emphasis the XAML path applies
+            // live on hover.
+            bool hovered = kv.Key == _hoveredKey;
+            if (_diagram.Boxes.TryGetValue(kv.Key, out var box))
+            {
+               _boxFactory.Create(frame, (float)kv.Value.X, (float)kv.Value.Y,
+                  box.Group, box.MemberCount, hovered);
+            }
+            else
+            {
+               _tableFactory.Create(frame, (float)kv.Value.X, (float)kv.Value.Y,
+                  BannerHeight, _tablesByName[kv.Key], hovered);
+            }
          }
 
          // Draw the routes, then the hovered route last, on top, emphasized
@@ -275,6 +359,9 @@ namespace ModelConsole.Controls
          _composing = true;
          ComposingText.Visibility = Visibility.Visible;
          var tables = _tables;
+         var visibility = _visibility;
+         var collapse = _collapse;
+         var themeName = _themeName;
          ILogService log = Ioc.Default.GetRequiredService<ILogService>();
          log.WriteMessage("Skia render: composing " + tables.Count + " tables…");
 
@@ -285,14 +372,20 @@ namespace ModelConsole.Controls
                using (var surface = SKSurface.Create(new SKImageInfo(1, 1)))
                {
                   var measureFrame = new GlFrame(surface);
+                  var theme = GroupingThemes.FromName(themeName, tables);
                   var diagram = ErdComposer.Compose(tables, measureFrame,
-                     new ErdOptions { BannerHeight = BannerHeight });
+                     new ErdOptions { BannerHeight = BannerHeight },
+                     visibility, collapse, theme);
 
                   DispatcherQueue.TryEnqueue(() =>
                   {
-                     // Discard a stale compose (the model changed mid-route)
-                     // and re-paint so the new model composes.
-                     if (!ReferenceEquals(tables, _tables))
+                     // Discard a stale compose (the model, its visibility, its
+                     // collapse state, or its grouping theme changed mid-route)
+                     // and re-paint so the new state composes.
+                     if (!ReferenceEquals(tables, _tables) ||
+                         !ReferenceEquals(visibility, _visibility) ||
+                         !ReferenceEquals(collapse, _collapse) ||
+                         !string.Equals(themeName, _themeName, StringComparison.Ordinal))
                      {
                         _composing = false;
                         ComposingText.Visibility = Visibility.Collapsed;
@@ -308,8 +401,11 @@ namespace ModelConsole.Controls
                      {
                         log.WriteMessage("FK issue: " + issue);
                      }
-                     log.WriteMessage("Skia render: " + diagram.Layout.Count +
-                        " tables and " + diagram.Edges.Count + " FK connectors.");
+                     log.WriteMessage("Skia render: " +
+                        (diagram.Layout.Count - diagram.Boxes.Count) +
+                        " tables and " + diagram.Boxes.Count +
+                        " collapsed groups, " + diagram.Routes.Count +
+                        " FK connectors.");
                      SkiaCanvas.Invalidate();
                   });
                }
@@ -451,12 +547,13 @@ namespace ModelConsole.Controls
             return;
          }
 
-         // Table hover (backlog 041): the table under the pointer draws its
-         // accent border; the cursor flips to a hand over empty space.
-         string hoveredTable = HitTestTable(pt.Position);
-         bool hoverChanged = hoveredTable != _hoveredTable;
-         _hoveredTable = hoveredTable;
-         SetCursor(hoveredTable != null ? null : _handCursor);
+         // Hover (backlog 041 + 039): the table or collapsed box under the
+         // pointer draws its accent border; the cursor flips to a hand over
+         // empty space.
+         string hoveredKey = HitTest(pt.Position);
+         bool hoverChanged = hoveredKey != _hoveredKey;
+         _hoveredKey = hoveredKey;
+         SetCursor(hoveredKey != null ? null : _handCursor);
 
          // Connector hover highlight: pure distance-to-polyline hit-test with
          // a constant on-screen radius (6 DIPs, scaled to content space via
@@ -497,10 +594,10 @@ namespace ModelConsole.Controls
          {
             SetCursor(null);
          }
-         if (_hoveredRoute != -1 || _hoveredTable != null)
+         if (_hoveredRoute != -1 || _hoveredKey != null)
          {
             _hoveredRoute = -1;
-            _hoveredTable = null;
+            _hoveredKey = null;
             SkiaCanvas.Invalidate();
          }
       }
@@ -521,7 +618,7 @@ namespace ModelConsole.Controls
          try
          {
             var pt = e.GetCurrentPoint(SkiaCanvas);
-            SetCursor(HitTestTable(pt.Position) != null ? null : _handCursor);
+            SetCursor(HitTest(pt.Position) != null ? null : _handCursor);
          }
          catch
          {
@@ -531,21 +628,22 @@ namespace ModelConsole.Controls
          // The pan branch never updates the hover highlight; drop any stale
          // emphasis now that the gesture ended (the release point may be over
          // a different spot than the press).
-         if (_hoveredRoute != -1 || _hoveredTable != null)
+         if (_hoveredRoute != -1 || _hoveredKey != null)
          {
             _hoveredRoute = -1;
-            _hoveredTable = null;
+            _hoveredKey = null;
             SkiaCanvas.Invalidate();
          }
       }
 
       /// <summary>
-      /// The name of the table under the pointer (DIPs), or null when no
-      /// table is hovered (backlog 041). Uses the same pointer → content
-      /// mapping as the paint/wheel transform so the emphasis never drifts
-      /// from what is drawn.
+      /// The layout key under the pointer (DIPs) — a table name or a
+      /// collapsed-box key (backlog 039) — or null when no table/box is
+      /// hovered (backlog 041). Uses the same pointer → content mapping as
+      /// the paint/wheel transform so the emphasis never drifts from what is
+      /// drawn.
       /// </summary>
-      private string HitTestTable(Point point)
+      private string HitTest(Point point)
       {
          if (_diagram == null || _diagram.Layout.Count == 0 || _viewW <= 0)
          {

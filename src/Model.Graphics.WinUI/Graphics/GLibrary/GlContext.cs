@@ -98,6 +98,25 @@ namespace ModelConsole.Graphics.GLibrary
       public event Action<GlObject> ShapeClicked;
 
       /// <summary>
+      /// Fired when a shape is double-clicked — a second press-and-release
+      /// without moving, on the same shape, within <see cref="DoubleClickInterval"/>
+      /// of the first (backlog 042). The first click still raises
+      /// <see cref="ShapeClicked"/>; only the second raises this, so
+      /// single-click selection is untouched and the host can open a details
+      /// surface on top of it.
+      /// </summary>
+      public event Action<GlObject> ShapeDoubleClicked;
+
+      /// <summary>Two clicks on the same shape within this interval count as a double-click.</summary>
+      private static readonly TimeSpan DoubleClickInterval = TimeSpan.FromMilliseconds(500);
+
+      /// <summary>The last shape clicked (to pair with the next click), or null after a double-click.</summary>
+      private GlObject _lastClickObject;
+
+      /// <summary>Time of the last shape click (paired with <see cref="_lastClickObject"/>).</summary>
+      private DateTime _lastClickTime;
+
+      /// <summary>
       /// Fired when the object under the pointer changes (backlog 027): raised
       /// on every hover move with the hovered <see cref="GlObject"/> and the
       /// pointer position in canvas (content) coordinates, and with a null
@@ -167,6 +186,8 @@ namespace ModelConsole.Graphics.GLibrary
          _grabber = null;
          _dragMoved = false;
          _panning = false;
+         _lastClickObject = null;
+         _lastClickTime = default;
          SetCursor(null);
       }
 
@@ -592,7 +613,23 @@ namespace ModelConsole.Graphics.GLibrary
             }
             else
             {
-               ShapeClicked?.Invoke(released);
+               // Backlog 042: two clicks on the same shape within the interval
+               // are a double-click — the first click still selects (raises
+               // ShapeClicked); only the second raises ShapeDoubleClicked, so
+               // the host can open a details surface without disturbing
+               // single-click selection.
+               bool doubleClick = ReferenceEquals(released, _lastClickObject) &&
+                  (DateTime.UtcNow - _lastClickTime) <= DoubleClickInterval;
+               _lastClickObject = doubleClick ? null : released;
+               _lastClickTime = DateTime.UtcNow;
+               if (doubleClick)
+               {
+                  ShapeDoubleClicked?.Invoke(released);
+               }
+               else
+               {
+                  ShapeClicked?.Invoke(released);
+               }
             }
          }
       }

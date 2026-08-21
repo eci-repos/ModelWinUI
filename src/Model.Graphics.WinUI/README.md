@@ -7,10 +7,11 @@ for every drawable shape object (`GlRectangle`, `GlOrthoPath`, `GlEllipse`,
 `GlTextBox`, ...) with `DeltaMove`/`Move`/`PointerEvent`/`Reshape`/`Selected`
 and a `Node` surface over the live model object; `GlOrtho/GlOrthoPath` draws
 orthogonal rounded-edge connector lines with reshape grips; `Graphics/Primitives`
-renders an ERD table (`Table`, `TableRowPanel`) from a `TableInfo`. Ships the
-DI-wired XAML factory contracts (`ITableFactory` / `IConnectorFactory` /
-`IRectangleFactory`), mirroring Model.Skia's `ISkiaTableFactory`. WinUI-bound —
-consumers must reference `Microsoft.WindowsAppSDK`.
+renders an ERD table (`Table`, `TableRowPanel`) from a `TableInfo` and a
+collapsed group's UML package box (`GroupBox`, name + `<<package>>` + count,
+per-group tint). Ships the DI-wired XAML factory contracts (`ITableFactory` /
+`IConnectorFactory` / `IRectangleFactory` / `IBoxFactory`), mirroring Model.Skia's
+`ISkiaTableFactory`. WinUI-bound — consumers must reference `Microsoft.WindowsAppSDK`.
 
 **Dependencies:** `Model.Data`, `Model.Graph`, `Model.Geometry`, `Model.Diagnostics`.
 

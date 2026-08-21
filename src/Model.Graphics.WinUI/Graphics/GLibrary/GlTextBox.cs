@@ -1,6 +1,8 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Input;
+using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 
 using Windows.Foundation;
 using System;
@@ -8,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using ModelConsole.Palette;
 
 namespace ModelConsole.Graphics.GLibrary
 {
@@ -35,9 +39,28 @@ namespace ModelConsole.Graphics.GLibrary
 
       public object Tag { get; set; } = null;
 
+      /// <summary>
+      /// Convert a #RRGGBB hex string to a <see cref="Color"/> (the shared
+      /// palette's format).
+      /// </summary>
+      private static Color FromHex(string hex)
+      {
+         hex = hex.TrimStart('#');
+         return Color.FromArgb(255,
+            Convert.ToByte(hex.Substring(0, 2), 16),
+            Convert.ToByte(hex.Substring(2, 2), 16),
+            Convert.ToByte(hex.Substring(4, 2), 16));
+      }
+
       public GlTextBox()
       {
          _textBlock.Tag = this;
+
+         // The drawing-surface text is always on the light pastel cards, so it
+         // renders in the palette's near-black regardless of the app theme — a
+         // theme-default foreground would go white in dark OS mode and vanish
+         // against the light cards (backlog 041 regression fix).
+         _textBlock.Foreground = new SolidColorBrush(FromHex(TablePalette.TextHex));
       }
 
       /// <summary>

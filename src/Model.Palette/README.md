@@ -14,10 +14,8 @@ the Skia render.
 - `TablePalette.StripeHex(kind)` — the alternating body-row stripe; the plain row stays white.
 - `TablePalette.FooterHeight` — the one footer budget (in pixels) both renderers use.
 - `TablePalette.BorderHex`/`BorderWidth` + `HoveredBorderHex`/`HoveredBorderWidth` (backlog 041) — the table card border at rest and when hovered (the DodgerBlue accent, thicker).
-- `TablePalette.CanvasBackgroundHex` — the default drawing-surface background both renderers start from (the renderer-bar drop-down can override it at runtime).
-
-The hex strings are the point of truth. XAML converts with `Color.FromArgb`,
-Skia with `SKColor.Parse`.
+- `TablePalette.CanvasBackgroundHex` — the drawing-surface background both renderers start from (the renderer-bar drop-down can override it at runtime).
+- `GroupPalette` (backlog 039) — the collapsed group-box metrics (HeaderHeight 24 / BodyHeight 44 / MinWidth 150 / TextPadding 16) + `BoxHex(group)`, a stable per-group pastel distinct from the table banner colors.
 
 The hex strings are the point of truth. XAML converts with `Color.FromArgb`,
 Skia with `SKColor.Parse`.
