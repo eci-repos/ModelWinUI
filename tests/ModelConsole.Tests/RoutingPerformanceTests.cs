@@ -36,7 +36,8 @@ namespace ModelConsole.Tests
          var tables = PublicSafetySchema.Tables;
          var (sizes, maxW, maxH) = MeasureTables(tables);
 
-         var layout = TableLayoutEngine.Layout(tables, new GridLayoutOptions
+         var layout = EntityLayoutEngine.Layout(tables, Array.Empty<FkRelation>(),
+            new EntityLayoutOptions
          {
             Columns = 7,
             SlotWidth = maxW + 80,

@@ -136,6 +136,12 @@ namespace ModelConsole.Controls
          HexColor.FromHex(TablePalette.CanvasBackgroundHex);
 
       /// <summary>
+      /// Current-session selected/highlighted connector style (backlog 051).
+      /// Rest-state connector drawing is unchanged.
+      /// </summary>
+      private ConnectorStyle _selectedConnectorStyle = ConnectorStyle.Default;
+
+      /// <summary>
       /// View-side entity visibility (backlog 038): the host shares the same
       /// instance with the panel so both renderers compose the identical
       /// visible set. Captured per compose; a change clears the cached diagram
@@ -159,6 +165,18 @@ namespace ModelConsole.Controls
       /// — a model change re-derives it automatically.
       /// </summary>
       private string _themeName = GroupingThemes.TagsName;
+
+      /// <summary>
+      /// The active presentation notation (backlog 040). Captured per compose
+      /// because UML table measurement can differ from ERD measurement.
+      /// </summary>
+      private DiagramNotation _notation = DiagramNotation.Erd;
+
+      /// <summary>
+      /// The active entity layout's name (backlog 045). Captured per compose
+      /// because layout changes re-measure slots and re-route connectors.
+      /// </summary>
+      private string _layoutName = EntityLayout.GridName;
 
       public SkiaPanelControl()
       {
@@ -242,6 +260,32 @@ namespace ModelConsole.Controls
       }
 
       /// <summary>
+      /// Apply presentation notation (backlog 040): clear the cached diagram
+      /// so the next paint re-measures and re-composes in the chosen notation.
+      /// </summary>
+      public void SetNotation(DiagramNotation notation)
+      {
+         _notation = notation;
+         _diagram = null;
+         _hoveredRoute = -1;
+         _hoveredKey = null;
+         SkiaCanvas?.Invalidate();
+      }
+
+      /// <summary>
+      /// Apply an entity layout (backlog 045): clear the cached diagram so the
+      /// next paint re-composes and re-routes in the chosen projection.
+      /// </summary>
+      public void SetLayout(string layoutName)
+      {
+         _layoutName = EntityLayout.FromName(layoutName).Name;
+         _diagram = null;
+         _hoveredRoute = -1;
+         _hoveredKey = null;
+         SkiaCanvas?.Invalidate();
+      }
+
+      /// <summary>
       /// The drawing-surface background color (backlog 041). The renderer-bar
       /// drop-down sets this on both renderers; each Skia paint clears to it.
       /// </summary>
@@ -257,6 +301,16 @@ namespace ModelConsole.Controls
             _backgroundColor = value;
             SkiaCanvas?.Invalidate();
          }
+      }
+
+      /// <summary>
+      /// Apply the selected/highlighted connector style and repaint the hover
+      /// emphasis if one is currently visible.
+      /// </summary>
+      public void SetSelectedConnectorStyle(ConnectorStyle style)
+      {
+         _selectedConnectorStyle = style ?? ConnectorStyle.Default;
+         SkiaCanvas?.Invalidate();
       }
 
       private void SkiaCanvas_PaintSurface(
@@ -330,7 +384,7 @@ namespace ModelConsole.Controls
             else
             {
                _tableFactory.Create(frame, (float)kv.Value.X, (float)kv.Value.Y,
-                  BannerHeight, _tablesByName[kv.Key], hovered);
+                  BannerHeight, _tablesByName[kv.Key], _notation, hovered);
             }
          }
 
@@ -341,13 +395,99 @@ namespace ModelConsole.Controls
          {
             if (i != _hoveredRoute)
             {
-               _connectorFactory.Create(frame, _diagram.Routes[i]);
+               DrawConnector(frame, i, false);
             }
          }
          if (_hoveredRoute >= 0 && _hoveredRoute < _diagram.Routes.Count)
          {
-            new Connector(_diagram.Routes[_hoveredRoute]) { Emphasized = true }.Draw(frame);
+            DrawConnector(frame, _hoveredRoute, true);
          }
+      }
+
+      private void DrawConnector(GlFrame frame, int index, bool emphasized)
+      {
+         if (_notation == DiagramNotation.Uml)
+         {
+            new Connector(_diagram.Routes[index])
+            {
+               Emphasized = emphasized,
+               SelectedStyle = _selectedConnectorStyle,
+               ShowEndpointMarkers = false
+            }.Draw(frame);
+            DrawUmlConnectorLabel(frame, index);
+            return;
+         }
+
+         if (emphasized)
+         {
+            new Connector(_diagram.Routes[index])
+            {
+               Emphasized = true,
+               SelectedStyle = _selectedConnectorStyle
+            }.Draw(frame);
+         }
+         else
+         {
+            _connectorFactory.Create(frame, _diagram.Routes[index]);
+         }
+      }
+
+      private void DrawUmlConnectorLabel(GlFrame frame, int index)
+      {
+         string label = "";
+         if (index < _diagram.Edges.Count)
+         {
+            label = UmlProfile.AssociationLabel(_diagram.Edges[index]);
+         }
+         else
+         {
+            int boxIndex = index - _diagram.Edges.Count;
+            if (boxIndex >= 0 && boxIndex < _diagram.BoxEdges.Count)
+            {
+               label = _diagram.BoxEdges[boxIndex].Label;
+            }
+         }
+         if (string.IsNullOrEmpty(label))
+         {
+            return;
+         }
+
+         Point2 p = Midpoint(_diagram.Routes[index]);
+         using var paint = new SKPaint
+         {
+            IsAntialias = true,
+            Color = SKColors.Black
+         };
+         using var font = new SKFont(SKTypeface.FromFamilyName("Arial"), 11);
+         frame.Canvas.DrawText(label, (float)p.X + 4, (float)p.Y - 4,
+            SKTextAlign.Left, font, paint);
+      }
+
+      private static Point2 Midpoint(IReadOnlyList<Point2> pts)
+      {
+         if (pts.Count == 1)
+         {
+            return pts[0];
+         }
+
+         double total = OrthogonalRouter.PolylineLength(pts);
+         double target = total / 2.0;
+         double walked = 0;
+         for (int i = 0; i < pts.Count - 1; i++)
+         {
+            Point2 a = pts[i];
+            Point2 b = pts[i + 1];
+            double length = Math.Abs(b.X - a.X) + Math.Abs(b.Y - a.Y);
+            if (walked + length >= target)
+            {
+               double remaining = target - walked;
+               double dx = Math.Sign(b.X - a.X) * Math.Min(Math.Abs(b.X - a.X), remaining);
+               double dy = Math.Sign(b.Y - a.Y) * Math.Min(Math.Abs(b.Y - a.Y), remaining);
+               return new Point2(a.X + dx, a.Y + dy);
+            }
+            walked += length;
+         }
+         return pts[pts.Count - 1];
       }
 
       /// <summary>
@@ -362,6 +502,8 @@ namespace ModelConsole.Controls
          var visibility = _visibility;
          var collapse = _collapse;
          var themeName = _themeName;
+         var notation = _notation;
+         var layoutName = _layoutName;
          ILogService log = Ioc.Default.GetRequiredService<ILogService>();
          log.WriteMessage("Skia render: composing " + tables.Count + " tables…");
 
@@ -374,7 +516,12 @@ namespace ModelConsole.Controls
                   var measureFrame = new GlFrame(surface);
                   var theme = GroupingThemes.FromName(themeName, tables);
                   var diagram = ErdComposer.Compose(tables, measureFrame,
-                     new ErdOptions { BannerHeight = BannerHeight },
+                     new ErdOptions
+                     {
+                        BannerHeight = BannerHeight,
+                        Notation = notation,
+                        LayoutName = layoutName
+                     },
                      visibility, collapse, theme);
 
                   DispatcherQueue.TryEnqueue(() =>
@@ -385,7 +532,9 @@ namespace ModelConsole.Controls
                      if (!ReferenceEquals(tables, _tables) ||
                          !ReferenceEquals(visibility, _visibility) ||
                          !ReferenceEquals(collapse, _collapse) ||
-                         !string.Equals(themeName, _themeName, StringComparison.Ordinal))
+                         !string.Equals(themeName, _themeName, StringComparison.Ordinal) ||
+                         notation != _notation ||
+                         !string.Equals(layoutName, _layoutName, StringComparison.Ordinal))
                      {
                         _composing = false;
                         ComposingText.Visibility = Visibility.Collapsed;

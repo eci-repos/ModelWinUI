@@ -1,9 +1,22 @@
-# Current Sprint
+# Sprint - Current
 
-**No sprint is currently in execution.**
+## Dates
 
-The last sprint (2026-08-21, grouping themes + package overview — backlog item `043`) was promoted to `docs/sprints/archive/sprint-2026-08-21-grouping-themes-and-package-overview.md`. `043` made grouping a first-class, **theme-driven** capability for very large models: a pure `GroupingTheme` abstraction (`Model.Graph`) with **Tags** (the authored theme, unchanged), **Schema** (zero-authoring — the 023 container already carries `SchemaName`), **Kind** (entity vs reference-code), and **Connectivity** (union-find over the FK graph, components named by their smallest table, singletons ungrouped). The theme flows as a **name** (string) and is derived from `tables + name` at each use site, so a model change re-derives the connectivity theme automatically. The explorer's Groups panel gained a **"Group by:" ComboBox**, **Collapse all / Expand all** buttons, and per-row **count readouts**; `ModelEditorControl.ApplyTheme` re-creates both shared visibility/collapse instances and raises `ThemeChanged` + `VisibilityChanged` + `CollapseChanged` so both renderers group + collapse the identical set. A new **Enterprise** sample (27 tables / 31 FKs across Sales / Inventory / Finance, 3 cross-schema FKs) makes the schema theme visible. **Deferred** from 043: group-first explorer tree + zoom-to-group.
+- **Start:** -
+- **End:** -
 
-**The backlog holds `040`** (UML notation/export) unscheduled. `040` renders the same package viewpoint (the 043 collapse-all-by-theme overview) as UML notation + PlantUML export.
+## Scope
 
-**043 follow-up (2026-08-21, no new backlog item):** a user-reported hang on expand/collapse was root-caused to `SequentialRouter.RouteAll` (the full compose pipeline runs synchronously on the UI thread per toggle): the A* hot loop scanned the whole obstacle list (~800 rects by the end of a 50-table pass) per cell expansion and never converged — a collapse-all compose took **~63 s**. Fixed in `OrthogonalRouter` with a precomputed **`WalkGrid`** (blocked cells + blocked directed steps, exact predicates) — the base grid builds once per route and the two A* runs clone it + stamp their thin connectors; `RouteAll` now converges in **~1.9 s** on the 50-table sample. The same pass reworked the explorer's grouping UX: the Groups panel is now **hidden by default** behind a **"Groups" button at the far right of the "Model Explorer" header**, and the confusing **Focus toggle** (which changed what the checkboxes meant) was replaced by an explicit **"Show only:" combo**, with the per-group collapse moved to a right-aligned `▣` and the Collapse all/Expand all row labeled **"Package overview"**. See the WORKLOG entry.
+Backlog items in this sprint:
+
+- -
+
+## Execution Log
+
+- -
+
+## Results
+
+- **Completed:** -
+- **Deferred:** -
+- **Notes:** No sprint is currently in execution.

@@ -74,7 +74,7 @@ Portable, deterministic geometry + routing that the app uses to lay out tables a
 |---|---|
 | `Point2`, `Rect2` | Portable geometry structs — `Contains`, `Intersects`, `SegmentCrossesInterior` (strict interior), `Inflate` |
 | `FkRelation`, `FkEdgeExtractor` | Resolves `ConstraintInfo` FK references into `FkRelation` edges; `ReferencedColumnName ?? parent PK`; reports issues and skips bad edges; deterministic order |
-| `TableLayoutEngine` | Row-major non-overlapping grid layout of `TableInfo` into `Rect2` slots |
+| `EntityLayout` / `EntityLayoutEngine` | Name-driven non-overlapping entity layouts (`Grid`, `Serpentine`, `Circle`, `Cross`) over `TableInfo`/collapsed-box keys into `Rect2` slots |
 | `OrthogonalRouter` | A* grid pathfinding — obstacle inflation, outward stubs snapped to clear cell centers, collinear simplification; `thinObstacles` (non-inflated) + A* segment-crossing check so a grid step cannot jump over a thin obstacle. **No connector crosses a table interior (backlog 012):** when the thin obstacles form a barrier that makes the grid unreachable, A* retries without them (crossing a connector is acceptable when the alternative is crossing a table); the Z fallback tries HV/VH variants and returns the first that avoids tables |
 | `ConnectorAnchors` | `AnchorSide` enum; `Resolve` picks the departure side from the child/parent relative position; `FanOut` offsets shared-column anchors perpendicular to the side |
 | `SequentialRouter` | `RouteAll` — routes edges in deterministic order, feeding each routed polyline back as a thin obstacle so later edges avoid crossing it |
@@ -85,7 +85,7 @@ Portable, deterministic geometry + routing that the app uses to lay out tables a
 
 ### Unit tests — `tests/ModelGraphLibrary.Tests` (namespace `ModelConsole.Tests`, Active)
 
-The repo's first test project (xUnit, net10.0, references ModelGraphLibrary only — no WinUI). 72 tests across `SchemaIntegrityTests`, `FkEdgeExtractorTests`, `TableLayoutEngineTests`, `OrthogonalRouterTests`, `ConnectorAnchorsTests`, `SequentialRouterTests`, `NoCrossingInvariantTests` (backlog 012 — asserts no routed segment crosses any table rect across the 50-table schema and tight/adversarial layouts), `ModelFileTests`, and `SampleModelTests` (backlog 005 — the shipped JSON files load, are valid, and stay in sync with the fixtures). Run: `dotnet test tests/ModelGraphLibrary.Tests/ModelGraphLibrary.Tests.csproj -c Debug`.
+The repo's first test project (xUnit, net10.0, references ModelGraphLibrary only — no WinUI). Tests cover `SchemaIntegrityTests`, `FkEdgeExtractorTests`, `EntityLayoutEngineTests`, `OrthogonalRouterTests`, `ConnectorAnchorsTests`, `SequentialRouterTests`, `NoCrossingInvariantTests` (backlog 012 — asserts no routed segment crosses any table rect across the 50-table schema and tight/adversarial layouts), `ModelFileTests`, and `SampleModelTests` (backlog 005 — the shipped JSON files load, are valid, and stay in sync with the fixtures). Run: `dotnet test tests/ModelConsole.Tests/ModelConsole.Tests.csproj -c Debug`.
 
 ### Sample data fixtures — `Model/ModelData` (Active)
 
@@ -144,7 +144,7 @@ SkiaSharp rendering onto an `SKSurface`. Lives in the ModelGraphLibrary project 
 
 ### Portable domain primitives — `ModelGraphLibrary/Skia/Primitives` (Active — the Skia render path)
 
-`Table` (Skia counterpart of the XAML `Table`; backlog 003 added `ComputedWidth`/`ComputedHeight`/`GetRowCenterY` so tables can be measured and anchored before drawing; `DrawBorders` composes its 180° rotation with the current canvas transform via `Save`/`Concat`/`Restore` so a fit/zoom transform survives — backlog 015), `Connector` (strokes a routed `Point2` polyline + filled endpoint markers via `GlFrame.Canvas` — the stack's first connector primitive, backlog 003), `RectangleHalf` — all WinUI-free. `ErdComposer` composes a full ERD as pure data (`ErdDiagram` — Layout/Edges/Routes/Issues): measure probes → `TableLayoutEngine` → `FkEdgeExtractor` → `ConnectorAnchors.Resolve`/`FanOut` → `SequentialRouter.RouteAll`. The "define and draw an ERD by writing code" API (backlog 003).
+`Table` (Skia counterpart of the XAML `Table`; backlog 003 added `ComputedWidth`/`ComputedHeight`/`GetRowCenterY` so tables can be measured and anchored before drawing; `DrawBorders` composes its 180° rotation with the current canvas transform via `Save`/`Concat`/`Restore` so a fit/zoom transform survives — backlog 015), `Connector` (strokes a routed `Point2` polyline + filled endpoint markers via `GlFrame.Canvas` — the stack's first connector primitive, backlog 003), `RectangleHalf` — all WinUI-free. `ErdComposer` composes a full ERD as pure data (`ErdDiagram` — Layout/Edges/Routes/Issues): measure probes → `EntityLayoutEngine` → `FkEdgeExtractor` → `ConnectorAnchors.Resolve`/`FanOut` → `SequentialRouter.RouteAll`. The "define and draw an ERD by writing code" API (backlog 003).
 
 ### DI service contracts + implementations — `Services` (Active, split across two projects)
 

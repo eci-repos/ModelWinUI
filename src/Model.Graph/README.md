@@ -2,9 +2,10 @@
 
 ERD domain logic over `Model.Data`. `FkEdgeExtractor` resolves FK
 `ConstraintInfo` references into `FkRelation` edges (parent PK default,
-reporting resolution issues); `TableLayoutEngine` lays tables out into
-non-overlapping `Rect2` slots; `EntityVisibility` / `ModelProjection` filter
-the model to a visible set (the UML package-diagram viewpoint);
+reporting resolution issues); `EntityLayout` / `EntityLayoutEngine` lay tables
+or collapsed boxes out into non-overlapping `Rect2` slots (Grid default plus
+Serpentine/Circle/Cross projections); `EntityVisibility` / `ModelProjection`
+filter the model to a visible set (the UML package-diagram viewpoint);
 `GroupCollapseState` / `GroupBoxAggregation` collapse a group into one package
 box (external edges aggregated per target); `GraphNode` / `HoverSummary` expose
 the portable node surface (identity, live model, summary, edit verbs); and

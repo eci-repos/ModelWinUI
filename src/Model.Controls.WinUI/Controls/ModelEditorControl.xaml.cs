@@ -17,6 +17,7 @@ using Windows.UI;
 
 using Model.Data;
 using ModelConsole.Graph;
+using ModelConsole.Palette;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -68,6 +69,7 @@ namespace ModelConsole.Controls
          // to both renderers; Collapse all / Expand all drive the shared
          // collapse state (the package overview).
          ExplorerPanel.ThemeRequested += (s, name) => ApplyTheme(name);
+         ExplorerPanel.LayoutRequested += (s, name) => ApplyLayout(name);
          ExplorerPanel.CollapseAllRequested += (s, collapsed) =>
             ApplyCollapse(() =>
             {
@@ -94,6 +96,7 @@ namespace ModelConsole.Controls
             ExplorerPanel.SetModel(ModelPanel.Tables);
             ExplorerPanel.SetVisibility(ModelPanel.CurrentVisibility);
             ExplorerPanel.SetCollapse(ModelPanel.CurrentCollapse);
+            ExplorerPanel.SetLayout(ModelPanel.CurrentLayoutName);
             _inspector?.SetVisibility(ModelPanel.CurrentVisibility);
          };
 
@@ -105,6 +108,7 @@ namespace ModelConsole.Controls
          ExplorerPanel.SetModel(ModelPanel.Tables);
          ExplorerPanel.SetVisibility(ModelPanel.CurrentVisibility);
          ExplorerPanel.SetCollapse(ModelPanel.CurrentCollapse);
+         ExplorerPanel.SetLayout(ModelPanel.CurrentLayoutName);
       }
 
       /// <summary>
@@ -230,6 +234,7 @@ namespace ModelConsole.Controls
          // the explorer and the (hosted) inspector consume the same instance.
          ExplorerPanel.SetVisibility(ModelPanel.CurrentVisibility);
          ExplorerPanel.SetCollapse(ModelPanel.CurrentCollapse);
+         ExplorerPanel.SetLayout(ModelPanel.CurrentLayoutName);
          _inspector?.SetVisibility(ModelPanel.CurrentVisibility);
          _inspector?.ShowModel(provenance, metadata);
       }
@@ -286,6 +291,66 @@ namespace ModelConsole.Controls
       public string CurrentThemeName
       {
          get { return ModelPanel.CurrentThemeName; }
+      }
+
+      /// <summary>
+      /// The active presentation notation (backlog 040): ERD by default, UML
+      /// when the host toggles the notation view.
+      /// </summary>
+      public DiagramNotation CurrentNotation
+      {
+         get { return ModelPanel.CurrentNotation; }
+      }
+
+      /// <summary>
+      /// The active entity layout's name (backlog 045): Grid by default, or an
+      /// alternate deterministic projection selected in the explorer header.
+      /// </summary>
+      public string CurrentLayoutName
+      {
+         get { return ModelPanel.CurrentLayoutName; }
+      }
+
+      /// <summary>
+      /// Raised after the notation changes so the host can re-compose the
+      /// Skia renderer in the identical mode.
+      /// </summary>
+      public event EventHandler<DiagramNotation> NotationChanged;
+
+      /// <summary>
+      /// Apply a presentation notation to the XAML renderer and notify the
+      /// host. This never mutates the model; it only changes rendering.
+      /// </summary>
+      public void ApplyNotation(DiagramNotation notation)
+      {
+         ModelPanel.SetNotation(notation);
+         NotationChanged?.Invoke(this, notation);
+      }
+
+      /// <summary>
+      /// Raised after the layout changes so the host can re-compose the Skia
+      /// renderer in the identical layout.
+      /// </summary>
+      public event EventHandler<string> LayoutChanged;
+
+      /// <summary>
+      /// Apply an entity layout to the XAML renderer and notify the host. This
+      /// is a view-side re-layout only; it never mutates the model.
+      /// </summary>
+      public void ApplyLayout(string layoutName)
+      {
+         ModelPanel.SetLayout(layoutName);
+         ExplorerPanel.SetLayout(ModelPanel.CurrentLayoutName);
+         LayoutChanged?.Invoke(this, ModelPanel.CurrentLayoutName);
+      }
+
+      /// <summary>
+      /// Apply the current-session selected/highlighted connector style to
+      /// the XAML drawing panel (backlog 051).
+      /// </summary>
+      public void SetSelectedConnectorStyle(ConnectorStyle style)
+      {
+         ModelPanel.SetSelectedConnectorStyle(style);
       }
 
       /// <summary>

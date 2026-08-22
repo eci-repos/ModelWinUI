@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -24,6 +25,7 @@ using Model.Validation;
 using ModelConsole.Diagnostics;
 using ModelConsole.ModelData;
 using ModelConsole.Controls.Helpers;
+using ModelConsole.Graph;
 using ModelConsole.Palette;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -49,6 +51,15 @@ namespace ModelWinUI
       /// </summary>
       private Color _currentBackgroundColor =
          HexColor.FromHex(TablePalette.CanvasBackgroundHex);
+
+      /// <summary>
+      /// Current-session selected/highlighted connector style (backlog 051).
+      /// The host relays this to both renderers; it is not persisted.
+      /// </summary>
+      private ConnectorStyle _selectedConnectorStyle = ConnectorStyle.Default;
+
+      /// <summary>Guards programmatic slider sync from re-entering.</summary>
+      private bool _syncingConnectorWidth;
 
       /// <summary>
       /// The one modeless entity-details window (backlog 042), created lazily
@@ -83,6 +94,16 @@ namespace ModelWinUI
          XamlEditor.ThemeChanged += (s, name) =>
             SkiaEditor.SetTheme(name);
 
+         // Backlog 040: notation is also a view-side choice. The XAML editor
+         // applies it first, then the Skia renderer re-composes in parity.
+         XamlEditor.NotationChanged += (s, notation) =>
+            SkiaEditor.SetNotation(notation);
+
+         // Backlog 045: layout is another view-side choice. The XAML editor
+         // applies it first, then Skia re-composes from the same layout name.
+         XamlEditor.LayoutChanged += (s, name) =>
+            SkiaEditor.SetLayout(name);
+
          // Backlog 042: double-clicking a table (or FK connector) opens the
          // modeless entity-details window; an already-open window follows
          // subsequent single-click selection (the first click of a
@@ -109,6 +130,8 @@ namespace ModelWinUI
             item.Click += OpenSample_Click;
             OpenSampleMenu.Items.Add(item);
          }
+
+         ApplySelectedConnectorStyle(_selectedConnectorStyle);
       }
 
       /// <summary>
@@ -126,6 +149,19 @@ namespace ModelWinUI
          SkiaToggle.IsChecked = skia;
          XamlEditor.Visibility = skia ? Visibility.Collapsed : Visibility.Visible;
          SkiaEditor.Visibility = skia ? Visibility.Visible : Visibility.Collapsed;
+      }
+
+      /// <summary>
+      /// Switch between ERD and UML notation (backlog 040). This is view-side
+      /// only: the canonical model is not mutated or serialized differently.
+      /// </summary>
+      private void NotationToggle_Click(object sender, RoutedEventArgs e)
+      {
+         bool uml = ReferenceEquals(sender, UmlNotationToggle);
+
+         ErdNotationToggle.IsChecked = !uml;
+         UmlNotationToggle.IsChecked = uml;
+         XamlEditor.ApplyNotation(uml ? DiagramNotation.Uml : DiagramNotation.Erd);
       }
 
       /// <summary>
@@ -188,6 +224,78 @@ namespace ModelWinUI
       }
 
       /// <summary>
+      /// Open the current-session selected-connector color picker. The color
+      /// is applied live to both renderers while the picker changes.
+      /// </summary>
+      private void ConnectorColorButton_Click(object sender, RoutedEventArgs e)
+      {
+         var picker = new ColorPicker
+         {
+            Color = HexColor.FromHex(_selectedConnectorStyle.SelectedHex),
+            IsAlphaEnabled = false
+         };
+         var flyout = new Flyout
+         {
+            Content = picker,
+            XamlRoot = RootGrid.XamlRoot
+         };
+         picker.ColorChanged += (s, args) =>
+            ApplySelectedConnectorStyle(
+               _selectedConnectorStyle.WithSelectedHex(ToHex(args.NewColor)));
+         flyout.ShowAt(ConnectorColorButton);
+      }
+
+      /// <summary>Apply the selected/highlighted connector width.</summary>
+      private void ConnectorWidthSlider_ValueChanged(
+         object sender, RangeBaseValueChangedEventArgs e)
+      {
+         if (_syncingConnectorWidth || ConnectorWidthText == null)
+         {
+            return;
+         }
+         ApplySelectedConnectorStyle(
+            _selectedConnectorStyle.WithSelectedWidth(e.NewValue));
+      }
+
+      /// <summary>
+      /// Relay selected/highlighted connector style to both renderers and keep
+      /// the renderer-bar controls synchronized.
+      /// </summary>
+      private void ApplySelectedConnectorStyle(ConnectorStyle style)
+      {
+         _selectedConnectorStyle = style ?? ConnectorStyle.Default;
+         XamlEditor?.SetSelectedConnectorStyle(_selectedConnectorStyle);
+         SkiaEditor?.SetSelectedConnectorStyle(_selectedConnectorStyle);
+
+         if (ConnectorColorSwatch != null)
+         {
+            ConnectorColorSwatch.Background =
+               new SolidColorBrush(HexColor.FromHex(_selectedConnectorStyle.SelectedHex));
+         }
+         if (ConnectorWidthText != null)
+         {
+            ConnectorWidthText.Text =
+               _selectedConnectorStyle.SelectedWidth.ToString(
+                  "0.#", CultureInfo.InvariantCulture);
+         }
+         if (ConnectorWidthSlider != null &&
+             Math.Abs(ConnectorWidthSlider.Value -
+                _selectedConnectorStyle.SelectedWidth) > 0.001)
+         {
+            _syncingConnectorWidth = true;
+            ConnectorWidthSlider.Value = _selectedConnectorStyle.SelectedWidth;
+            _syncingConnectorWidth = false;
+         }
+      }
+
+      private static string ToHex(Color color)
+      {
+         return "#" + color.R.ToString("X2", CultureInfo.InvariantCulture) +
+            color.G.ToString("X2", CultureInfo.InvariantCulture) +
+            color.B.ToString("X2", CultureInfo.InvariantCulture);
+      }
+
+      /// <summary>
       /// File → Model info (backlog 042): open the modeless details window in
       /// model mode — the provenance + model-metadata readout.
       /// </summary>
@@ -196,6 +304,48 @@ namespace ModelWinUI
          EnsureDetailsWindow();
          _detailsWindow.ShowModelInfo();
          _detailsWindow.Activate();
+      }
+
+      /// <summary>
+      /// File → Export PlantUML… (backlog 040): write the current model as a
+      /// deterministic PlantUML package diagram plus class diagram.
+      /// </summary>
+      private async void ExportPlantUml_Click(object sender, RoutedEventArgs e)
+      {
+         var picker = new FileSavePicker();
+         picker.FileTypeChoices.Add("PlantUML", new List<string> { ".puml" });
+         picker.SuggestedFileName = "EDAM-Studio-model";
+
+         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+         var file = await picker.PickSaveFileAsync();
+         if (file == null)
+         {
+            return;
+         }
+
+         try
+         {
+            var theme = GroupingThemes.FromName(
+               XamlEditor.CurrentThemeName, XamlEditor.Tables);
+            string package = UmlPlantEmitter.EmitPackageDiagram(
+               XamlEditor.Tables, theme, XamlEditor.CurrentVisibility,
+               XamlEditor.CurrentCollapse);
+            string classes = UmlPlantEmitter.EmitClassDiagram(XamlEditor.Tables);
+            File.WriteAllText(file.Path, package + Environment.NewLine + classes);
+         }
+         catch (Exception ex)
+         {
+            var dialog = new ContentDialog
+            {
+               Title = "Could not export PlantUML",
+               Content = ex.Message,
+               CloseButtonText = "OK",
+               XamlRoot = RootGrid.XamlRoot
+            };
+            await dialog.ShowAsync();
+         }
       }
 
       /// <summary>
@@ -325,6 +475,7 @@ namespace ModelWinUI
          // Backlog 039: likewise share the collapse state (a fresh model starts
          // all-expanded), so both renderers collapse the same groups.
          SkiaEditor.SetCollapse(XamlEditor.CurrentCollapse);
+         SkiaEditor.SetLayout(XamlEditor.CurrentLayoutName);
          LogModelLoad(provenance, tables, issues, schemaIssues);
       }
 

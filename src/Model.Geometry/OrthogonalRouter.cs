@@ -67,6 +67,104 @@ namespace ModelConsole.Geometry
          IReadOnlyList<Rect2> obstacles, Rect2 bounds, RouterOptions options,
          IReadOnlyList<Rect2> thinObstacles = null)
       {
+         return RouteCore(
+            start, end, null, null, obstacles, bounds, options, thinObstacles);
+      }
+
+      /// <summary>
+      /// Compute an axis-aligned polyline from a side-aware connector request.
+      /// The first non-zero segment leaves <see cref="ConnectorRouteRequest.Start"/>
+      /// perpendicular to <see cref="ConnectorRouteRequest.StartSide"/>, and
+      /// the final non-zero segment enters <see cref="ConnectorRouteRequest.End"/>
+      /// perpendicular to <see cref="ConnectorRouteRequest.EndSide"/>.
+      /// </summary>
+      public static IReadOnlyList<Point2> Route(
+         ConnectorRouteRequest request,
+         IReadOnlyList<Rect2> obstacles, Rect2 bounds, RouterOptions options,
+         IReadOnlyList<Rect2> thinObstacles = null)
+      {
+         return RouteCore(
+            request.Start, request.End,
+            Direction(request.StartSide), Direction(request.EndSide),
+            obstacles, bounds, options, thinObstacles);
+      }
+
+      /// <summary>
+      /// Normalize a routed polyline by removing redundant points and tiny
+      /// obstacle-safe doglegs. Intended for route cleanup and unit tests; it
+      /// does not round corners or otherwise change the drawing semantics.
+      /// </summary>
+      public static IReadOnlyList<Point2> Normalize(
+         IReadOnlyList<Point2> points,
+         IReadOnlyList<Rect2> obstacles,
+         double tinyJogLength = 8)
+      {
+         return NormalizeRoute(
+            ToList(points), obstacles ?? new List<Rect2>(), tinyJogLength,
+            null, null, new List<Rect2>());
+      }
+
+      /// <summary>
+      /// Normalize a side-aware routed polyline. In addition to general
+      /// dogleg cleanup, this straightens tiny terminal approach offsets when
+      /// the shortcut preserves the explicit endpoint sides.
+      /// </summary>
+      public static IReadOnlyList<Point2> Normalize(
+         ConnectorRouteRequest request,
+         IReadOnlyList<Point2> points,
+         IReadOnlyList<Rect2> obstacles,
+         double tinyJogLength = 8)
+      {
+         return NormalizeRoute(
+            ToList(points), obstacles ?? new List<Rect2>(), tinyJogLength,
+            Direction(request.StartSide), Direction(request.EndSide),
+            new List<Rect2>());
+      }
+
+      /// <summary>
+      /// Inspect a final side-aware route for tiny terminal nudges and
+      /// classify whether they can be straightened safely. Diagnostics are
+      /// produced from the exact points the renderers draw after cleanup.
+      /// </summary>
+      public static IReadOnlyList<RouteNudgeDiagnostic> DiagnoseNudges(
+         ConnectorRouteRequest request,
+         IReadOnlyList<Point2> points,
+         IReadOnlyList<Rect2> obstacles,
+         IReadOnlyList<Rect2> thinObstacles = null,
+         double tinyJogLength = 8)
+      {
+         var raw = obstacles ?? new List<Rect2>();
+         var thin = thinObstacles ?? new List<Rect2>();
+         var result = new List<RouteNudgeDiagnostic>();
+         var route = Simplify(RemoveNearDuplicates(ToList(points)));
+
+         RouteNudgeDiagnostic start = DiagnoseStartTerminalNudge(
+            route, raw, thin, tinyJogLength, Direction(request.StartSide),
+            RouteNudgeTerminal.Start);
+         if (start != null)
+         {
+            result.Add(start);
+         }
+
+         var reversed = ToList(route);
+         reversed.Reverse();
+         RouteNudgeDiagnostic end = DiagnoseStartTerminalNudge(
+            reversed, raw, thin, tinyJogLength, Direction(request.EndSide),
+            RouteNudgeTerminal.End);
+         if (end != null)
+         {
+            result.Add(end);
+         }
+
+         return result;
+      }
+
+      private static IReadOnlyList<Point2> RouteCore(
+         Point2 start, Point2 end,
+         Point2? explicitStartDir, Point2? explicitEndDir,
+         IReadOnlyList<Rect2> obstacles, Rect2 bounds, RouterOptions options,
+         IReadOnlyList<Rect2> thinObstacles = null)
+      {
          if (start.Equals(end))
          {
             return new List<Point2> { start, end };
@@ -90,22 +188,30 @@ namespace ModelConsole.Geometry
          //    inflated margin.
          var raw = obstacles ?? new List<Rect2>();
          var hv = new List<Point2> { start, new Point2(end.X, start.Y), end };
-         if (IsClear(hv, raw, thin))
+         if (IsClear(hv, raw, thin) &&
+             RespectsEndpointDirections(hv, explicitStartDir, explicitEndDir))
          {
-            return Simplify(hv);
+            return NormalizeRoute(
+               hv, raw, grid / 2.0, explicitStartDir, explicitEndDir, thin);
          }
          var vh = new List<Point2> { start, new Point2(start.X, end.Y), end };
-         if (IsClear(vh, raw, thin))
+         if (IsClear(vh, raw, thin) &&
+             RespectsEndpointDirections(vh, explicitStartDir, explicitEndDir))
          {
-            return Simplify(vh);
+            return NormalizeRoute(
+               vh, raw, grid / 2.0, explicitStartDir, explicitEndDir, thin);
          }
 
          // 2. Move the anchors out of the obstacles so the grid path never
          //    starts inside a blocked cell. The stub's parallel coordinate is
          //    snapped to a grid center so the stitching segments (anchor ->
          //    stub -> first grid point) stay axis-aligned.
-         Point2 startDir = OutwardDirection(start, obstacles);
-         Point2 endDir = OutwardDirection(end, obstacles);
+         Point2 startDir = explicitStartDir.HasValue
+            ? explicitStartDir.Value
+            : OutwardDirection(start, obstacles);
+         Point2 endDir = explicitEndDir.HasValue
+            ? explicitEndDir.Value
+            : OutwardDirection(end, obstacles);
          Point2 startStub = SnapStub(start, startDir, stub, bounds, grid, inflated, thin, raw);
          Point2 endStub = SnapStub(end, endDir, stub, bounds, grid, inflated, thin, raw);
 
@@ -132,7 +238,9 @@ namespace ModelConsole.Geometry
          {
             // Genuinely unreachable (e.g. a full-height wall): best-effort Z
             // that avoids tables when possible.
-            return ZFallback(start, startStub, endStub, end, raw);
+            return NormalizeRoute(
+               ZFallback(start, startStub, endStub, end, raw),
+               raw, grid / 2.0, explicitStartDir, explicitEndDir, thin);
          }
 
          // 4. Stitch the anchors onto the grid path and simplify.
@@ -142,7 +250,8 @@ namespace ModelConsole.Geometry
          points.AddRange(gridPath);
          points.Add(endStub);
          points.Add(end);
-         return Simplify(points);
+         return NormalizeRoute(
+            points, raw, grid / 2.0, explicitStartDir, explicitEndDir, thin);
       }
 
       /// <summary>
@@ -176,6 +285,23 @@ namespace ModelConsole.Geometry
             ? options.CrossingTolerance : 1.5;
          var withWalls = Route(start, end, obstacles, bounds, options, thinObstacles);
          var withoutWalls = Route(start, end, obstacles, bounds, options, null);
+         return PolylineLength(withoutWalls) * factor < PolylineLength(withWalls)
+            ? withoutWalls
+            : withWalls;
+      }
+
+      /// <summary>
+      /// Side-aware variant of <see cref="RouteBest(Point2, Point2, IReadOnlyList{Rect2}, Rect2, RouterOptions, IReadOnlyList{Rect2})"/>.
+      /// </summary>
+      public static IReadOnlyList<Point2> RouteBest(
+         ConnectorRouteRequest request,
+         IReadOnlyList<Rect2> obstacles, Rect2 bounds, RouterOptions options,
+         IReadOnlyList<Rect2> thinObstacles)
+      {
+         double factor = options != null && options.CrossingTolerance > 0
+            ? options.CrossingTolerance : 1.5;
+         var withWalls = Route(request, obstacles, bounds, options, thinObstacles);
+         var withoutWalls = Route(request, obstacles, bounds, options, null);
          return PolylineLength(withoutWalls) * factor < PolylineLength(withWalls)
             ? withoutWalls
             : withWalls;
@@ -249,12 +375,406 @@ namespace ModelConsole.Geometry
          return result;
       }
 
+      private static List<Point2> NormalizeRoute(
+         List<Point2> points, IReadOnlyList<Rect2> raw, double tinyJogLength,
+         Point2? explicitStartDir, Point2? explicitEndDir,
+         IReadOnlyList<Rect2> thin)
+      {
+         var original = ToList(points);
+         var result = RemoveNearDuplicates(points);
+         result = Simplify(result);
+         result = CollapseTinyDoglegs(result, raw, thin, tinyJogLength);
+         result = Simplify(result);
+         result = StraightenTerminalOffsets(
+            result, raw, thin, tinyJogLength, explicitStartDir, explicitEndDir);
+         result = Simplify(result);
+
+         if (!RespectsEndpointDirections(result, explicitStartDir, explicitEndDir))
+         {
+            return Simplify(RemoveNearDuplicates(original));
+         }
+         return result;
+      }
+
+      private static List<Point2> ToList(IReadOnlyList<Point2> points)
+      {
+         var result = new List<Point2>();
+         if (points == null)
+         {
+            return result;
+         }
+         for (int i = 0; i < points.Count; i++)
+         {
+            result.Add(points[i]);
+         }
+         return result;
+      }
+
+      private static List<Point2> RemoveNearDuplicates(IReadOnlyList<Point2> points)
+      {
+         var result = new List<Point2>();
+         for (int i = 0; i < points.Count; i++)
+         {
+            if (result.Count == 0 || !SamePoint(result[result.Count - 1], points[i]))
+            {
+               result.Add(points[i]);
+            }
+         }
+         return result;
+      }
+
+      private static List<Point2> CollapseTinyDoglegs(
+         List<Point2> points, IReadOnlyList<Rect2> raw,
+         IReadOnlyList<Rect2> thin, double tinyJogLength)
+      {
+         if (points.Count < 5 || tinyJogLength <= 0)
+         {
+            return points;
+         }
+
+         var result = new List<Point2>(points);
+         bool changed;
+         do
+         {
+            changed = false;
+            for (int i = 1; i <= result.Count - 4; i++)
+            {
+               Point2 a = result[i - 1];
+               Point2 b = result[i];
+               Point2 c = result[i + 1];
+               Point2 d = result[i + 2];
+               Point2 e = result[i + 3];
+               if (IsTinyDogleg(a, b, c, d, e, tinyJogLength) &&
+                   !SegmentCrossesAny(a, e, raw, thin))
+               {
+                  result.RemoveRange(i, 3);
+                  changed = true;
+                  break;
+               }
+            }
+         }
+         while (changed);
+
+         return result;
+      }
+
+      private static bool IsTinyDogleg(
+         Point2 a, Point2 b, Point2 c, Point2 d, Point2 e,
+         double tinyJogLength)
+      {
+         bool horizontal =
+            SameY(a, b) && SameX(b, c) && SameY(c, d) &&
+            SameX(d, e) && SameY(a, e) &&
+            Math.Abs(c.Y - b.Y) <= tinyJogLength &&
+            Math.Abs(e.Y - d.Y) <= tinyJogLength &&
+            Math.Sign(c.Y - b.Y) == -Math.Sign(e.Y - d.Y);
+         if (horizontal)
+         {
+            return true;
+         }
+
+         return SameX(a, b) && SameY(b, c) && SameX(c, d) &&
+            SameY(d, e) && SameX(a, e) &&
+            Math.Abs(c.X - b.X) <= tinyJogLength &&
+            Math.Abs(e.X - d.X) <= tinyJogLength &&
+            Math.Sign(c.X - b.X) == -Math.Sign(e.X - d.X);
+      }
+
+      private static List<Point2> StraightenTerminalOffsets(
+         List<Point2> points, IReadOnlyList<Rect2> raw, IReadOnlyList<Rect2> thin,
+         double tinyJogLength, Point2? explicitStartDir, Point2? explicitEndDir)
+      {
+         var result = points;
+         if (explicitStartDir.HasValue)
+         {
+            result = StraightenStartTerminalOffset(
+               result, raw, thin, tinyJogLength, explicitStartDir.Value);
+         }
+         if (explicitEndDir.HasValue)
+         {
+            var reversed = ToList(result);
+            reversed.Reverse();
+            reversed = StraightenStartTerminalOffset(
+               reversed, raw, thin, tinyJogLength, explicitEndDir.Value);
+            reversed.Reverse();
+            result = reversed;
+         }
+         return result;
+      }
+
+      private static List<Point2> StraightenStartTerminalOffset(
+         List<Point2> points, IReadOnlyList<Rect2> raw, IReadOnlyList<Rect2> thin,
+         double tinyJogLength, Point2 outwardDir)
+      {
+         RouteNudgeDiagnostic diagnostic = DiagnoseStartTerminalNudge(
+            points, raw, thin, tinyJogLength, outwardDir, RouteNudgeTerminal.Start);
+         if (diagnostic == null ||
+             diagnostic.Disposition != RouteNudgeDisposition.Removable)
+         {
+            return points;
+         }
+         return ToList(diagnostic.CandidatePoints);
+      }
+
+      private static RouteNudgeDiagnostic DiagnoseStartTerminalNudge(
+         List<Point2> points, IReadOnlyList<Rect2> raw, IReadOnlyList<Rect2> thin,
+         double tinyJogLength, Point2 outwardDir, RouteNudgeTerminal terminal)
+      {
+         if (points.Count < 4 || tinyJogLength <= 0)
+         {
+            return null;
+         }
+
+         if (!DirectionMatches(points[0], points[1], outwardDir, out bool nonZero) ||
+             !nonZero)
+         {
+            return null;
+         }
+
+         Point2 anchor = points[0];
+         int runStart = 2;
+         int runEnd = runStart;
+         Point2 projected;
+         double offset;
+
+         if (outwardDir.X != 0)
+         {
+            if (!SameX(points[1], points[2]))
+            {
+               return null;
+            }
+            offset = Math.Abs(points[2].Y - anchor.Y);
+            if (offset > tinyJogLength)
+            {
+               return null;
+            }
+            while (runEnd + 1 < points.Count && SameY(points[runEnd], points[runEnd + 1]))
+            {
+               runEnd++;
+            }
+            if (runEnd == runStart)
+            {
+               return null;
+            }
+            projected = new Point2(points[runEnd].X, anchor.Y);
+         }
+         else
+         {
+            if (!SameY(points[1], points[2]))
+            {
+               return null;
+            }
+            offset = Math.Abs(points[2].X - anchor.X);
+            if (offset > tinyJogLength)
+            {
+               return null;
+            }
+            while (runEnd + 1 < points.Count && SameX(points[runEnd], points[runEnd + 1]))
+            {
+               runEnd++;
+            }
+            if (runEnd == runStart)
+            {
+               return null;
+            }
+            projected = new Point2(anchor.X, points[runEnd].Y);
+         }
+
+         if (!DirectionMatches(anchor, projected, outwardDir, out bool projectedNonZero) ||
+             !projectedNonZero)
+         {
+            return null;
+         }
+
+         if (runEnd + 1 >= points.Count)
+         {
+            return BuildDiagnostic(
+               terminal, RouteNudgeDisposition.RequiredByEndpointAlignment,
+               offset, points, new Point2[0],
+               "The small shift is the only place the route reconciles different endpoint rails.");
+         }
+
+         var candidate = new List<Point2> { anchor };
+         if (!SamePoint(anchor, projected))
+         {
+            candidate.Add(projected);
+         }
+         for (int i = runEnd + 1; i < points.Count; i++)
+         {
+            candidate.Add(points[i]);
+         }
+
+         candidate = Simplify(RemoveNearDuplicates(candidate));
+         if (!SegmentsAreAxisAligned(candidate))
+         {
+            return BuildDiagnostic(
+               terminal, RouteNudgeDisposition.RequiredByEndpointAlignment,
+               offset, points, new Point2[0],
+               "Straightening would require moving an endpoint or adding a non-orthogonal segment.");
+         }
+         if (!IsClear(candidate, raw, thin))
+         {
+            return BuildDiagnostic(
+               terminal, RouteNudgeDisposition.BlockedByObstacleOrConnector,
+               offset, points, new Point2[0],
+               "Straightening would cross a table or connector obstacle.");
+         }
+
+         return BuildDiagnostic(
+            terminal, RouteNudgeDisposition.Removable, offset, points,
+            candidate, "The tiny terminal shift can be straightened safely.");
+      }
+
+      private static RouteNudgeDiagnostic BuildDiagnostic(
+         RouteNudgeTerminal terminal,
+         RouteNudgeDisposition disposition,
+         double offset,
+         IReadOnlyList<Point2> points,
+         IReadOnlyList<Point2> candidate,
+         string reason)
+      {
+         var route = ToList(points);
+         var replacement = ToList(candidate);
+         if (terminal == RouteNudgeTerminal.End)
+         {
+            route.Reverse();
+            replacement.Reverse();
+         }
+         return new RouteNudgeDiagnostic(
+            terminal, disposition, offset, route, replacement, reason);
+      }
+
       /// <summary>
       /// Axis-aligned collinearity: all three points share an X or a Y.
       /// </summary>
       private static bool IsCollinear(Point2 a, Point2 b, Point2 c)
       {
-         return (a.X == b.X && b.X == c.X) || (a.Y == b.Y && b.Y == c.Y);
+         return (SameX(a, b) && SameX(b, c)) ||
+            (SameY(a, b) && SameY(b, c));
+      }
+
+      private static bool SegmentsAreAxisAligned(IReadOnlyList<Point2> points)
+      {
+         for (int i = 0; i < points.Count - 1; i++)
+         {
+            if (!SameX(points[i], points[i + 1]) &&
+                !SameY(points[i], points[i + 1]))
+            {
+               return false;
+            }
+         }
+         return true;
+      }
+
+      private static bool SamePoint(Point2 a, Point2 b)
+      {
+         return SameX(a, b) && SameY(a, b);
+      }
+
+      private static bool SameX(Point2 a, Point2 b)
+      {
+         return Math.Abs(a.X - b.X) < 0.001;
+      }
+
+      private static bool SameY(Point2 a, Point2 b)
+      {
+         return Math.Abs(a.Y - b.Y) < 0.001;
+      }
+
+      private static bool RespectsEndpointDirections(
+         IReadOnlyList<Point2> points,
+         Point2? explicitStartDir, Point2? explicitEndDir)
+      {
+         if (points == null || points.Count < 2)
+         {
+            return true;
+         }
+
+         if (explicitStartDir.HasValue &&
+             !FirstDirectionMatches(points, explicitStartDir.Value))
+         {
+            return false;
+         }
+
+         if (explicitEndDir.HasValue &&
+             !LastDirectionMatches(points, Opposite(explicitEndDir.Value)))
+         {
+            return false;
+         }
+
+         return true;
+      }
+
+      private static bool FirstDirectionMatches(
+         IReadOnlyList<Point2> points, Point2 expected)
+      {
+         for (int i = 0; i < points.Count - 1; i++)
+         {
+            if (DirectionMatches(points[i], points[i + 1], expected, out bool nonZero))
+            {
+               return true;
+            }
+            if (nonZero)
+            {
+               return false;
+            }
+         }
+         return true;
+      }
+
+      private static bool LastDirectionMatches(
+         IReadOnlyList<Point2> points, Point2 expected)
+      {
+         for (int i = points.Count - 2; i >= 0; i--)
+         {
+            if (DirectionMatches(points[i], points[i + 1], expected, out bool nonZero))
+            {
+               return true;
+            }
+            if (nonZero)
+            {
+               return false;
+            }
+         }
+         return true;
+      }
+
+      private static bool DirectionMatches(
+         Point2 a, Point2 b, Point2 expected, out bool nonZero)
+      {
+         double dx = b.X - a.X;
+         double dy = b.Y - a.Y;
+         nonZero = Math.Abs(dx) >= 0.001 || Math.Abs(dy) >= 0.001;
+         if (!nonZero)
+         {
+            return false;
+         }
+
+         if (expected.X != 0)
+         {
+            return Math.Abs(dy) < 0.001 && Math.Sign(dx) == Math.Sign(expected.X);
+         }
+         return Math.Abs(dx) < 0.001 && Math.Sign(dy) == Math.Sign(expected.Y);
+      }
+
+      private static Point2 Direction(AnchorSide side)
+      {
+         switch (side)
+         {
+            case AnchorSide.Left:
+               return new Point2(-1, 0);
+            case AnchorSide.Right:
+               return new Point2(1, 0);
+            case AnchorSide.Top:
+               return new Point2(0, -1);
+            default:
+               return new Point2(0, 1);
+         }
+      }
+
+      private static Point2 Opposite(Point2 direction)
+      {
+         return new Point2(-direction.X, -direction.Y);
       }
 
       /// <summary>

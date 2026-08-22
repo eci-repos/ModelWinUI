@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 
 using ModelConsole.Geometry;
+using ModelConsole.Palette;
 using ModelConsole.Skia.GLibrary;
 
 using SkiaSharp;
@@ -12,8 +13,8 @@ namespace ModelConsole.Skia.Primitives
     /// Draw a constraint connector as a polyline on the Skia stack. This is
     /// the Skia counterpart of the XAML <c>GlOrthoPath.DrawRouted</c> + its
     /// <c>GlEllipse</c> endpoint markers: a static, pre-computed route (the
-    /// output of <see cref="OrthogonalRouter"/>) is stroked as-is, with no
-    /// corner rounding and no grips.
+    /// output of <see cref="OrthogonalRouter"/>) is stroked with visual-only
+    /// rounded bends and no grips. The original route points stay unchanged.
     /// </summary>
     public class Connector
     {
@@ -28,6 +29,9 @@ namespace ModelConsole.Skia.Primitives
         /// highlight makes start and end unambiguous).
         /// </summary>
         public const float EmphasizedEndpointRadius = 6;
+
+        /// <summary>Visual-only radius used to soften orthogonal bends.</summary>
+        public const float CornerRadius = 8;
 
         /// <summary>Stroke paint for the polyline.</summary>
         private static readonly SKPaint LinePaint = new SKPaint
@@ -47,27 +51,6 @@ namespace ModelConsole.Skia.Primitives
         };
 
         /// <summary>
-        /// Emphasized stroke paint (a thicker, SlateBlue line under the hover
-        /// highlight — the analogous violet neighbor of the DodgerBlue rest
-        /// color, so the hovered connector pops out of the connector tangle).
-        /// </summary>
-        private static readonly SKPaint LinePaintEmphasized = new SKPaint
-        {
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke,
-            Color = GlPastelPalette.ConnectorHoverStroke,
-            StrokeWidth = 3.5f
-        };
-
-        /// <summary>Emphasized endpoint marker paint (same fill as at rest).</summary>
-        private static readonly SKPaint MarkerPaintEmphasized = new SKPaint
-        {
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill,
-            Color = GlPastelPalette.ConnectorFill
-        };
-
-        /// <summary>
         /// The polyline this connector renders. Never null; may be empty.
         /// </summary>
         public IReadOnlyList<Point2> Points { get; }
@@ -78,6 +61,18 @@ namespace ModelConsole.Skia.Primitives
         /// unambiguous. Default false (normal drawing).
         /// </summary>
         public bool Emphasized { get; set; }
+
+        /// <summary>
+        /// Current-session style used when <see cref="Emphasized"/> is true.
+        /// Rest-state connector drawing is unchanged.
+        /// </summary>
+        public ConnectorStyle SelectedStyle { get; set; } = ConnectorStyle.Default;
+
+        /// <summary>
+        /// Whether endpoint circles are drawn. ERD shows dependency endpoints;
+        /// UML associations use a clean line with labels (backlog 040).
+        /// </summary>
+        public bool ShowEndpointMarkers { get; set; } = true;
 
         /// <summary>
         /// Connector class initialization.
@@ -102,24 +97,45 @@ namespace ModelConsole.Skia.Primitives
 
             using (var builder = new SKPathBuilder())
             {
-                builder.MoveTo(new SKPoint((float)Points[0].X, (float)Points[0].Y));
-                for (int i = 1; i < Points.Count; i++)
+                var commands = RoundedPolyline.Build(Points, CornerRadius);
+                for (int i = 0; i < commands.Count; i++)
                 {
-                    builder.LineTo(new SKPoint((float)Points[i].X, (float)Points[i].Y));
+                    var command = commands[i];
+                    switch (command.Type)
+                    {
+                        case RoundedPathCommandType.MoveTo:
+                            builder.MoveTo(ToPoint(command.Point));
+                            break;
+                        case RoundedPathCommandType.QuadraticTo:
+                            builder.QuadTo(
+                                ToPoint(command.ControlPoint),
+                                ToPoint(command.Point));
+                            break;
+                        default:
+                            builder.LineTo(ToPoint(command.Point));
+                            break;
+                    }
                 }
                 using (var path = builder.Detach())
                 {
-                    frame.Canvas.DrawPath(
-                        path, Emphasized ? LinePaintEmphasized : LinePaint);
+                    using SKPaint emphasizedLine = Emphasized
+                        ? CreateEmphasizedLinePaint() : null;
+                    SKPaint line = Emphasized ? emphasizedLine : LinePaint;
+                    frame.Canvas.DrawPath(path, line);
                 }
             }
 
-            float radius = Emphasized ? EmphasizedEndpointRadius : EndpointRadius;
-            SKPaint marker = Emphasized ? MarkerPaintEmphasized : MarkerPaint;
-            Point2 first = Points[0];
-            Point2 last = Points[Points.Count - 1];
-            frame.Canvas.DrawCircle((float)first.X, (float)first.Y, radius, marker);
-            frame.Canvas.DrawCircle((float)last.X, (float)last.Y, radius, marker);
+            if (ShowEndpointMarkers)
+            {
+                float radius = Emphasized ? EmphasizedEndpointRadius : EndpointRadius;
+                using SKPaint emphasizedMarker = Emphasized
+                    ? CreateEmphasizedMarkerPaint() : null;
+                SKPaint marker = Emphasized ? emphasizedMarker : MarkerPaint;
+                Point2 first = Points[0];
+                Point2 last = Points[Points.Count - 1];
+                frame.Canvas.DrawCircle((float)first.X, (float)first.Y, radius, marker);
+                frame.Canvas.DrawCircle((float)last.X, (float)last.Y, radius, marker);
+            }
         }
 
         /// <summary>
@@ -133,6 +149,34 @@ namespace ModelConsole.Skia.Primitives
             Connector c = new Connector(points);
             c.Draw(frame);
             return c;
+        }
+
+        private static SKPoint ToPoint(Point2 point)
+        {
+            return new SKPoint((float)point.X, (float)point.Y);
+        }
+
+        private SKPaint CreateEmphasizedLinePaint()
+        {
+            ConnectorStyle style = SelectedStyle ?? ConnectorStyle.Default;
+            return new SKPaint
+            {
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke,
+                Color = SKColor.Parse(style.SelectedHex),
+                StrokeWidth = (float)style.SelectedWidth
+            };
+        }
+
+        private SKPaint CreateEmphasizedMarkerPaint()
+        {
+            ConnectorStyle style = SelectedStyle ?? ConnectorStyle.Default;
+            return new SKPaint
+            {
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill,
+                Color = SKColor.Parse(style.SelectedHex)
+            };
         }
 
     }

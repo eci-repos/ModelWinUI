@@ -23,16 +23,27 @@
             <Grid.ColumnDefinitions>
                <ColumnDefinition Width="*" />
                <ColumnDefinition Width="Auto" />
+               <ColumnDefinition Width="Auto" />
+               <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="HeaderText" Text="Model Explorer"
                        FontWeight="SemiBold" FontSize="13"
                        Foreground="{ThemeResource ControlHeaderForegroundBrush}"
                        VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="Layout:" FontSize="12"
+                       Margin="8,0,4,0"
+                       Foreground="{ThemeResource ControlHeaderForegroundBrush}"
+                       VerticalAlignment="Center" />
+            <ComboBox x:Name="LayoutCombo" Grid.Column="2"
+                      MinWidth="112" FontSize="12"
+                      SelectionChanged="LayoutCombo_SelectionChanged"
+                      ToolTipService.ToolTip="Arrange entities as a grid, serpentine sweep, circle, or cross" />
             <!-- Groups panel toggle (backlog 043 UX): the grouping options
                  live behind this header button — shown on request, hidden by
                  default so the tree stays uncluttered. -->
-            <Button x:Name="GroupsToggleButton" Grid.Column="1"
+            <Button x:Name="GroupsToggleButton" Grid.Column="3"
                     MinWidth="0" Padding="8,2" FontSize="12"
+                    Margin="8,0,0,0"
                     Click="GroupsToggleButton_Click"
                     ToolTipService.ToolTip="Show or hide the grouping panel" />
          </Grid>

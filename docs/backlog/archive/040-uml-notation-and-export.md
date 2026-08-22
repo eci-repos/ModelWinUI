@@ -58,6 +58,6 @@ The capstone of the tag/group seam (037–039): because the model already carrie
 
 ## Status
 
-- **State:** Planned
-- **Sprint:** not yet scheduled
-- **Completed:** —
+- **State:** Completed
+- **Sprint:** 2026-08-22 — UML notation and export
+- **Completed:** 2026-08-22

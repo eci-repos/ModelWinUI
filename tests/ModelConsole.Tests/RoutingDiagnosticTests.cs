@@ -54,7 +54,8 @@ namespace ModelConsole.Tests
          }
 
          const double SlotPadding = 80, Gutter = 80;
-         var layout = TableLayoutEngine.Layout(tables, new GridLayoutOptions
+         var layout = EntityLayoutEngine.Layout(tables, Array.Empty<FkRelation>(),
+            new EntityLayoutOptions
          {
             Columns = 7,
             SlotWidth = maxW + SlotPadding,
@@ -92,7 +93,7 @@ namespace ModelConsole.Tests
             .GroupBy(e => e.ParentTable + "::" + e.ParentColumn)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-         var anchorEdges = new List<(Point2 Start, Point2 End, FkRelation Edge)>();
+         var anchorEdges = new List<(ConnectorRouteRequest Route, FkRelation Edge)>();
          foreach (var edge in edges)
          {
             var child = rects[edge.ChildTable];
@@ -108,13 +109,25 @@ namespace ModelConsole.Tests
             start = ConnectorAnchors.FanOut(start, childSide, sg.IndexOf(edge), sg.Count, 6);
             end = ConnectorAnchors.FanOut(end, parentSide, eg.IndexOf(edge), eg.Count, 6);
 
-            anchorEdges.Add((start, end, edge));
+            anchorEdges.Add((
+               new ConnectorRouteRequest(start, childSide, end, parentSide),
+               edge));
          }
 
          var obstacles = rects.Values.ToList();
          var routes = SequentialRouter.RouteAll(
-            anchorEdges.Select(a => (a.Start, a.End)).ToList(),
+            anchorEdges.Select(a => a.Route).ToList(),
             obstacles, bounds, options);
+
+         var nudgeDiagnostics = new List<(FkRelation Edge, RouteNudgeDiagnostic Diagnostic)>();
+         for (int i = 0; i < routes.Count; i++)
+         {
+            foreach (var diagnostic in OrthogonalRouter.DiagnoseNudges(
+               anchorEdges[i].Route, routes[i], obstacles, tinyJogLength: 8))
+            {
+               nudgeDiagnostics.Add((anchorEdges[i].Edge, diagnostic));
+            }
+         }
 
          // Count crossings.
          int crossings = 0;
@@ -141,6 +154,14 @@ namespace ModelConsole.Tests
          _output.WriteLine("maxW=" + maxW + " maxH=" + maxH);
          _output.WriteLine("crossings=" + crossings);
          _output.WriteLine("crossing edges: " + string.Join(", ", crossingEdges.Distinct()));
+         _output.WriteLine("terminal nudges=" + nudgeDiagnostics.Count);
+         foreach (var item in nudgeDiagnostics.Take(20))
+         {
+            _output.WriteLine(
+               item.Edge.ChildTable + "->" + item.Edge.ParentTable + " " +
+               item.Diagnostic.Terminal + " " + item.Diagnostic.Disposition +
+               " offset=" + item.Diagnostic.Offset + " " + item.Diagnostic.Reason);
+         }
 
          // Render to PNG.
          RenderPng(rects, anchorEdges, routes, bounds);
@@ -167,7 +188,7 @@ namespace ModelConsole.Tests
 
       private static void RenderPng(
          IReadOnlyDictionary<string, Rect2> rects,
-         List<(Point2 Start, Point2 End, FkRelation Edge)> anchorEdges,
+         List<(ConnectorRouteRequest Route, FkRelation Edge)> anchorEdges,
          IReadOnlyList<IReadOnlyList<Point2>> routes,
          Rect2 bounds)
       {
@@ -202,8 +223,8 @@ namespace ModelConsole.Tests
 
          foreach (var a in anchorEdges)
          {
-            canvas.DrawCircle((float)a.Start.X, (float)a.Start.Y, 3, anchorPaint);
-            canvas.DrawCircle((float)a.End.X, (float)a.End.Y, 3, anchorPaint);
+            canvas.DrawCircle((float)a.Route.Start.X, (float)a.Route.Start.Y, 3, anchorPaint);
+            canvas.DrawCircle((float)a.Route.End.X, (float)a.Route.End.Y, 3, anchorPaint);
          }
 
          string dir = Path.Combine(Path.GetTempPath(), "model-console-diag");

@@ -65,6 +65,12 @@ namespace ModelConsole.Controls
       public event EventHandler<string> ThemeRequested;
 
       /// <summary>
+      /// Raised when the "Layout:" selector changes (backlog 045): the host
+      /// applies the layout to both renderers.
+      /// </summary>
+      public event EventHandler<string> LayoutRequested;
+
+      /// <summary>
       /// Raised by the Collapse all / Expand all buttons (backlog 043): true =
       /// collapse every group into a package box, false = expand them all.
       /// </summary>
@@ -112,6 +118,12 @@ namespace ModelConsole.Controls
       /// re-derives it automatically.
       /// </summary>
       private string _themeName = GroupingThemes.TagsName;
+
+      /// <summary>
+      /// The active entity layout's name (backlog 045) — the compact selector
+      /// in the explorer header.
+      /// </summary>
+      private string _layoutName = EntityLayout.GridName;
 
       /// <summary>Guards programmatic checkbox/content updates from re-entering the handlers.</summary>
       private bool _syncing;
@@ -179,6 +191,12 @@ namespace ModelConsole.Controls
          ThemeCombo.Items.Add(GroupingThemes.KindName);
          ThemeCombo.Items.Add(GroupingThemes.ConnectivityName);
          ThemeCombo.SelectedIndex = 0;
+
+         foreach (var name in EntityLayout.Names)
+         {
+            LayoutCombo.Items.Add(name);
+         }
+         LayoutCombo.SelectedIndex = 0;
       }
 
       /// <summary>
@@ -497,6 +515,45 @@ namespace ModelConsole.Controls
          if (name != null)
          {
             ThemeRequested?.Invoke(this, name);
+         }
+      }
+
+      /// <summary>
+      /// Switch the layout selector to the applied layout without requesting a
+      /// second host change.
+      /// </summary>
+      public void SetLayout(string layoutName)
+      {
+         _layoutName = EntityLayout.FromName(layoutName).Name;
+         SyncLayoutCombo();
+      }
+
+      private void SyncLayoutCombo()
+      {
+         _syncing = true;
+         for (int i = 0; i < LayoutCombo.Items.Count; i++)
+         {
+            if (string.Equals(LayoutCombo.Items[i] as string, _layoutName,
+               StringComparison.Ordinal))
+            {
+               LayoutCombo.SelectedIndex = i;
+               break;
+            }
+         }
+         _syncing = false;
+      }
+
+      private void LayoutCombo_SelectionChanged(
+         object sender, SelectionChangedEventArgs e)
+      {
+         if (_syncing || _tables == null)
+         {
+            return;
+         }
+         string name = LayoutCombo.SelectedItem as string;
+         if (name != null)
+         {
+            LayoutRequested?.Invoke(this, name);
          }
       }
 

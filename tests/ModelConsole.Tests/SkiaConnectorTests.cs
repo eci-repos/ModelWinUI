@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 
 using ModelConsole.Geometry;
+using ModelConsole.Palette;
 using ModelConsole.Skia.GLibrary;
 using ModelConsole.Skia.Primitives;
 
@@ -73,6 +74,41 @@ namespace ModelConsole.Tests
             "emphasized start marker should be larger");
          Assert.True(IsColored(bitmap.GetPixel(380, 105)),
             "emphasized end marker should be larger");
+      }
+
+      [Fact]
+      public void DrawEmphasizedUsesSelectedConnectorStyle()
+      {
+         using var surface = CreateSurface(400, 200, out var bitmap);
+         var frame = new GlFrame(surface);
+
+         var points = new List<Point2>
+         {
+            new Point2(20, 100), new Point2(200, 100), new Point2(380, 100)
+         };
+         new Connector(points)
+         {
+            Emphasized = true,
+            SelectedStyle = new ConnectorStyle("#FF00AA", 6)
+         }.Draw(frame);
+
+         Assert.Equal(SKColor.Parse("#FF00AA"), bitmap.GetPixel(200, 100));
+         Assert.True(IsColored(bitmap.GetPixel(200, 102)),
+            "custom emphasized stroke width should be honored");
+         Assert.Equal(SKColor.Parse("#FF00AA"), bitmap.GetPixel(20, 100));
+      }
+
+      [Fact]
+      public void ConnectorStyleNormalizesColorAndClampsWidth()
+      {
+         var style = new ConnectorStyle("00aa11", 20);
+
+         Assert.Equal("#00AA11", style.SelectedHex);
+         Assert.Equal(ConnectorStyle.MaxSelectedWidth, style.SelectedWidth);
+
+         var fallback = new ConnectorStyle("not-a-color", double.NaN);
+         Assert.Equal(ConnectorStyle.DefaultSelectedHex, fallback.SelectedHex);
+         Assert.Equal(ConnectorStyle.DefaultSelectedWidth, fallback.SelectedWidth);
       }
 
       [Fact]

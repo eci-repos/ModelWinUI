@@ -1,6 +1,7 @@
 using Model.Data;
 using ModelConsole.Graphics.GLibrary;
 using ModelConsole.Graphics.Primitives;
+using ModelConsole.Graph;
 
 namespace ModelConsole.Graphics.Services
 {
@@ -18,11 +19,13 @@ namespace ModelConsole.Graphics.Services
       /// <param name="y">y lower-left</param>
       /// <param name="bannerHeight">top banner height</param>
       /// <param name="table">table information</param>
+      /// <param name="notation">ERD or UML presentation mode</param>
       /// <returns>the created Table instance is returned</returns>
       public Table Create(GlContext frame, float x, float y,
-         float bannerHeight, TableInfo table)
+         float bannerHeight, TableInfo table,
+         DiagramNotation notation = DiagramNotation.Erd)
       {
-         Table t = new Table(frame, x, y, bannerHeight, table);
+         Table t = new Table(frame, x, y, bannerHeight, table, notation);
          t.DrawTable(frame);
          return t;
       }

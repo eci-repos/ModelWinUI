@@ -115,6 +115,20 @@ namespace ModelConsole.Controls
       private string _themeName = GroupingThemes.TagsName;
 
       /// <summary>
+      /// The active presentation notation (backlog 040). UML is a view over
+      /// the same model and route geometry; switching it re-measures because
+      /// class-style attribute rows can be wider than ERD rows.
+      /// </summary>
+      private DiagramNotation _notation = DiagramNotation.Erd;
+
+      /// <summary>
+      /// The active entity layout's name (backlog 045). Grid preserves the
+      /// historical row-major layout; alternate layouts use the FK graph to
+      /// cluster related entities before projecting to a shape.
+      /// </summary>
+      private string _layoutName = EntityLayout.GridName;
+
+      /// <summary>
       /// The collapsed groups' box models (backlog 039), in collapsed-set
       /// order — rebuilt over the visible projection on layout and render.
       /// </summary>
@@ -171,6 +185,12 @@ namespace ModelConsole.Controls
       /// </summary>
       private Color _backgroundColor =
          HexColor.FromHex(TablePalette.CanvasBackgroundHex);
+
+      /// <summary>
+      /// Current-session selected/highlighted connector style (backlog 051).
+      /// Rest-state connector drawing is unchanged.
+      /// </summary>
+      private ConnectorStyle _selectedConnectorStyle = ConnectorStyle.Default;
 
       /// <summary>
       /// Delay before a hover readout appears (ms) — long enough that sweeping
@@ -398,6 +418,40 @@ namespace ModelConsole.Controls
       public GroupingTheme CurrentTheme
       {
          get { return GroupingThemes.FromName(_themeName, _tables); }
+      }
+
+      /// <summary>The active presentation notation (ERD or UML).</summary>
+      public DiagramNotation CurrentNotation
+      {
+         get { return _notation; }
+      }
+
+      /// <summary>The active entity-layout name.</summary>
+      public string CurrentLayoutName
+      {
+         get { return _layoutName; }
+      }
+
+      /// <summary>
+      /// Switch the notation and re-render. The model, visibility, collapse,
+      /// and routes' logical identities are unchanged.
+      /// </summary>
+      public void SetNotation(DiagramNotation notation)
+      {
+         _notation = notation;
+         InitializeLayout();
+         Render();
+      }
+
+      /// <summary>
+      /// Switch the entity layout and re-render. Layout is a view-side choice;
+      /// it never mutates the model.
+      /// </summary>
+      public void SetLayout(string layoutName)
+      {
+         _layoutName = EntityLayout.FromName(layoutName).Name;
+         InitializeLayout();
+         Render();
       }
 
       /// <summary>
@@ -712,7 +766,7 @@ namespace ModelConsole.Controls
             {
                continue;
             }
-            var probe = new Table(_context, 0, 0, BannerHeight, t);
+            var probe = new Table(_context, 0, 0, BannerHeight, t, _notation);
             maxWidth = Math.Max(maxWidth, probe.ComputedWidth);
             maxHeight = Math.Max(maxHeight, probe.ComputedHeight);
          }
@@ -730,13 +784,15 @@ namespace ModelConsole.Controls
          {
             layoutTables.Add(new TableInfo { TableName = key });
          }
-         var layout = TableLayoutEngine.Layout(layoutTables, new GridLayoutOptions
+         var layoutEdges = BuildLayoutEdges(visibleEdges, _boxes, _boxed);
+         var layout = EntityLayoutEngine.Layout(
+            layoutTables, layoutEdges, new EntityLayoutOptions
          {
             Columns = 7,
             SlotWidth = maxWidth + SlotPadding,
             SlotHeight = maxHeight + SlotPadding,
             Gutter = Gutter
-         });
+         }, EntityLayout.FromName(_layoutName));
 
          // Center the content in the large canvas so panning has room in all
          // directions (the "paper" is effectively unlimited - the view stops
@@ -799,6 +855,39 @@ namespace ModelConsole.Controls
          return (boxes, boxed);
       }
 
+      private static IReadOnlyList<FkRelation> BuildLayoutEdges(
+         IReadOnlyList<FkRelation> visibleEdges,
+         IReadOnlyList<(string Key, GroupBoxModel Box)> boxes,
+         HashSet<string> boxed)
+      {
+         var layoutEdges = new List<FkRelation>();
+         foreach (var edge in visibleEdges)
+         {
+            if (!boxed.Contains(edge.ChildTable) && !boxed.Contains(edge.ParentTable))
+            {
+               layoutEdges.Add(edge);
+            }
+         }
+         foreach (var (key, box) in boxes)
+         {
+            foreach (var edge in box.ExternalEdges)
+            {
+               string target = edge.TargetKey;
+               if (edge.Outbound)
+               {
+                  layoutEdges.Add(new FkRelation(
+                     key, "", target, "", edge.Sample.Constraint));
+               }
+               else
+               {
+                  layoutEdges.Add(new FkRelation(
+                     target, "", key, "", edge.Sample.Constraint));
+               }
+            }
+         }
+         return layoutEdges;
+      }
+
       /// <summary>
       /// Re-render the whole drawing from the current model state. The
       /// drawing is always derived from the state (table positions + FK
@@ -854,7 +943,7 @@ namespace ModelConsole.Controls
                continue;
             }
             var table = _tableFactory.Create(
-               _context, (float)rect.X, (float)rect.Y, BannerHeight, t);
+               _context, (float)rect.X, (float)rect.Y, BannerHeight, t, _notation);
             drawn[t.TableName] = table;
             model.Add(table);
          }
@@ -938,7 +1027,7 @@ namespace ModelConsole.Controls
             .GroupBy(e => e.ParentTable + "::" + e.ParentColumn)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-         var anchorEdges = new List<(Point2 Start, Point2 End, FkRelation Edge)>();
+         var anchorEdges = new List<(ConnectorRouteRequest Route, FkRelation Edge)>();
          foreach (var edge in tableEdges)
          {
             if (!drawn.TryGetValue(edge.ChildTable, out var child) ||
@@ -960,7 +1049,9 @@ namespace ModelConsole.Controls
             end = ConnectorAnchors.FanOut(
                end, parentSide, endGroup.IndexOf(edge), endGroup.Count, 6);
 
-            anchorEdges.Add((start, end, edge));
+            anchorEdges.Add((
+               new ConnectorRouteRequest(start, childSide, end, parentSide),
+               edge));
          }
 
          // Backlog 039: the boxes' external connectors — one anchor pair per
@@ -969,7 +1060,7 @@ namespace ModelConsole.Controls
          // midpoint — it has no column rows). Target rects are the drawn
          // tables/boxes (actual sizes, not slots), so the connector touches
          // the box's real boundary.
-         var boxAnchors = new List<(Point2 Start, Point2 End, GroupBoxEdge Edge)>();
+         var boxAnchors = new List<(ConnectorRouteRequest Route, GroupBoxEdge Edge)>();
          foreach (var (key, box) in _boxes)
          {
             if (!drawnBoxes.TryGetValue(key, out var boxObj))
@@ -999,9 +1090,11 @@ namespace ModelConsole.Controls
                   continue; // target box collapsed to nothing (all hidden)
                }
 
-               var (start, end, _, _) = ConnectorAnchors.Resolve(
+               var (start, end, startSide, endSide) = ConnectorAnchors.Resolve(
                   boxRect, targetRect, boxRect.Center.Y, targetRect.Center.Y);
-               boxAnchors.Add((start, end, be));
+               boxAnchors.Add((
+                  new ConnectorRouteRequest(start, startSide, end, endSide),
+                  be));
             }
          }
 
@@ -1012,8 +1105,8 @@ namespace ModelConsole.Controls
             // sequentially so no connector crosses another — nor any box,
             // which is in the obstacle set.
             var allAnchors = anchorEdges
-               .Select(a => (a.Start, a.End))
-               .Concat(boxAnchors.Select(a => (a.Start, a.End)))
+               .Select(a => a.Route)
+               .Concat(boxAnchors.Select(a => a.Route))
                .ToList();
             var routes = SequentialRouter.RouteAll(
                allAnchors, obstacles, bounds, routerOptions);
@@ -1058,7 +1151,7 @@ namespace ModelConsole.Controls
             foreach (var a in toRoute)
             {
                var pts = OrthogonalRouter.RouteBest(
-                  a.Start, a.End, obstacles, bounds, routerOptions, thin);
+                  a.Route, obstacles, bounds, routerOptions, thin);
                newRoutes.Add((a.Edge, pts));
                AddSegmentObstacles(thin, pts, 4);
             }
@@ -1076,7 +1169,7 @@ namespace ModelConsole.Controls
             foreach (var a in toBoxRoute)
             {
                var pts = OrthogonalRouter.RouteBest(
-                  a.Start, a.End, obstacles, bounds, routerOptions, thin);
+                  a.Route, obstacles, bounds, routerOptions, thin);
                newBoxRoutes.Add((a.Edge, pts));
                AddSegmentObstacles(thin, pts, 4);
             }
@@ -1131,6 +1224,13 @@ namespace ModelConsole.Controls
       {
          var connector = _connectorFactory.CreateRouted(_context, pts);
          connector.Data = data;
+         if (_notation == DiagramNotation.Uml)
+         {
+            connector.Path.Stroke = new SolidColorBrush(Colors.Black);
+            connector.Path.StrokeThickness = 1.2;
+            DrawConnectorLabel(pts, data);
+            return;
+         }
 
          var startCircle = GlEllipse.Draw(
             _context, pts[0].X, pts[0].Y, 8, Colors.DodgerBlue);
@@ -1138,6 +1238,66 @@ namespace ModelConsole.Controls
          var endCircle = GlEllipse.Draw(
             _context, pts[pts.Count - 1].X, pts[pts.Count - 1].Y, 8, Colors.DodgerBlue);
          endCircle.NativeInstance.Tag = connector;
+      }
+
+      /// <summary>
+      /// Draw the UML association label near the route's midpoint.
+      /// </summary>
+      private void DrawConnectorLabel(IReadOnlyList<Point2> pts, object data)
+      {
+         string label = data is FkRelation edge
+            ? UmlProfile.AssociationLabel(edge)
+            : data is GroupBoxEdge boxEdge ? boxEdge.Label : "";
+         if (string.IsNullOrEmpty(label) || pts == null || pts.Count == 0)
+         {
+            return;
+         }
+
+         var p = Midpoint(pts);
+         var text = new TextBlock
+         {
+            Text = label,
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Colors.Black),
+            IsHitTestVisible = false
+         };
+         var labelBox = new Border
+         {
+            Background = new SolidColorBrush(_backgroundColor),
+            Padding = new Thickness(3, 1, 3, 1),
+            Child = text,
+            IsHitTestVisible = false
+         };
+         Canvas.SetLeft(labelBox, p.X + 4);
+         Canvas.SetTop(labelBox, p.Y - 12);
+         ModelCanvas.Children.Add(labelBox);
+      }
+
+      private static Point2 Midpoint(IReadOnlyList<Point2> pts)
+      {
+         if (pts.Count == 1)
+         {
+            return pts[0];
+         }
+
+         double total = OrthogonalRouter.PolylineLength(pts);
+         double target = total / 2.0;
+         double walked = 0;
+         for (int i = 0; i < pts.Count - 1; i++)
+         {
+            Point2 a = pts[i];
+            Point2 b = pts[i + 1];
+            double length = Math.Abs(b.X - a.X) + Math.Abs(b.Y - a.Y);
+            if (walked + length >= target)
+            {
+               double remaining = target - walked;
+               double dx = Math.Sign(b.X - a.X) * Math.Min(Math.Abs(b.X - a.X), remaining);
+               double dy = Math.Sign(b.Y - a.Y) * Math.Min(Math.Abs(b.Y - a.Y), remaining);
+               return new Point2(a.X + dx, a.Y + dy);
+            }
+            walked += length;
+         }
+         return pts[pts.Count - 1];
       }
 
       /// <summary>
@@ -1323,8 +1483,9 @@ namespace ModelConsole.Controls
       private void ApplyConnectorHighlight(GlOrthoPath connector)
       {
          _hoverConnector = connector;
-         connector.Path.Stroke = new SolidColorBrush(Colors.SlateBlue);
-         connector.Path.StrokeThickness = 3.5;
+         Color selectedColor = HexColor.FromHex(_selectedConnectorStyle.SelectedHex);
+         connector.Path.Stroke = new SolidColorBrush(selectedColor);
+         connector.Path.StrokeThickness = _selectedConnectorStyle.SelectedWidth;
 
          // The highlighted route is a table FK or a collapsed box's external
          // connector — look in both route lists (the data is the route's
@@ -1357,13 +1518,29 @@ namespace ModelConsole.Controls
 
          _hoverCircles = new List<GlEllipse>
          {
-            GlEllipse.Draw(_context, pts[0].X, pts[0].Y, 12, Colors.DodgerBlue),
+            GlEllipse.Draw(_context, pts[0].X, pts[0].Y, 12, selectedColor),
             GlEllipse.Draw(
-               _context, pts[pts.Count - 1].X, pts[pts.Count - 1].Y, 12, Colors.DodgerBlue)
+               _context, pts[pts.Count - 1].X, pts[pts.Count - 1].Y, 12, selectedColor)
          };
          foreach (var circle in _hoverCircles)
          {
             circle.NativeInstance.IsHitTestVisible = false;
+         }
+      }
+
+      /// <summary>
+      /// Apply the current-session selected/highlighted connector style. If a
+      /// connector is already highlighted, refresh it in place so the UI
+      /// controls feel live.
+      /// </summary>
+      public void SetSelectedConnectorStyle(ConnectorStyle style)
+      {
+         _selectedConnectorStyle = style ?? ConnectorStyle.Default;
+         if (_hoverConnector != null)
+         {
+            var connector = _hoverConnector;
+            ClearConnectorHighlight();
+            ApplyConnectorHighlight(connector);
          }
       }
 
@@ -1648,7 +1825,7 @@ namespace ModelConsole.Controls
          {
             return;
          }
-         var probe = new Table(_context, 0, 0, BannerHeight, table);
+         var probe = new Table(_context, 0, 0, BannerHeight, table, _notation);
          _layout[table.TableName] = new Rect2(
             old.X, old.Y, probe.ComputedWidth, probe.ComputedHeight);
       }

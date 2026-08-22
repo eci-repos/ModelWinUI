@@ -12,6 +12,129 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-22 — Connector nudge diagnostics and safe straightening (backlog item 052)
+
+- **User request:** "work on 051 and then 052, go" — execute the diagnostic-first follow-up for the remaining near-straight connector nudges after completing `051`.
+- **Sprint:** `docs/sprints/CURRENT.md` was started for `052`, completed, and promoted to `docs/sprints/archive/sprint-2026-08-22-connector-nudge-diagnostics-and-safe-straightening.md`.
+- **Diagnostics:** added `RouteNudgeDiagnostic` / `RouteNudgeDisposition` / `RouteNudgeTerminal` and `OrthogonalRouter.DiagnoseNudges(...)` so final routed points can report whether a tiny terminal nudge is removable, required by endpoint alignment, or blocked by table/connector obstacles.
+- **Safe cleanup:** terminal straightening now goes through the same classifier and only applies `Removable` candidates. Endpoint-alignment offsets that would require moving an endpoint or dropping the opposite endpoint are explicitly retained and reported.
+- **Diagnostic renderer:** `RoutingDiagnosticTests` now routes the sample through side-aware `ConnectorRouteRequest` values and writes terminal nudge classifications to test output alongside the PNG diagnostic.
+- **Tests:** added coverage for a removable terminal nudge and an intentionally retained endpoint-alignment offset.
+- **Docs:** archived backlog item `052`, promoted the sprint record, and reset `docs/sprints/CURRENT.md` to the placeholder.
+- **Verified:** `dotnet test tests/ModelConsole.Tests/ModelConsole.Tests.csproj -c Debug` -> **314/314 pass**; `dotnet build src/Model.WinUI.Console/ModelWinUI.csproj -c Debug -p:Platform=x64` -> **0 errors / 0 warnings**.
+
+### 2026-08-22 — Selected connector style controls (backlog item 051)
+
+- **User request:** "work on 051 and then 052, go" — first add user controls for the selected/highlighted FK connector path color and width.
+- **Sprint:** `docs/sprints/CURRENT.md` was started for `051`, completed, and promoted to `docs/sprints/archive/sprint-2026-08-22-selected-connector-style-controls.md`.
+- **Shared style:** added `ConnectorStyle` in `Model.Palette` with a default SlateBlue selected color, 3.5 px default width, and 1-8 px clamping.
+- **UI:** the renderer bar now has a selected-connector color swatch/button opening a WinUI color picker plus a bounded width slider. The host keeps the current-session style and relays it to both renderers.
+- **Renderer parity:** XAML connector hover/selection emphasis and Skia emphasized connector drawing both use the shared current-session color and width; rest-state connector styling remains unchanged.
+- **Tests:** added Skia rendering coverage for custom emphasized connector style plus `ConnectorStyle` normalization/clamping coverage.
+- **Docs:** archived backlog item `051`, promoted the sprint record, and moved on to `052`.
+- **Verified:** `dotnet test tests/ModelConsole.Tests/ModelConsole.Tests.csproj -c Debug` -> **312/312 pass**. First WinUI build failed because `ModelWinUI (20392)` and Visual Studio locked output DLLs; after stopping the running app process, `dotnet build src/Model.WinUI.Console/ModelWinUI.csproj -c Debug -p:Platform=x64` -> **0 errors / 0 warnings**.
+
+### 2026-08-22 — Prepared connector nudge diagnostics backlog item
+
+- **User request:** write a backlog item for the remaining few-pixel connector nudges that appear near table edges on otherwise straight FK paths.
+- **Backlog created:** `052-connector-nudge-diagnostics-and-safe-straightening.md`.
+- **Notes:** The item is diagnostic-first: capture actual final route points from rendered examples, classify whether each nudge is removable or intentional, add tests from captured cases, then straighten only the safe removable patterns.
+- **Verification:** documentation-only change; no build/test run.
+
+### 2026-08-22 — Prepared selected connector style controls backlog item
+
+- **User request:** prepare a backlog item so the selected FK path line color, currently blue-like, can be changed by the user along with the selected line width.
+- **Backlog created:** `051-selected-connector-style-controls.md`.
+- **Notes:** The item captures app UI controls plus shared renderer wiring so XAML and Skia selected/highlighted connector paths use the same user-chosen color and stroke width while rest-state connector styling remains unchanged.
+- **Verification:** documentation-only change; no build/test run.
+
+### 2026-08-22 — Connector terminal micro-offset straightening (backlog item 050)
+
+- **User request:** "work on 050, make it the current sprint and execute it."
+- **Sprint:** `docs/sprints/CURRENT.md` was started for `050`, completed, and promoted to `docs/sprints/archive/sprint-2026-08-22-connector-terminal-micro-offset-straightening.md`.
+- **Terminal cleanup:** `OrthogonalRouter` now runs a side-aware terminal normalization pass after general tiny-dogleg cleanup. It detects the pattern `anchor → perpendicular stub → tiny lateral snap → near-table route rail` at either route end and straightens it to the anchor's fanned row/column when the replacement remains axis-aligned, preserves the explicit endpoint side, and stays clear of table and thin connector obstacles.
+- **Safety behavior:** exact start/end anchors stay unchanged; side-aware endpoint direction is still validated after cleanup; obstacle-blocked terminal offsets are retained; shared-column fan-out anchors stay distinct instead of collapsing onto one port.
+- **Tests:** added coverage for start-terminal cleanup, end-terminal cleanup, obstacle-blocked cleanup, and distinct fan-out anchors.
+- **Docs:** archived backlog item `050`, promoted the sprint record, and reset `docs/sprints/CURRENT.md` to the placeholder.
+- **Verified:** `dotnet test tests/ModelConsole.Tests/ModelConsole.Tests.csproj -c Debug` → **310/310 pass**; `dotnet build ModelWinUI.sln -p:Platform=x64` → **0 errors / 0 warnings**.
+
+### 2026-08-22 — Prepared terminal connector micro-offset backlog item
+
+- **User report:** after `048`/`049`, a few connector paths still show a small lateral shift immediately before landing on a table edge.
+- **Backlog created:** `050-connector-terminal-micro-offset-straightening.md`.
+- **Notes:** This is captured as a targeted terminal-normalization follow-up to `048`: detect start/end approach jogs that can be straightened while preserving exact anchors, perpendicular endpoint direction, no-table-crossing, and intentional shared-column fan-out.
+- **Verification:** documentation-only change; no build/test run.
+
+### 2026-08-22 — Connector endpoint cleanup and rounded bends (backlog items 048–049)
+
+- **User request:** "work on 048, make it current sprint and execute it, when done work on 049."
+- **Sprint 048:** `docs/sprints/CURRENT.md` was started for `048`, completed, and promoted to `docs/sprints/archive/sprint-2026-08-22-connector-endpoint-perpendicularity-and-jog-cleanup.md`.
+- **Endpoint routing contract:** added `ConnectorRouteRequest` so resolved `AnchorSide` values survive into routing. `OrthogonalRouter` and `SequentialRouter` now have side-aware overloads; XAML `ModelPanelControl` and Skia `ErdComposer` use them for table FK routes and collapsed group-box routes.
+- **Perpendicular endpoints:** side-aware routes validate that the first non-zero segment departs along the child table side's outward normal and that the last non-zero segment enters opposite the parent table side's outward normal. Existing point-only router APIs remain for compatibility.
+- **Tiny-jog cleanup:** added route normalization that removes duplicate/near-collinear points and collapses tiny obstacle-safe doglegs while preserving side-aware endpoint direction and never shortcutting through table interiors.
+- **Sprint 049:** `docs/sprints/CURRENT.md` was then started for `049`, completed, and promoted to `docs/sprints/archive/sprint-2026-08-22-draw-only-rounded-connector-bends.md`.
+- **Draw-only rounding:** added `RoundedPolyline`, a portable command builder that converts route points into move/line/quadratic draw commands with a capped 8 px corner radius. XAML routed connectors and Skia connectors consume those commands; route points are unchanged for routing, connector walls, hit testing, endpoint markers, and UML labels.
+- **Docs:** updated `src/Model.Geometry/README.md` and stale connector comments; archived backlog items `048` and `049`; reset `docs/sprints/CURRENT.md` to the placeholder.
+- **Verified:** `dotnet test tests/ModelConsole.Tests/ModelConsole.Tests.csproj -c Debug` → **306/306 pass**; `dotnet build ModelWinUI.sln -p:Platform=x64` → **0 errors / 0 warnings**.
+
+### 2026-08-22 — Prepared connector-path cleanup backlog items
+
+- **User request:** prepare backlog items for FK connector paths that sometimes leave/enter table borders tangentially, contain small unnecessary jogs, and should render rounded turns without changing route geometry.
+- **Backlog created:** `048-connector-endpoint-perpendicularity-and-jog-cleanup.md` and `049-draw-only-rounded-connector-bends.md`.
+- **Decision captured:** endpoint perpendicularity and tiny-jog cleanup belong in the portable routing contract; rounded bends are draw-only in the XAML and Skia renderers so routing, hit testing, label placement, and obstacle math continue to use the original orthogonal polyline.
+- **Verification:** documentation-only change; no build/test run.
+
+### 2026-08-22 — Filled Cross entity layout (backlog item 047)
+
+- **User request:** "work on 047, promote it as the current sprint and execute it."
+- **Sprint:** `docs/sprints/CURRENT.md` was started for `047`, completed the same day, and promoted to `docs/sprints/archive/sprint-2026-08-22-filled-cross-entity-layout.md`.
+- **Cross semantics corrected:** `EntityLayout.Cross` no longer places entities on four one-cell-wide arms. It now generates a filled cross mask — the union of horizontal and vertical rectangular bars — expands the mask until enough slots fit, assigns from the center/intersection outward, and normalizes the footprint to positive coordinates.
+- **Connectivity behavior:** the existing connectivity-aware order and projected-span optimizer now feed the filled cross region, so high-degree hubs can occupy the intersection while related entities fill nearby bar cells.
+- **Tests:** added `CrossUsesFilledBarCells` (rejects center-row/center-column-only arm placement by requiring off-line bar cells) and `CrossPlacesConnectedHubNearCenter` (star hub lands at the footprint center). Existing all-layout non-overlap and collapsed-box parity tests continue covering Cross.
+- **Verified:** `dotnet test tests/ModelConsole.Tests/ModelConsole.Tests.csproj -c Debug` → **295/295 pass**; `dotnet build ModelWinUI.sln -p:Platform=x64` → **0 errors / 0 warnings**.
+- **Promoted:** `047` → `docs/backlog/archive/`; sprint → `docs/sprints/archive/sprint-2026-08-22-filled-cross-entity-layout.md`; `docs/sprints/CURRENT.md` reset to the placeholder.
+
+### 2026-08-22 — Filled Circle entity layout (backlog item 046)
+
+- **User request:** "work on 046, make it the current sprint and execute it."
+- **Sprint:** `docs/sprints/CURRENT.md` was started for `046`, completed the same day, and promoted to `docs/sprints/archive/sprint-2026-08-22-filled-circle-entity-layout.md`.
+- **Circle semantics corrected:** `EntityLayout.Circle` no longer places entities on a circumference. It now generates disk-mask layout slots, expands the disk until enough cells fit, orders cells from the center outward, and normalizes the footprint to positive coordinates for renderer layout.
+- **Connectivity behavior:** Circle no longer applies the old ring seam rotation. The existing connectivity-aware order and projected-span optimizer now feed a center-out filled disk, so high-degree hubs can land in the middle instead of on an outer ring.
+- **Tests:** added `CircleUsesFilledInteriorCells` (rejects ring-only placement by checking interior radius bands) and `CirclePlacesConnectedHubNearCenter` (star hub lands at the footprint center). Existing all-layout non-overlap and collapsed-box parity tests continue covering Circle.
+- **Verified:** `dotnet test tests/ModelConsole.Tests/ModelConsole.Tests.csproj -c Debug` → **293/293 pass**; `dotnet build ModelWinUI.sln -p:Platform=x64` → **0 errors / 0 warnings**. First normal build attempt was blocked by the running `ModelWinUI` dev app locking output DLLs; after stopping that `ModelWinUI` process, the normal solution build passed.
+- **Promoted:** `046` → `docs/backlog/archive/`; sprint → `docs/sprints/archive/sprint-2026-08-22-filled-circle-entity-layout.md`; `docs/sprints/CURRENT.md` reset to the placeholder.
+
+### 2026-08-22 — Prepared corrective backlog items for filled Circle/Cross layouts
+
+- **User correction:** Circle and Cross layouts were not intended as linear projections. Circle should pack entities within a filled circular region, and Cross should pack entities within a filled two-rectangle cross region.
+- **Backlog created:** `046-filled-circle-entity-layout.md` and `047-filled-cross-entity-layout.md`.
+- **Notes:** The current `EntityLayout.Circle` ring placement and `EntityLayout.Cross` center-plus-arms placement are now explicitly captured as behaviors to replace, not intended final semantics.
+- **Verification:** documentation-only change; no build/test run.
+
+### 2026-08-22 — Entity layout engine and app switcher (backlog items 044–045)
+
+- **User request:** "work on 044 when done on 045" — execute the connectivity-aware entity/table layout work and then expose it in the app.
+- **Sprint:** `docs/sprints/CURRENT.md` was started for `044`/`045`, completed the same day, and promoted to `docs/sprints/archive/sprint-2026-08-22-entity-layouts-and-switcher.md`.
+- **Pure layout engine:** replaced `TableLayoutEngine` / `GridLayoutOptions` with `EntityLayout` / `EntityLayoutEngine` / `EntityLayoutOptions` in `Model.Graph`. Grid remains the default and preserves the existing incoming row-major order exactly; non-grid layouts and opt-in grid ordering use deterministic FK-aware ordering plus projected edge-span optimization.
+- **Layouts:** added the name registry (`Grid`, `Serpentine`, `Circle`, `Cross`) and projections that return the same `name → Rect2` contract as before. The layout input treats a collapsed group box key (`group::...`) as a single entity key, so collapsed groups lay out as one rect across every shape.
+- **Renderer wiring:** both XAML (`ModelPanelControl`) and Skia (`ErdComposer` / `SkiaPanelControl`) now pass visible FK edges plus collapsed-box external edges to the layout engine before anchoring/routing. `ErdOptions.LayoutName`, `ModelPanelControl.SetLayout`, `SkiaPanelControl.SetLayout`, `ModelEditorControl.ApplyLayout`, and `MainWindow`'s relay keep both renderers on the same layout name; Skia's stale-compose guard now compares layout name too.
+- **UI:** the Model Explorer header now includes a compact **Layout:** selector listing Grid / Serpentine / Circle / Cross. Layout switching is view-side only and does not mutate or persist the model.
+- **Tests:** replaced the old row-major layout tests with `EntityLayoutEngineTests`: default Grid parity, registry round-trip/fallback, deterministic ordering, all-shape non-overlap, serpentine row alternation, PublicSafety edge-span improvement versus blind grid, and collapsed-box key parity. Suite is now **291/291**.
+- **Docs:** updated `CLAUDE.md`, `src/Model.Graph/README.md`, and `docs/codebase-functionality-map.md`; archived `044` and `045`; reset `docs/sprints/CURRENT.md` to a placeholder.
+- **Verified:** `dotnet test tests/ModelConsole.Tests/ModelConsole.Tests.csproj -c Debug` → **291/291 pass**; `dotnet build ModelWinUI.sln -p:Platform=x64` → **0 errors / 0 warnings**.
+- **Deferred:** surfacing the serpentine column/up-down knobs in the UI. The current selector uses the existing default layout options from both renderer paths.
+
+### 2026-08-22 — UML notation toggle and PlantUML export (backlog item 040)
+
+- **User request:** start backlog `040`, make it current, and execute it.
+- **Sprint:** `docs/sprints/CURRENT.md` was started for `040` and completed the same day.
+- **Pure UML profile/export:** added `DiagramNotation`, `UmlProfile`, and `UmlPlantEmitter` in `Model.Graph`. UML stays a derived view/export only — no UML-only structure was added to the canonical model or JSON format. Mapping: `TableInfo` → UML class (`Schema::Table`), `ColumnInfo` → public attribute with `{PK}`/`{FK}`, `FkRelation`/`ConstraintInfo` → directed association with child-side multiplicity and role labels, `GroupingTheme`/tags → packages, `TableKindClassifier` → `<<entity>>` / `<<reference>>` stereotypes, and visibility/collapse → the package viewpoint.
+- **Renderer notation:** both renderers gained ERD/UML notation switching. ERD remains the default. UML mode re-measures tables, renders class-style attribute rows, hides ERD endpoint dots, and labels associations/aggregated package edges while keeping the existing layout, anchor, and routing pipeline.
+- **App wiring:** the renderer bar now includes an **ERD / UML** notation toggle, relayed from `ModelEditorControl` to `SkiaPanelControl` like the existing theme/visibility/collapse parity paths. **File → Export PlantUML…** writes a deterministic package diagram for the current theme/visibility/collapse viewpoint plus a full class diagram.
+- **Tests:** added `UmlProfileTests` for attribute formatting, cardinality/multiplicity formatting, deterministic class export, and collapsed package export.
+- **Verified:** `dotnet test tests/ModelConsole.Tests/ModelConsole.Tests.csproj -c Debug` → **281/281 pass**; `dotnet build ModelWinUI.sln -p:Platform=x64` → **0 errors / 0 warnings**.
+- **Deferred:** the stretch UML-ish grouped JSON import/round-trip remains a future follow-up; the core notation/export work is complete and the canonical-core guarantee was preserved.
+
 ### 2026-08-21 — Blank table names after Schema grouping (dark-OS-theme text regression)
 
 - **User report:** "I group by 'schema' and then all table (entity) names are set to 'blank' are not shown! … I can hover and see the names but on hover out those names are not shown."
@@ -569,7 +692,23 @@ Verification: each library builds standalone **0 errors, 0 warnings**; `dotnet b
 
 ### Next tasks (in priority order)
 
-0. **Entity details window (backlog `042`) is complete.** The right-column Inspection panel is gone — double-clicking a table (or FK connector) opens a **modeless details `Window`** (`EntityDetailsWindow`, app chrome, lazily created + reused by `MainWindow`, re-created after `Closed`), **read-only by default** with an **Edit/Done** toggle in the inspector's header revealing the 029 edit surface (`EntityInspectorControl` gained the View/Edit mode — `BuildEditTable`/`BuildEditConnector` in edit mode, `BuildReadOnlyTable`/`BuildReadOnlyConnector` otherwise). Double-click detection: `GlContext.ShapeDoubleClicked` (a second quick ≤500 ms click on the same shape) → `ModelPanelControl.EntityDoubleTapped` (node's live model; group boxes skip). `ModelEditorControl` dropped the inspector (right panel is log-only) and exposes `Tables`/`Enumerations`/`CurrentProvenance`/`CurrentMetadata`, `EntitySelected`/`EntityDoubleClicked`, `WireInspector`, and public `ApplyVisibility`/`ApplyCollapse`. **File → Model info** carries the model-level readout; the side-panel header banners now share the zoom-toolbar gray `#F3F3F7` (the 035 pastels retire), and the Model Explorer shows table names again (the 038 gray-out now lands on the realized `TreeViewItem` container, `Content` stays a string). Follow-up polish (same day): the inspector's content was rebuilt as **bordered section cards** — one per logical section (entity summary, columns, foreign keys, properties/actions) — with the column rows alternating **white/light-gray zebra bands** (`InspectorAlternateBandBrush`, a new `ControlTheme.xaml` key) and **PK/FK badge chips** tinted from the model's own entity-blue/reference-green families; in edit mode each column is its own zebra sub-card holding all of that column's controls, and the connector/model readouts are carded too. Pure presentation — every control, gate, and commit is unchanged. **done** (2026-08-21; 256/256 tests; solution 0/0; backlog archived). The backlog holds `040` unscheduled.
+0. **Connector nudge diagnostics and safe straightening (backlog `052`) is complete.** Final route diagnostics now classify tiny terminal nudges as removable, endpoint-alignment-required, or obstacle/connector-blocked, and cleanup applies only to removable candidates. **done** (2026-08-22; 314/314 tests; app build 0/0; backlog archived).
+
+0. **Selected connector style controls (backlog `051`) is complete.** The renderer bar now lets users choose selected/highlighted connector color and width for the current session, and both XAML and Skia renderers honor it while rest-state connector styling is unchanged. **done** (2026-08-22; 312/312 tests; app build 0/0 after stopping stale app lock; backlog archived).
+
+0. **Connector terminal micro-offset straightening (backlog `050`) is complete.** The router now straightens small start/end terminal approach shifts when the shortcut is obstacle-safe, side-aware, and does not collapse intentional fan-out. **done** (2026-08-22; 310/310 tests; solution 0/0; backlog archived).
+
+0. **Connector endpoint perpendicularity and jog cleanup (backlog `048`) is complete.** Side-aware route requests now preserve anchor-side intent through both renderers, routes guarantee perpendicular first/last segments, and tiny obstacle-safe doglegs are normalized away. **done** (2026-08-22; 306/306 tests; solution 0/0; backlog archived).
+
+1. **Draw-only rounded connector bends (backlog `049`) is complete.** XAML and Skia connectors now draw small clamped quadratic bends from a draw-only command stream while leaving the routed polyline unchanged for hit testing, labels, and obstacle calculations. **done** (2026-08-22; 306/306 tests; solution 0/0; backlog archived).
+
+0. **Filled Cross layout (backlog `047`) is complete.** Cross now packs entities into a filled two-rectangle cross region from the center/intersection outward instead of placing them on four one-cell-wide arms. **done** (2026-08-22; 295/295 tests; solution 0/0; backlog archived).
+
+1. **Filled Circle layout (backlog `046`) is complete.** Circle now packs entities into a filled disk-like region from the center outward instead of placing them on a ring. **done** (2026-08-22; 293/293 tests; solution 0/0; backlog archived).
+
+2. **Entity layouts and switcher (backlog `044`–`045`) are complete.** The app now has Grid / Serpentine / Circle / Cross layout selection, both renderers consume the same layout name, collapsed group boxes participate as one layout key, and the pure engine is covered by deterministic/non-overlap/PublicSafety edge-span tests. **done** (2026-08-22; 291/291 tests; solution 0/0; backlog archived). Follow-ups `046`–`047` corrected Circle/Cross shape semantics.
+
+3. **Entity details window (backlog `042`) is complete.** The right-column Inspection panel is gone — double-clicking a table (or FK connector) opens a **modeless details `Window`** (`EntityDetailsWindow`, app chrome, lazily created + reused by `MainWindow`, re-created after `Closed`), **read-only by default** with an **Edit/Done** toggle in the inspector's header revealing the 029 edit surface (`EntityInspectorControl` gained the View/Edit mode — `BuildEditTable`/`BuildEditConnector` in edit mode, `BuildReadOnlyTable`/`BuildReadOnlyConnector` otherwise). Double-click detection: `GlContext.ShapeDoubleClicked` (a second quick ≤500 ms click on the same shape) → `ModelPanelControl.EntityDoubleTapped` (node's live model; group boxes skip). `ModelEditorControl` dropped the inspector (right panel is log-only) and exposes `Tables`/`Enumerations`/`CurrentProvenance`/`CurrentMetadata`, `EntitySelected`/`EntityDoubleClicked`, `WireInspector`, and public `ApplyVisibility`/`ApplyCollapse`. **File → Model info** carries the model-level readout; the side-panel header banners now share the zoom-toolbar gray `#F3F3F7` (the 035 pastels retire), and the Model Explorer shows table names again (the 038 gray-out now lands on the realized `TreeViewItem` container, `Content` stays a string). Follow-up polish (same day): the inspector's content was rebuilt as **bordered section cards** — one per logical section (entity summary, columns, foreign keys, properties/actions) — with the column rows alternating **white/light-gray zebra bands** (`InspectorAlternateBandBrush`, a new `ControlTheme.xaml` key) and **PK/FK badge chips** tinted from the model's own entity-blue/reference-green families; in edit mode each column is its own zebra sub-card holding all of that column's controls, and the connector/model readouts are carded too. Pure presentation — every control, gate, and commit is unchanged. **done** (2026-08-21; 256/256 tests; solution 0/0; backlog archived).
 
 1. **Tags on the model (backlog `037`) is complete.** `TableInfo.Tags` — the first *persisted* per-entity annotation — is a serialized `List<string>` (written only when present via `[JsonIgnore(WhenWritingNull)]`, so older model files stay byte-identical) that round-trips through **both** JSON formats (containerized per-table + flat-array) and **both** schemas (`array` `Tags` / `grouped` `tags`, optional string-array). The interpreter captures it through a new `EntityContainerSpec.TagsField` (`"Tags"` / `"tags"`); the inspector edits it through the pure `ModelEdits.SetTableTags` — trim, dedupe, drop blanks, and **UML-identifier hygiene** (`IsValidTagName`: letters/digits/`_`/`-`, no leading digit; rejected names surface on the **diagnostics log** via `ILogService`, never a crash) — gated by the new `NodeVerbs.CanEditTags`; the explorer node shows a `[tag, tag]` suffix and the hover/readout a `Tags: …` line. Tags are the deliberate **UML seam** (040): they map to UML package/stereotype names losslessly. **done** (2026-08-20; 205/205 tests; solution 0/0; backlog archived). The backlog holds `038`–`040` unscheduled.
 
@@ -589,9 +728,13 @@ Verification: each library builds standalone **0 errors, 0 warnings**; `dotnet b
 - The XAML `Graphics` stack is now a reusable library too (backlog `031`) — `Model.Graphics.WinUI` hosts the `Gl*` stack + the XAML factory contracts, so every layer of the drawing code is referenceable by other projects. The library-reusability series (030–032) is complete.
 - `SkiaPanelControl` renders the Skia ERD in the app via the MainWindow renderer bar (backlog 003). It has zoom (fit button + slider + wheel-zoom around the cursor, backlog 015 + follow-up), **drag-to-pan** (2026-08-19 — left/middle/space+drag, 1:1 at any zoom, leaves fit mode), and **connector hover-highlight** (2026-08-19 — a distance-to-polyline hit-test + emphasized `Connector`) but **no per-object drag/inspector** (those stay on the XAML path). A shared composition/anchoring helper for `ModelPanelControl` too is a deferred follow-up.
 - Test project exists (backlog 007) but only covers the portable libraries' pure modules (`Model.Data`, `Model.Geometry`, `Model.Graph`, `Model.Skia`); the XAML `Graphics` stack and the WinUI app have no automated tests.
-- Routed connectors have no corner rounding (deferred from backlog 007) — rounding can re-intersect obstacles in tight gaps.
+- Routed connector endpoint perpendicularity and draw-only bend rounding are complete as backlog items `048` and `049`.
+- Connector terminal micro-offset straightening is complete as backlog item `050`.
+- Selected connector color/width controls are complete as backlog item `051`.
+- Connector nudge diagnostics and safe straightening is complete as backlog item `052`; some remaining visible offsets may be endpoint-alignment or obstacle/fan-out tradeoffs and should be treated as intentional unless diagnostics classify them as removable.
 - Deferred from backlog 010: editing table text; add/remove whole tables and columns (inspector edit comes first); undo/redo (the model/view separation keeps it possible); live re-route during drag (re-route on release first; optimize to only re-route edges touching the changed table later).
 - The layout is user-driven once a table is dragged (dragging overrides the grid); there is no auto-arrange/re-layout after drags, so a moved table can overlap a neighbour.
+- Deferred from backlog 045: the app selector does not yet expose serpentine column/up/down knobs; it uses the shared default layout options.
 - csproj references `PublishProfile=win10-$(Platform).pubxml` but no `.pubxml` files exist (`NETSDK1198` warning).
 - `Log.Write` is inert (`EVENT_LOG_SUPPORT` not defined); diagnostics flow through `ResultLog.DefaultLog` instead.
 

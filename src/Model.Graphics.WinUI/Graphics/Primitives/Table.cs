@@ -33,6 +33,12 @@ namespace ModelConsole.Graphics.Primitives
       private TableInfo _table;
 
       /// <summary>
+      /// The notation used to render this card. ERD is the default; UML uses
+      /// class-style attribute rows over the same table metadata (backlog 040).
+      /// </summary>
+      public DiagramNotation Notation { get; set; } = DiagramNotation.Erd;
+
+      /// <summary>
       /// True while the pointer is over this table (backlog 041): the border
       /// draws the DodgerBlue accent, thicker, so the hovered card reads at a
       /// glance (the same accent the selection outline and connector emphasis
@@ -142,11 +148,13 @@ namespace ModelConsole.Graphics.Primitives
       /// </summary>
       /// <param name="table">table information</param>
       public Table(GlContext frame, double x, double y,
-         double bannerHeight, TableInfo table) : base()
+         double bannerHeight, TableInfo table,
+         DiagramNotation notation = DiagramNotation.Erd) : base()
       {
          X = x;
          Y = y;
          _bannerHeight = bannerHeight;
+         Notation = notation;
          CornerRadius = GlContext.DefaultRoundCorderRadious;
 
          SetTable(table);
@@ -201,7 +209,9 @@ namespace ModelConsole.Graphics.Primitives
       public void DrawBannerText(GlContext frame)
       {
          AddBanner(
-            frame, this, _table.SchemaName + "::" + _table.TableName);
+            frame, this, Notation == DiagramNotation.Uml
+               ? UmlProfile.ClassBanner(_table)
+               : _table.SchemaName + "::" + _table.TableName);
       }
 
       /// <summary>
@@ -233,18 +243,23 @@ namespace ModelConsole.Graphics.Primitives
 
          foreach (var i in columns)
          {
-            b.Text = i.ColumnName;
+            b.Text = Notation == DiagramNotation.Uml
+               ? UmlProfile.Attribute(i)
+               : i.ColumnName;
             size = b.GetDesiredSize();
             if (size.Width > maxLength)
             {
                maxLength = size.Width;
             }
 
-            b.Text = TableRowPanel.GetDataType(i);
-            size = b.GetDesiredSize();
-            if (size.Width > maxTypeLength)
+            if (Notation == DiagramNotation.Erd)
             {
-               maxTypeLength = size.Width;
+               b.Text = TableRowPanel.GetDataType(i);
+               size = b.GetDesiredSize();
+               if (size.Width > maxTypeLength)
+               {
+                  maxTypeLength = size.Width;
+               }
             }
          }
 
@@ -336,28 +351,37 @@ namespace ModelConsole.Graphics.Primitives
 
             i.SetBackground(everyOther ? stripeColor : plainColor);
 
-            // draw constraint
-            string constraint = null;
-            if (i.Column.IsKey)
+            if (Notation == DiagramNotation.Uml)
             {
-               constraint += "PK";
+               i.ConstraintText.Text = "";
+               i.Text.Text = UmlProfile.Attribute(i.Column);
+               i.DataTypeText.Text = "";
             }
-            if (i.Column.IsForeignKey)
+            else
             {
-               constraint += constraint == null ? "" : ", ";
-               constraint += "FK";
+               // draw constraint
+               string constraint = null;
+               if (i.Column.IsKey)
+               {
+                  constraint += "PK";
+               }
+               if (i.Column.IsForeignKey)
+               {
+                  constraint += constraint == null ? "" : ", ";
+                  constraint += "FK";
+               }
+
+               if (constraint != null)
+               {
+                  i.ConstraintText.Text = constraint;
+               }
+
+               // draw column name text
+               i.Text.Text = i.Column.ColumnName;
+
+               // draw data type text
+               i.DataTypeText.Text = TableRowPanel.GetDataType(i.Column);
             }
-
-            if (constraint != null)
-            {
-               i.ConstraintText.Text = constraint;
-            }
-
-            // draw column name text
-            i.Text.Text = i.Column.ColumnName;
-
-            // draw data type text
-            i.DataTypeText.Text = TableRowPanel.GetDataType(i.Column);
 
             // add panel padding to show space around text-blocks
             i.Instance.Padding = new Thickness(
@@ -445,9 +469,10 @@ namespace ModelConsole.Graphics.Primitives
       /// <param name="table"></param>
       /// <returns></returns>
       public static Table DrawTable(GlContext frame, float x, float y,
-         float bannerHeight, TableInfo table)
+         float bannerHeight, TableInfo table,
+         DiagramNotation notation = DiagramNotation.Erd)
       {
-         Table t = new Table(frame, x, y, bannerHeight, table);
+         Table t = new Table(frame, x, y, bannerHeight, table, notation);
          t.DrawTable(frame);
          return t;
       }

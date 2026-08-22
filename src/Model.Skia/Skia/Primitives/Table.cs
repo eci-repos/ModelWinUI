@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Model.Data;
+using ModelConsole.Graph;
 using ModelConsole.Palette;
 using ModelConsole.Skia.GLibrary;
 
@@ -44,6 +45,12 @@ namespace ModelConsole.Skia.Primitives
         public float _cornerRadious;
 
         private TableInfo _table;
+
+        /// <summary>
+        /// The notation used to render this card. ERD is the default; UML uses
+        /// class-style attribute rows over the same table metadata (backlog 040).
+        /// </summary>
+        public DiagramNotation Notation { get; set; } = DiagramNotation.Erd;
 
         /// <summary>
         /// Table kind, captured when the table is set — colors the banner and
@@ -88,12 +95,14 @@ namespace ModelConsole.Skia.Primitives
         /// </summary>
         /// <param name="table">table information</param>
         public Table(GlFrame frame, float x, float y,
-           float bannerHeight, TableInfo table)
+           float bannerHeight, TableInfo table,
+           DiagramNotation notation = DiagramNotation.Erd)
         {
             _frame = frame;
             _panel.x = x;
             _panel.y = y;
             _bannerHeight = bannerHeight;
+            Notation = notation;
             _cornerRadious = _frame.DefaultRoundCorderRadious;
 
             SetTable(table);
@@ -143,16 +152,21 @@ namespace ModelConsole.Skia.Primitives
 
             foreach (var i in columns)
             {
-                float w = _font.MeasureText(i.ColumnName);
+                float w = _font.MeasureText(Notation == DiagramNotation.Uml
+                   ? UmlProfile.Attribute(i)
+                   : i.ColumnName);
                 if (w > maxLength)
                 {
                     maxLength = w;
                 }
 
-                w = _font.MeasureText(TablePanel.GetDataType(i));
-                if (w > maxTypeLength)
+                if (Notation == DiagramNotation.Erd)
                 {
-                    maxTypeLength = w;
+                    w = _font.MeasureText(TablePanel.GetDataType(i));
+                    if (w > maxTypeLength)
+                    {
+                        maxTypeLength = w;
+                    }
                 }
             }
 
@@ -354,7 +368,16 @@ namespace ModelConsole.Skia.Primitives
         public void DrawTable()
         {
             DrawBorders();
-            DrawBannerText(_table.SchemaName, _table.TableName);
+            if (Notation == DiagramNotation.Uml)
+            {
+                _frame.Canvas.DrawText(UmlProfile.ClassBanner(_table),
+                   _panel.x + 10, _panel.y + 10, SKTextAlign.Left,
+                   _frame.DefaultFont, _frame.DefaultTextPaint);
+            }
+            else
+            {
+                DrawBannerText(_table.SchemaName, _table.TableName);
+            }
 
             // Kind-tinted body rows (backlog 036): the alternating stripe
             // carries a whisper of the banner hue; the plain row stays white.
@@ -387,38 +410,49 @@ namespace ModelConsole.Skia.Primitives
 
                 // draw header
 
-                string header = null;
-                if (i.Column.IsKey)
-                {
-                    header += "PK";
-                }
-                if (i.Column.IsForeignKey)
-                {
-                    header += header == null ? "" : ", ";
-                    header += "FK";
-                }
-
-                if (header != null)
+                if (Notation == DiagramNotation.Uml)
                 {
                     p.X = i.x + _frame.DefaultTextPanelPadding + 10;
                     p.Y = i.y + _frame.DefaultTextPanelPadding + _cornerRadious +
                        _frame.DefaultTextPanelPadding;
-                    _frame.Canvas.DrawText(header, p.X, p.Y, SKTextAlign.Left,
-                       _frame.DefaultFont, _frame.DefaultTextPaint);
+                    _frame.Canvas.DrawText(UmlProfile.Attribute(i.Column), p.X, p.Y,
+                       SKTextAlign.Left, _frame.DefaultFont, _frame.DefaultTextPaint);
                 }
+                else
+                {
+                    string header = null;
+                    if (i.Column.IsKey)
+                    {
+                        header += "PK";
+                    }
+                    if (i.Column.IsForeignKey)
+                    {
+                        header += header == null ? "" : ", ";
+                        header += "FK";
+                    }
 
-                // draw column name text
-                p.X = i.x + _frame.DefaultTextPanelPadding + _leftPadding;
-                p.Y = i.y + _frame.DefaultTextPanelPadding + _cornerRadious +
-                   _frame.DefaultTextPanelPadding;
-                _frame.Canvas.DrawText(i.Column.ColumnName, p.X, p.Y,
-                   SKTextAlign.Left, _frame.DefaultFont, _frame.DefaultTextPaint);
+                    if (header != null)
+                    {
+                        p.X = i.x + _frame.DefaultTextPanelPadding + 10;
+                        p.Y = i.y + _frame.DefaultTextPanelPadding + _cornerRadious +
+                           _frame.DefaultTextPanelPadding;
+                        _frame.Canvas.DrawText(header, p.X, p.Y, SKTextAlign.Left,
+                           _frame.DefaultFont, _frame.DefaultTextPaint);
+                    }
 
-                // draw table name text
-                p.X += i.width + _frame.DefaultTextPanelPadding + 10;
-                _frame.Canvas.DrawText(TablePanel.GetDataType(i.Column),
-                   p.X, p.Y, SKTextAlign.Left, _frame.DefaultFont,
-                   _frame.DefaultTextPaint);
+                    // draw column name text
+                    p.X = i.x + _frame.DefaultTextPanelPadding + _leftPadding;
+                    p.Y = i.y + _frame.DefaultTextPanelPadding + _cornerRadious +
+                       _frame.DefaultTextPanelPadding;
+                    _frame.Canvas.DrawText(i.Column.ColumnName, p.X, p.Y,
+                       SKTextAlign.Left, _frame.DefaultFont, _frame.DefaultTextPaint);
+
+                    // draw table name text
+                    p.X += i.width + _frame.DefaultTextPanelPadding + 10;
+                    _frame.Canvas.DrawText(TablePanel.GetDataType(i.Column),
+                       p.X, p.Y, SKTextAlign.Left, _frame.DefaultFont,
+                       _frame.DefaultTextPaint);
+                }
             }
 
             stripePaint.Dispose();
@@ -435,9 +469,10 @@ namespace ModelConsole.Skia.Primitives
         /// <param name="table"></param>
         /// <returns></returns>
         public static Table DrawTable(GlFrame frame, float x, float y,
-           float bannerHeight, TableInfo table)
+           float bannerHeight, TableInfo table,
+           DiagramNotation notation = DiagramNotation.Erd)
         {
-            Table t = new Table(frame, x, y, bannerHeight, table);
+            Table t = new Table(frame, x, y, bannerHeight, table, notation);
             t.DrawTable();
             return t;
         }

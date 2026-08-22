@@ -42,6 +42,18 @@ namespace ModelConsole.Skia.Primitives
       /// <summary>Options passed to the orthogonal router.</summary>
       public RouterOptions RouterOptions { get; set; } =
          new RouterOptions { GridSize = 16, ObstacleMargin = 14, StubLength = 20 };
+
+      /// <summary>
+      /// Presentation notation used when measuring table probes. UML rows can
+      /// be wider than ERD rows, so the layout must measure the chosen view.
+      /// </summary>
+      public DiagramNotation Notation { get; set; } = DiagramNotation.Erd;
+
+      /// <summary>
+      /// Name of the entity layout projection to use. Grid is the historical
+      /// default and preserves the incoming row-major order.
+      /// </summary>
+      public string LayoutName { get; set; } = EntityLayout.GridName;
    }
 
    /// <summary>
@@ -222,7 +234,8 @@ namespace ModelConsole.Skia.Primitives
             {
                continue;
             }
-            var probe = new Table(measureFrame, 0, 0, opts.BannerHeight, t);
+            var probe = new Table(measureFrame, 0, 0, opts.BannerHeight, t,
+               opts.Notation);
             probes[t.TableName] = probe;
             maxWidth = Math.Max(maxWidth, probe.ComputedWidth);
             maxHeight = Math.Max(maxHeight, probe.ComputedHeight);
@@ -238,12 +251,12 @@ namespace ModelConsole.Skia.Primitives
 
          try
          {
-            // 2. Layout — row-major grid sized for the widest/tallest
-            // table or box so nothing overlaps its neighbour. A collapsed
-            // group's members are REPLACED by its box (one rect for the
-            // group — the 2000-table win); a synthetic table per box feeds
-            // the grid engine unchanged (it reads only TableName), so a
-            // boxed member neither draws nor blocks the router.
+            // 2. Layout — entity layout sized for the widest/tallest table or
+            // box so nothing overlaps its neighbour. A collapsed group's
+            // members are REPLACED by its box (one rect for the group — the
+            // 2000-table win); a synthetic table per box feeds the layout
+            // engine unchanged (it reads only TableName), so a boxed member
+            // neither draws nor blocks the router.
             var layoutTables = new List<TableInfo>();
             foreach (var t in visibleTables)
             {
@@ -256,13 +269,15 @@ namespace ModelConsole.Skia.Primitives
             {
                layoutTables.Add(new TableInfo { TableName = key });
             }
-            var layout = TableLayoutEngine.Layout(layoutTables, new GridLayoutOptions
+            var layoutEdges = BuildLayoutEdges(visibleEdges, boxes, boxed);
+            var layout = EntityLayoutEngine.Layout(
+               layoutTables, layoutEdges, new EntityLayoutOptions
             {
                Columns = opts.Columns,
                SlotWidth = maxWidth + opts.SlotPadding,
                SlotHeight = maxHeight + opts.SlotPadding,
                Gutter = opts.Gutter
-            });
+            }, EntityLayout.FromName(opts.LayoutName));
 
             // Measured rects at their slot positions (the router avoids
             // these; the renderer draws tables and boxes onto them).
@@ -313,7 +328,7 @@ namespace ModelConsole.Skia.Primitives
                .GroupBy(e => e.ParentTable + "::" + e.ParentColumn)
                .ToDictionary(g => g.Key, g => g.ToList());
 
-            var tableAnchors = new List<(Point2 Start, Point2 End, FkRelation Edge)>();
+            var tableAnchors = new List<(ConnectorRouteRequest Route, FkRelation Edge)>();
             foreach (var edge in tableEdges)
             {
                if (!rects.TryGetValue(edge.ChildTable, out var child) ||
@@ -339,10 +354,12 @@ namespace ModelConsole.Skia.Primitives
                end = ConnectorAnchors.FanOut(
                   end, parentSide, endGroup.IndexOf(edge), endGroup.Count, 6);
 
-               tableAnchors.Add((start, end, edge));
+               tableAnchors.Add((
+                  new ConnectorRouteRequest(start, childSide, end, parentSide),
+                  edge));
             }
 
-            var boxAnchors = new List<(Point2 Start, Point2 End, GroupBoxEdge Edge)>();
+            var boxAnchors = new List<(ConnectorRouteRequest Route, GroupBoxEdge Edge)>();
             var boxEdges = new List<GroupBoxEdge>();
             foreach (var (key, box) in boxes)
             {
@@ -356,9 +373,11 @@ namespace ModelConsole.Skia.Primitives
                   {
                      continue; // target box collapsed to nothing (all hidden)
                   }
-                  var (start, end, _, _) = ConnectorAnchors.Resolve(
+                  var (start, end, startSide, endSide) = ConnectorAnchors.Resolve(
                      boxRect, targetRect, boxRect.Center.Y, targetRect.Center.Y);
-                  boxAnchors.Add((start, end, be));
+                  boxAnchors.Add((
+                     new ConnectorRouteRequest(start, startSide, end, endSide),
+                     be));
                   boxEdges.Add(be);
                }
             }
@@ -376,14 +395,14 @@ namespace ModelConsole.Skia.Primitives
                (maxX - minX) + 2 * opts.ExtentMargin,
                (maxY - minY) + 2 * opts.ExtentMargin);
 
-            var allAnchors = new List<(Point2 Start, Point2 End)>();
+            var allAnchors = new List<ConnectorRouteRequest>();
             foreach (var a in tableAnchors)
             {
-               allAnchors.Add((a.Start, a.End));
+               allAnchors.Add(a.Route);
             }
             foreach (var a in boxAnchors)
             {
-               allAnchors.Add((a.Start, a.End));
+               allAnchors.Add(a.Route);
             }
 
             var routes = SequentialRouter.RouteAll(
@@ -400,6 +419,39 @@ namespace ModelConsole.Skia.Primitives
                probe.Dispose();
             }
          }
+      }
+
+      private static IReadOnlyList<FkRelation> BuildLayoutEdges(
+         IReadOnlyList<FkRelation> visibleEdges,
+         IReadOnlyList<(string Key, GroupBoxModel Box)> boxes,
+         HashSet<string> boxed)
+      {
+         var layoutEdges = new List<FkRelation>();
+         foreach (var edge in visibleEdges)
+         {
+            if (!boxed.Contains(edge.ChildTable) && !boxed.Contains(edge.ParentTable))
+            {
+               layoutEdges.Add(edge);
+            }
+         }
+         foreach (var (key, box) in boxes)
+         {
+            foreach (var edge in box.ExternalEdges)
+            {
+               string target = edge.TargetKey;
+               if (edge.Outbound)
+               {
+                  layoutEdges.Add(new FkRelation(
+                     key, "", target, "", edge.Sample.Constraint));
+               }
+               else
+               {
+                  layoutEdges.Add(new FkRelation(
+                     target, "", key, "", edge.Sample.Constraint));
+               }
+            }
+         }
+         return layoutEdges;
       }
 
    }

@@ -30,13 +30,15 @@ namespace ModelConsole.Graphics.GLibrary.GlOrtho
    /// origin.</description></item>
    /// <item><description><see cref="DrawRouted(GlContext, IReadOnlyList{Point2})"/> —
    /// a static connector from a pre-computed absolute polyline (the output of
-   /// <see cref="ModelConsole.Geometry.OrthogonalRouter"/>). No grips and no
-   /// corner rounding; the points are used as-is. This is the mode the ERD
-   /// renderer uses.</description></item>
+   /// <see cref="ModelConsole.Geometry.OrthogonalRouter"/>). No grips; bends
+   /// are rounded visually and the route points are used as-is for the ERD
+   /// renderer's routing semantics.</description></item>
    /// </list>
    /// </summary>
    public class GlOrthoPath : GlObject, IGlGrip
    {
+      private const double RoutedCornerRadius = 8;
+
       protected Path _path = new Path();
       protected GlOrthoPathShape _orthoShape;
       protected double MiddleLength = -1;
@@ -505,9 +507,8 @@ namespace ModelConsole.Graphics.GLibrary.GlOrtho
 
       /// <summary>
       /// Draw an orthogonal connector from a pre-computed absolute polyline
-      /// (e.g. the output of <see cref="OrthogonalRouter"/>). No grips and no
-      /// corner rounding - the points are used as-is, positioned at the
-      /// canvas origin.
+      /// (e.g. the output of <see cref="OrthogonalRouter"/>). No grips; bends
+      /// are rounded visually while the route points remain unchanged.
       /// </summary>
       /// <param name="context">drawing canvas and context</param>
       /// <param name="points">absolute path points (at least two)</param>
@@ -520,13 +521,29 @@ namespace ModelConsole.Graphics.GLibrary.GlOrtho
 
          var geometry = new PathGeometry();
          var figure = new PathFigure();
-         figure.StartPoint = new Point(points[0].X, points[0].Y);
-         for (int i = 1; i < points.Count; i++)
+         var commands = RoundedPolyline.Build(points, RoutedCornerRadius);
+         if (commands.Count > 0)
          {
-            figure.Segments.Add(new LineSegment
+            figure.StartPoint = ToPoint(commands[0].Point);
+         }
+         for (int i = 1; i < commands.Count; i++)
+         {
+            var command = commands[i];
+            if (command.Type == RoundedPathCommandType.QuadraticTo)
             {
-               Point = new Point(points[i].X, points[i].Y)
-            });
+               figure.Segments.Add(new QuadraticBezierSegment
+               {
+                  Point1 = ToPoint(command.ControlPoint),
+                  Point2 = ToPoint(command.Point)
+               });
+            }
+            else
+            {
+               figure.Segments.Add(new LineSegment
+               {
+                  Point = ToPoint(command.Point)
+               });
+            }
          }
          geometry.Figures.Add(figure);
 
@@ -536,6 +553,11 @@ namespace ModelConsole.Graphics.GLibrary.GlOrtho
          // points are absolute; keep the path at the canvas origin
          context.Instance.Children.Add(shape._path);
          return shape;
+      }
+
+      private static Point ToPoint(Point2 point)
+      {
+         return new Point(point.X, point.Y);
       }
 
       #endregion

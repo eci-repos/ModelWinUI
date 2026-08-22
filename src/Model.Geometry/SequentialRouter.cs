@@ -50,6 +50,31 @@ namespace ModelConsole.Geometry
       }
 
       /// <summary>
+      /// Route every side-aware edge in order, treating each routed polyline
+      /// as an obstacle for the rest.
+      /// </summary>
+      public static IReadOnlyList<IReadOnlyList<Point2>> RouteAll(
+         IReadOnlyList<ConnectorRouteRequest> edges,
+         IReadOnlyList<Rect2> obstacles,
+         Rect2 bounds,
+         RouterOptions options,
+         double edgeMargin = 4)
+      {
+         var result = new List<IReadOnlyList<Point2>>();
+         var thin = new List<Rect2>();
+
+         foreach (var edge in edges)
+         {
+            var pts = OrthogonalRouter.RouteBest(
+               edge, obstacles, bounds, options, thin);
+            result.Add(pts);
+            AddSegmentObstacles(thin, pts, edgeMargin);
+         }
+
+         return result;
+      }
+
+      /// <summary>
       /// Add each segment of the polyline to the thin-obstacle list as a
       /// rectangle around the segment.
       /// </summary>
