@@ -488,6 +488,55 @@ namespace ModelWinUI
       }
 
       /// <summary>
+      /// File → Export T-SQL… (backlog 055): write the model as a runnable SQL
+      /// Server DDL script through the replaceable <see cref="ITsqlEmitter"/>,
+      /// with annotated comment cards carrying the model's design metadata.
+      /// Resolution/type-mapping issues surface on the diagnostics log. A
+      /// canceled picker is a silent no-op; a failure surfaces in a dialog.
+      /// </summary>
+      private async void ExportTsql_Click(object sender, RoutedEventArgs e)
+      {
+         var picker = new FileSavePicker();
+         picker.FileTypeChoices.Add("SQL script", new List<string> { ".sql" });
+         picker.SuggestedFileName = "EDAM-Studio-schema";
+
+         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+         var file = await picker.PickSaveFileAsync();
+         if (file == null)
+         {
+            return; // canceled — no error, no state change
+         }
+
+         try
+         {
+            var emitter = Ioc.Default.GetRequiredService<ITsqlEmitter>();
+            var result = emitter.EmitCreateScript(XamlEditor.Tables,
+               new TsqlExportOptions { Annotated = true });
+            File.WriteAllText(file.Path, result.Script);
+            var log = Ioc.Default.GetRequiredService<ILogService>();
+            foreach (var issue in result.Issues)
+            {
+               log.WriteMessage("T-SQL: " + issue);
+            }
+            log.WriteMessage("Exported T-SQL: " + file.Path + " (" +
+               XamlEditor.Tables.Count + " tables).");
+         }
+         catch (Exception ex)
+         {
+            var dialog = new ContentDialog
+            {
+               Title = "Could not export T-SQL",
+               Content = ex.Message,
+               CloseButtonText = "OK",
+               XamlRoot = RootGrid.XamlRoot
+            };
+            await dialog.ShowAsync();
+         }
+      }
+
+      /// <summary>
       /// Build the export options from the current view state (backlog 054):
       /// the same notation, layout, visibility, collapse, theme, and drawing
       /// surface color the renderers are showing, so an export matches the

@@ -49,6 +49,11 @@
                <MenuFlyoutItem Text="Export PNG…" Click="ExportPng_Click" />
                <MenuFlyoutItem Text="Export PDF…" Click="ExportPdf_Click" />
                <MenuFlyoutSeparator />
+               <!-- Backlog 055: export the model as a runnable SQL Server DDL
+                    script (schemas, tables, columns, PK, FK) through the
+                    replaceable ITsqlEmitter, with annotated comment cards. -->
+               <MenuFlyoutItem Text="Export T-SQL…" Click="ExportTsql_Click" />
+               <MenuFlyoutSeparator />
                <!-- Backlog 042: the modeless entity-details window, opened in
                     model mode (provenance + model metadata readout). The same
                     window double-clicking a table opens in entity mode. -->

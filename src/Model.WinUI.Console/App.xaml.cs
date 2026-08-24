@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
@@ -24,6 +24,7 @@ using ModelConsole.Graphics.Services;
 using ModelConsole.Controls.Services;
 using ModelConsole.Skia.Services;
 using ModelConsole.Controls.ViewModels;
+using ModelConsole.Graph;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -84,6 +85,11 @@ namespace ModelWinUI
          services.AddSingleton<ISkiaConnectorFactory, SkiaConnectorFactory>();
          services.AddSingleton<IConnectorFactory, ConnectorFactory>();
          services.AddSingleton<IRectangleFactory, RectangleFactory>();
+
+         // Backlog 055: the pure T-SQL DDL exporter is a stateless service,
+         // replaceable via its interface — a host can register its own
+         // ITsqlEmitter to substitute the implementation.
+         services.AddSingleton<ITsqlEmitter, TsqlEmitter>();
 
          // A fresh model per drawing operation; a singleton would accumulate
          // items across draws.
