@@ -12,6 +12,17 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-23 — Save model and export diagram files (backlog item 054)
+
+- **User request:** "go" — execute backlog `054` as the current sprint, committing per milestone (Model JSON, then PNG, then PDF).
+- **Sprint:** `docs/sprints/CURRENT.md` was started for `054`, completed, and promoted to `docs/sprints/archive/sprint-2026-08-23-save-model-and-export-diagram-files.md`.
+- **Milestone 1 — Save As Model JSON:** `File → Save As Model JSON…` writes the live editable model in the container JSON shape `File → Open Model…` reads (reopenable + editable). Canceled pickers are silent no-ops; write failures surface in a dialog; success logs through diagnostics. Added `FullPublicSafetyFixtureRoundTrips` — the real 50-table/74-FK shipped model survives a `ToJson → LoadJson` pass.
+- **Milestone 2 — Export PNG:** added the portable `ErdExporter` in `Model.Skia` — the shared composition path: `ErdComposer.Compose` → render at full size (content bounds + stable padding, no hover/selection emphasis) honoring notation/layout/visibility/collapse/theme/background. `GlFrame` gained an `SKCanvas` constructor overload so the same draw code targets a raster surface and a PDF page. `File → Export PNG…` + `ErdExporterTests` (non-blank, sized to bounds + padding, empty for empty model).
+- **Milestone 3 — Export PDF:** `File → Export PDF…` writes a single-page PDF through the same shared composition path (page sized to the same bounds + padding, so PNG and PDF match). PDF tests verify a readable `%PDF` header and a `MediaBox` matching the diagram size.
+- **Verified:** `dotnet test tests/ModelConsole.Tests/ModelConsole.Tests.csproj -c Debug` → **328/328 pass** (was 322; +6 new tests); `dotnet build ModelWinUI.sln -c Debug -p:Platform=x64` → **0 errors / 0 warnings**. (Manual pass — open a sample, Save As Model JSON and reopen, Export PNG/PDF and open the files — needs a human run; CLI launch runs on the agent's non-interactive desktop.)
+- **Promoted:** `054` → `docs/backlog/archive/`; sprint → `docs/sprints/archive/sprint-2026-08-23-save-model-and-export-diagram-files.md`; `docs/sprints/CURRENT.md` reset to the placeholder. The backlog now holds `055` (Export T-SQL Script) unscheduled.
+- **Note for the next agent:** the previous session's backlog `053` (Crow's Foot) work was left **uncommitted** in the working tree (it was completed and promoted in the worklog but never committed). It is not part of the 054 commits; leave it for the user to review/commit.
+
 ### 2026-08-23 — Prepared T-SQL export backlog item
 
 - **User request:** review exporting the model as a Transact-SQL script, then prepare a backlog item honoring the separation-of-concerns mandate and the interface-based replaceable-component convention.
