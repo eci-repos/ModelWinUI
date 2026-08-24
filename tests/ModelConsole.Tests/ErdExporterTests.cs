@@ -68,6 +68,43 @@ namespace ModelConsole.Tests
          Assert.Equal((0, 0), ErdExporter.GetSize(diagram, 40));
       }
 
+      [Fact]
+      public void WritePdfProducesReadablePdf()
+      {
+         var tables = Schema();
+         var options = new ErdExportOptions { Padding = 40 };
+
+         using var stream = new System.IO.MemoryStream();
+         ErdExporter.WritePdf(stream, tables, options);
+
+         byte[] pdf = stream.ToArray();
+         Assert.NotEmpty(pdf);
+         // PDF magic header: "%PDF".
+         Assert.Equal((byte)'%', pdf[0]);
+         Assert.Equal((byte)'P', pdf[1]);
+         Assert.Equal((byte)'D', pdf[2]);
+         Assert.Equal((byte)'F', pdf[3]);
+      }
+
+      [Fact]
+      public void WritePdfPageMatchesDiagramSize()
+      {
+         var tables = Schema();
+         var options = new ErdExportOptions { Padding = 40 };
+
+         var diagram = ErdExporter.Compose(tables, options);
+         var (w, h) = ErdExporter.GetSize(diagram, options.Padding);
+
+         using var stream = new System.IO.MemoryStream();
+         ErdExporter.WritePdf(stream, tables, options);
+
+         // The PDF page is sized to the same bounds + padding as the PNG, so
+         // the two exports match.
+         byte[] pdf = stream.ToArray();
+         string text = System.Text.Encoding.ASCII.GetString(pdf);
+         Assert.Contains("/MediaBox [0 0 " + w + " " + h + "]", text);
+      }
+
       // ------------------------------------------------------------------
 
       private static IReadOnlyList<TableInfo> Schema()

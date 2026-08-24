@@ -445,6 +445,49 @@ namespace ModelWinUI
       }
 
       /// <summary>
+      /// File → Export PDF… (backlog 054): write the full diagram as a
+      /// single-page PDF through the same shared Skia composition path as the
+      /// PNG export, so the two outputs match. A canceled picker is a silent
+      /// no-op; a failure surfaces in a dialog.
+      /// </summary>
+      private async void ExportPdf_Click(object sender, RoutedEventArgs e)
+      {
+         var picker = new FileSavePicker();
+         picker.FileTypeChoices.Add("PDF document", new List<string> { ".pdf" });
+         picker.SuggestedFileName = "EDAM-Studio-diagram";
+
+         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+         var file = await picker.PickSaveFileAsync();
+         if (file == null)
+         {
+            return; // canceled — no error, no state change
+         }
+
+         try
+         {
+            using (var stream = File.Create(file.Path))
+            {
+               ErdExporter.WritePdf(stream, XamlEditor.Tables, BuildExportOptions());
+            }
+            var log = Ioc.Default.GetRequiredService<ILogService>();
+            log.WriteMessage("Exported PDF: " + file.Path);
+         }
+         catch (Exception ex)
+         {
+            var dialog = new ContentDialog
+            {
+               Title = "Could not export PDF",
+               Content = ex.Message,
+               CloseButtonText = "OK",
+               XamlRoot = RootGrid.XamlRoot
+            };
+            await dialog.ShowAsync();
+         }
+      }
+
+      /// <summary>
       /// Build the export options from the current view state (backlog 054):
       /// the same notation, layout, visibility, collapse, theme, and drawing
       /// surface color the renderers are showing, so an export matches the

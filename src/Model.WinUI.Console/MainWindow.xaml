@@ -47,6 +47,7 @@
                <!-- Backlog 054: full-diagram visual exports through the shared
                     Skia composition path (ErdExporter), so PNG and PDF match. -->
                <MenuFlyoutItem Text="Export PNG…" Click="ExportPng_Click" />
+               <MenuFlyoutItem Text="Export PDF…" Click="ExportPdf_Click" />
                <MenuFlyoutSeparator />
                <!-- Backlog 042: the modeless entity-details window, opened in
                     model mode (provenance + model metadata readout). The same
