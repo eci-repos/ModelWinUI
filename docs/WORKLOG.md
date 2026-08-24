@@ -12,6 +12,36 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-23 — Prepared T-SQL export backlog item
+
+- **User request:** review exporting the model as a Transact-SQL script, then prepare a backlog item honoring the separation-of-concerns mandate and the interface-based replaceable-component convention.
+- **Backlog created:** `055-export-tsql-script.md`.
+- **Notes:** The item scopes a pure, portable, deterministic `ITsqlEmitter`/`TsqlEmitter` in `Model.Graph` (DI-registered singleton, app consumes only the interface — mirroring `ISkiaTableFactory`/`ITableFactory`/`IBoxFactory` and the `UmlPlantEmitter` pattern). It emits `CREATE SCHEMA`/`CREATE TABLE`/`ALTER TABLE ... ADD CONSTRAINT` DDL plus an **annotated** mode with strictly regular `-- KEY : value` comment cards (table header cards + FK blocks) carrying the model's kind/tags/descriptions/cardinality/roles that DDL cannot express. Annotated is the default; bare DDL is the toggle. Out of scope: DML, views/procs/triggers, cardinality-as-DDL, a round-trip importer, and 054's deferred workspace-state/Save concerns.
+- **Verification:** documentation-only change; no build/test run.
+
+### 2026-08-23 — Crow's Foot cardinality notation (backlog item 053)
+
+- **User request:** "work on 053, make it the current sprint and implement it."
+- **Sprint:** `docs/sprints/CURRENT.md` was started for `053`, completed, and promoted to `docs/sprints/archive/sprint-2026-08-23-crows-foot-cardinality-notation.md`.
+- **Notation model:** added `DiagramNotation.ErdCrowFoot` and a portable `CrowFootNotation` helper in `Model.Graph` that maps existing FK `ConstraintInfo.MinCardinality` / `MaxCardinality` to optional/one/many endpoint marker parts without changing the canonical model or JSON.
+- **Renderer parity:** the renderer bar now offers ERD / Crow's Foot / UML. XAML connectors draw tagged circle/bar/prong marker shapes for Crow's Foot; Skia connectors draw equivalent marker geometry from the same mapping. Simple ERD dots and UML label behavior remain separate.
+- **Tests:** added `CrowFootNotationTests` for cardinality-to-marker mapping and a Skia bitmap test that verifies optional, many, and required-one symbols are rendered.
+- **Verified:** `dotnet test tests/ModelConsole.Tests/ModelConsole.Tests.csproj -c Debug` -> **322/322 pass**; `dotnet build src/Model.WinUI.Console/ModelWinUI.csproj -c Debug -p:Platform=x64` -> **0 errors / 0 warnings**.
+
+### 2026-08-23 — Prepared model save and diagram export backlog item
+
+- **User request:** prepare a backlog item to implement file output options for Model JSON, PNG, and PDF after agreeing on those formats and full-diagram exports.
+- **Backlog created:** `054-save-model-and-export-diagram-files.md`.
+- **Notes:** The item scopes Model JSON as editable model persistence, PNG/PDF as full-diagram visual exports preferably through the Skia composition path, and explicitly defers dirty-state/plain Save, workspace-state persistence, viewport-only export, and schema changes.
+- **Verification:** documentation-only change; no build/test run.
+
+### 2026-08-23 — Prepared Crow's Foot cardinality notation backlog item
+
+- **User request:** prepare a backlog item to implement Crow's Foot or similar table cardinality notation after agreeing it should be a draw-only notation/profile over existing FK cardinality data.
+- **Backlog created:** `053-crows-foot-cardinality-notation.md`.
+- **Notes:** The item keeps `ConstraintInfo.MinCardinality` / `MaxCardinality` as the source of truth, scopes Crow's Foot to ERD rendering in both XAML and Skia, keeps UML multiplicity labels separate, and explicitly excludes model JSON changes, IDEF1X, and routing changes.
+- **Verification:** documentation-only change; no build/test run.
+
 ### 2026-08-22 — Connector nudge diagnostics and safe straightening (backlog item 052)
 
 - **User request:** "work on 051 and then 052, go" — execute the diagnostic-first follow-up for the remaining near-straight connector nudges after completing `051`.
@@ -691,6 +721,10 @@ Verification: each library builds standalone **0 errors, 0 warnings**; `dotnet b
 ## Pending
 
 ### Next tasks (in priority order)
+
+0. **Save model and export diagram files (backlog `054`) is planned.** Add Save As Model JSON plus full-diagram PNG and PDF exports, with JSON as editable model persistence and PNG/PDF as rendered artifacts, preferably through the shared Skia composition path.
+
+0. **Crow's Foot cardinality notation (backlog `053`) is complete.** The app now has an ERD / Crow's Foot / UML notation toggle; Crow's Foot markers are draw-only in both XAML and Skia and derive from existing FK cardinality. **done** (2026-08-23; 322/322 tests; app build 0/0; backlog archived).
 
 0. **Connector nudge diagnostics and safe straightening (backlog `052`) is complete.** Final route diagnostics now classify tiny terminal nudges as removable, endpoint-alignment-required, or obstacle/connector-blocked, and cleanup applies only to removable candidates. **done** (2026-08-22; 314/314 tests; app build 0/0; backlog archived).
 

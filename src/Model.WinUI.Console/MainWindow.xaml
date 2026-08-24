@@ -39,6 +39,11 @@
                <MenuFlyoutSeparator />
                <MenuFlyoutItem Text="Export PlantUML…" Click="ExportPlantUml_Click" />
                <MenuFlyoutSeparator />
+               <!-- Backlog 054: save the live editable model as JSON (the same
+                    shape File → Open Model… reads), so a saved model can be
+                    reopened and edited. -->
+               <MenuFlyoutItem Text="Save As Model JSON…" Click="SaveModelJson_Click" />
+               <MenuFlyoutSeparator />
                <!-- Backlog 042: the modeless entity-details window, opened in
                     model mode (provenance + model metadata readout). The same
                     window double-clicking a table opens in entity mode. -->
@@ -62,6 +67,8 @@
          <TextBlock Text="Notation:" VerticalAlignment="Center" Margin="12,0,0,0" />
          <ToggleButton x:Name="ErdNotationToggle" Content="ERD"
                        IsChecked="True" Click="NotationToggle_Click" />
+         <ToggleButton x:Name="CrowFootNotationToggle" Content="Crow's Foot"
+                       Click="NotationToggle_Click" />
          <ToggleButton x:Name="UmlNotationToggle" Content="UML"
                        Click="NotationToggle_Click" />
          <TextBlock Text="Base:" VerticalAlignment="Center" Margin="12,0,0,0" />

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 
 using Model.Data;
+using ModelConsole.ModelData;
 
 using Xunit;
 
@@ -72,6 +73,39 @@ namespace ModelConsole.Tests
          var loaded = ModelFile.LoadJson(ModelFile.ToJson(new TableInfo[0]));
 
          Assert.Empty(loaded);
+      }
+
+      [Fact]
+      public void FullPublicSafetyFixtureRoundTrips()
+      {
+         // Backlog 054: the save path must round-trip the real shipped model —
+         // all 50 tables, every column, and all 74 FK constraints survive a
+         // ToJson → LoadJson pass (the exact shape File → Save As Model JSON…
+         // writes and File → Open Model… reads).
+         var tables = PublicSafetySchema.Tables;
+
+         var loaded = ModelFile.LoadJson(ModelFile.ToJson(tables));
+
+         Assert.Equal(tables.Length, loaded.Count);
+         Assert.Equal(
+            tables.Select(t => t.TableName).OrderBy(n => n, StringComparer.Ordinal),
+            loaded.Select(t => t.TableName).OrderBy(n => n, StringComparer.Ordinal));
+
+         foreach (var original in tables)
+         {
+            var round = loaded.First(t => t.TableName == original.TableName);
+            Assert.Equal(original.SchemaName, round.SchemaName);
+            Assert.Equal(original.Columns.Count, round.Columns.Count);
+            foreach (var col in original.Columns)
+            {
+               var rc = round.Columns.First(c => c.ColumnName == col.ColumnName);
+               Assert.Equal(col.Type, rc.Type);
+               Assert.Equal(col.Size, rc.Size);
+               Assert.Equal(col.IsKey, rc.IsKey);
+               Assert.Equal(col.IsForeignKey, rc.IsForeignKey);
+               Assert.Equal(col.Constraints.Count, rc.Constraints.Count);
+            }
+         }
       }
 
       // -------- Container form (backlog 023) --------------------------------

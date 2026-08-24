@@ -157,11 +157,15 @@ namespace ModelWinUI
       /// </summary>
       private void NotationToggle_Click(object sender, RoutedEventArgs e)
       {
+         bool crowFoot = ReferenceEquals(sender, CrowFootNotationToggle);
          bool uml = ReferenceEquals(sender, UmlNotationToggle);
 
-         ErdNotationToggle.IsChecked = !uml;
+         ErdNotationToggle.IsChecked = !crowFoot && !uml;
+         CrowFootNotationToggle.IsChecked = crowFoot;
          UmlNotationToggle.IsChecked = uml;
-         XamlEditor.ApplyNotation(uml ? DiagramNotation.Uml : DiagramNotation.Erd);
+         XamlEditor.ApplyNotation(uml
+            ? DiagramNotation.Uml
+            : crowFoot ? DiagramNotation.ErdCrowFoot : DiagramNotation.Erd);
       }
 
       /// <summary>
@@ -340,6 +344,48 @@ namespace ModelWinUI
             var dialog = new ContentDialog
             {
                Title = "Could not export PlantUML",
+               Content = ex.Message,
+               CloseButtonText = "OK",
+               XamlRoot = RootGrid.XamlRoot
+            };
+            await dialog.ShowAsync();
+         }
+      }
+
+      /// <summary>
+      /// File → Save As Model JSON… (backlog 054): write the live editable
+      /// model as JSON in the same container shape File → Open Model… reads,
+      /// so a saved model can be reopened and edited. A canceled picker is a
+      /// silent no-op; a write failure surfaces in a dialog.
+      /// </summary>
+      private async void SaveModelJson_Click(object sender, RoutedEventArgs e)
+      {
+         var picker = new FileSavePicker();
+         picker.FileTypeChoices.Add("Model JSON", new List<string> { ".json" });
+         picker.SuggestedFileName = "EDAM-Studio-model";
+
+         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+         var file = await picker.PickSaveFileAsync();
+         if (file == null)
+         {
+            return; // canceled — no error, no state change
+         }
+
+         try
+         {
+            string json = ModelFile.ToJson(XamlEditor.Tables);
+            File.WriteAllText(file.Path, json);
+            var log = Ioc.Default.GetRequiredService<ILogService>();
+            log.WriteMessage("Saved model JSON: " + file.Path + " (" +
+               XamlEditor.Tables.Count + " tables).");
+         }
+         catch (Exception ex)
+         {
+            var dialog = new ContentDialog
+            {
+               Title = "Could not save model",
                Content = ex.Message,
                CloseButtonText = "OK",
                XamlRoot = RootGrid.XamlRoot
