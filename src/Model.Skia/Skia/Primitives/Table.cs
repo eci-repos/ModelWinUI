@@ -160,7 +160,7 @@ namespace ModelConsole.Skia.Primitives
                     maxLength = w;
                 }
 
-                if (Notation == DiagramNotation.Erd)
+                if (Notation != DiagramNotation.Uml)
                 {
                     w = _font.MeasureText(TablePanel.GetDataType(i));
                     if (w > maxTypeLength)

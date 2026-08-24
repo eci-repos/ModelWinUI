@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 
 using ModelConsole.Geometry;
+using ModelConsole.Graph;
 using ModelConsole.Palette;
 using ModelConsole.Skia.GLibrary;
 using ModelConsole.Skia.Primitives;
@@ -96,6 +97,31 @@ namespace ModelConsole.Tests
          Assert.True(IsColored(bitmap.GetPixel(200, 102)),
             "custom emphasized stroke width should be honored");
          Assert.Equal(SKColor.Parse("#FF00AA"), bitmap.GetPixel(20, 100));
+      }
+
+      [Fact]
+      public void DrawCrowFootMarkersUsesEndpointCardinalitySymbols()
+      {
+         using var surface = CreateSurface(400, 200, out var bitmap);
+         var frame = new GlFrame(surface);
+
+         var points = new List<Point2>
+         {
+            new Point2(20, 100), new Point2(200, 100), new Point2(380, 100)
+         };
+         new Connector(points)
+         {
+            StartMarker = new CrowFootNotation.CardinalityMarker(
+               optional: true, one: false, many: true),
+            EndMarker = CrowFootNotation.CardinalityMarker.RequiredOne
+         }.Draw(frame);
+
+         Assert.True(IsColored(bitmap.GetPixel(23, 100)),
+            "optional circle stroke should be painted near the start endpoint");
+         Assert.True(IsColored(bitmap.GetPixel(40, 103)),
+            "crow-foot prongs should be painted near the start endpoint");
+         Assert.True(IsColored(bitmap.GetPixel(373, 105)),
+            "required-one bar should be painted near the end endpoint");
       }
 
       [Fact]

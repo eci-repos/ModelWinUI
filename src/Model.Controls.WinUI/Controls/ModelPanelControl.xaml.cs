@@ -51,6 +51,11 @@ namespace ModelConsole.Controls
       private const double SlotPadding = 80;
       private const double Gutter = 80;
       private const double ExtentMargin = 80;
+      private const double CrowFootMarkerStep = 7;
+      private const double CrowFootBarHalfLength = 6;
+      private const double CrowFootOptionalDiameter = 8;
+      private const double CrowFootProngLength = 12;
+      private const double CrowFootProngHalfSpread = 6;
 
       /// <summary>Margin (px) left around the model when fitting to the window.</summary>
       private const double FitMargin = 5;
@@ -1232,12 +1237,143 @@ namespace ModelConsole.Controls
             return;
          }
 
+         if (_notation == DiagramNotation.ErdCrowFoot &&
+             data is FkRelation edge)
+         {
+            var markers = CrowFootNotation.ForEdge(edge);
+            if (!markers.IsNone)
+            {
+               DrawCrowFootMarkers(pts, connector, markers);
+               return;
+            }
+         }
+
          var startCircle = GlEllipse.Draw(
             _context, pts[0].X, pts[0].Y, 8, Colors.DodgerBlue);
          startCircle.NativeInstance.Tag = connector;
          var endCircle = GlEllipse.Draw(
             _context, pts[pts.Count - 1].X, pts[pts.Count - 1].Y, 8, Colors.DodgerBlue);
          endCircle.NativeInstance.Tag = connector;
+      }
+
+      /// <summary>
+      /// Draw Crow's Foot endpoint markers as visual-only XAML shapes. The
+      /// shapes are tagged with the connector so clicks and hover resolve to
+      /// the same FK relationship as the routed path.
+      /// </summary>
+      private void DrawCrowFootMarkers(
+         IReadOnlyList<Point2> pts,
+         GlOrthoPath connector,
+         CrowFootNotation.ConnectorMarkers markers)
+      {
+         if (pts == null || pts.Count < 2)
+         {
+            return;
+         }
+
+         DrawCrowFootMarker(pts[0], pts[1], markers.ChildMarker, connector);
+         DrawCrowFootMarker(
+            pts[pts.Count - 1], pts[pts.Count - 2],
+            markers.ParentMarker, connector);
+      }
+
+      private void DrawCrowFootMarker(
+         Point2 endpoint,
+         Point2 adjacent,
+         CrowFootNotation.CardinalityMarker marker,
+         GlOrthoPath connector)
+      {
+         if (marker.IsNone)
+         {
+            return;
+         }
+
+         var along = Unit(endpoint, adjacent);
+         if (along.X == 0 && along.Y == 0)
+         {
+            return;
+         }
+         var perp = new Point2(-along.Y, along.X);
+         double cursor = CrowFootMarkerStep;
+
+         if (marker.Optional)
+         {
+            Point2 center = Add(endpoint, ScalePoint(along, cursor));
+            var circle = new Ellipse
+            {
+               Width = CrowFootOptionalDiameter,
+               Height = CrowFootOptionalDiameter,
+               Fill = new SolidColorBrush(_backgroundColor),
+               Stroke = new SolidColorBrush(Colors.Black),
+               StrokeThickness = 1.2,
+               Tag = connector
+            };
+            Canvas.SetLeft(circle, center.X - CrowFootOptionalDiameter / 2.0);
+            Canvas.SetTop(circle, center.Y - CrowFootOptionalDiameter / 2.0);
+            _context.Instance.Children.Add(circle);
+            cursor += CrowFootMarkerStep;
+         }
+
+         if (marker.One)
+         {
+            Point2 center = Add(endpoint, ScalePoint(along, cursor));
+            DrawMarkerLine(
+               Add(center, ScalePoint(perp, -CrowFootBarHalfLength)),
+               Add(center, ScalePoint(perp, CrowFootBarHalfLength)),
+               connector);
+            cursor += CrowFootMarkerStep;
+         }
+
+         if (marker.Many)
+         {
+            Point2 tips = Add(endpoint, ScalePoint(along, cursor));
+            Point2 root = Add(
+               endpoint, ScalePoint(along, cursor + CrowFootProngLength));
+            DrawMarkerLine(root, tips, connector);
+            DrawMarkerLine(
+               root, Add(tips, ScalePoint(perp, -CrowFootProngHalfSpread)),
+               connector);
+            DrawMarkerLine(
+               root, Add(tips, ScalePoint(perp, CrowFootProngHalfSpread)),
+               connector);
+         }
+      }
+
+      private void DrawMarkerLine(Point2 a, Point2 b, GlOrthoPath connector)
+      {
+         var line = new Line
+         {
+            X1 = a.X,
+            Y1 = a.Y,
+            X2 = b.X,
+            Y2 = b.Y,
+            Stroke = new SolidColorBrush(Colors.Black),
+            StrokeThickness = 1.2,
+            StrokeEndLineCap = PenLineCap.Square,
+            StrokeStartLineCap = PenLineCap.Square,
+            Tag = connector
+         };
+         _context.Instance.Children.Add(line);
+      }
+
+      private static Point2 Unit(Point2 from, Point2 to)
+      {
+         double dx = to.X - from.X;
+         double dy = to.Y - from.Y;
+         double length = Math.Sqrt(dx * dx + dy * dy);
+         return length <= 0
+            ? new Point2(0, 0)
+            : new Point2(dx / length, dy / length);
+      }
+
+      private static Point2 Add(Point2 a, Point2 b)
+      {
+         return new Point2(a.X + b.X, a.Y + b.Y);
+      }
+
+      private static Point2 ScalePoint(Point2 p, double scale)
+      {
+         return new Point2(p.X * scale, p.Y * scale);
       }
 
       /// <summary>

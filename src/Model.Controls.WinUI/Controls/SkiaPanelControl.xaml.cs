@@ -418,6 +418,19 @@ namespace ModelConsole.Controls
             return;
          }
 
+         if (_notation == DiagramNotation.ErdCrowFoot)
+         {
+            var markers = CrowFootMarkers(index);
+            new Connector(_diagram.Routes[index])
+            {
+               Emphasized = emphasized,
+               SelectedStyle = _selectedConnectorStyle,
+               StartMarker = markers.ChildMarker,
+               EndMarker = markers.ParentMarker
+            }.Draw(frame);
+            return;
+         }
+
          if (emphasized)
          {
             new Connector(_diagram.Routes[index])
@@ -430,6 +443,17 @@ namespace ModelConsole.Controls
          {
             _connectorFactory.Create(frame, _diagram.Routes[index]);
          }
+      }
+
+      private CrowFootNotation.ConnectorMarkers CrowFootMarkers(int index)
+      {
+         if (index >= 0 && index < _diagram.Edges.Count)
+         {
+            return CrowFootNotation.ForEdge(_diagram.Edges[index]);
+         }
+         return new CrowFootNotation.ConnectorMarkers(
+            CrowFootNotation.CardinalityMarker.None,
+            CrowFootNotation.CardinalityMarker.None);
       }
 
       private void DrawUmlConnectorLabel(GlFrame frame, int index)

@@ -252,7 +252,7 @@ namespace ModelConsole.Graphics.Primitives
                maxLength = size.Width;
             }
 
-            if (Notation == DiagramNotation.Erd)
+            if (Notation != DiagramNotation.Uml)
             {
                b.Text = TableRowPanel.GetDataType(i);
                size = b.GetDesiredSize();
