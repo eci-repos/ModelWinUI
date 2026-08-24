@@ -27,6 +27,8 @@ using ModelConsole.ModelData;
 using ModelConsole.Controls.Helpers;
 using ModelConsole.Graph;
 using ModelConsole.Palette;
+using ModelConsole.Skia.Primitives;
+using SkiaSharp;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -299,6 +301,12 @@ namespace ModelWinUI
             color.B.ToString("X2", CultureInfo.InvariantCulture);
       }
 
+      /// <summary>Convert a Windows.UI.Color to the SKColor the export clears to.</summary>
+      private static SKColor ToSkColor(Color c)
+      {
+         return new SKColor(c.R, c.G, c.B);
+      }
+
       /// <summary>
       /// File → Model info (backlog 042): open the modeless details window in
       /// model mode — the provenance + model-metadata readout.
@@ -392,6 +400,68 @@ namespace ModelWinUI
             };
             await dialog.ShowAsync();
          }
+      }
+
+      /// <summary>
+      /// File → Export PNG… (backlog 054): write the full diagram as a PNG
+      /// raster through the shared Skia composition path (<see cref="ErdExporter"/>),
+      /// sized to the composed bounds + padding so nothing clips. A canceled
+      /// picker is a silent no-op; a failure surfaces in a dialog.
+      /// </summary>
+      private async void ExportPng_Click(object sender, RoutedEventArgs e)
+      {
+         var picker = new FileSavePicker();
+         picker.FileTypeChoices.Add("PNG image", new List<string> { ".png" });
+         picker.SuggestedFileName = "EDAM-Studio-diagram";
+
+         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+         var file = await picker.PickSaveFileAsync();
+         if (file == null)
+         {
+            return; // canceled — no error, no state change
+         }
+
+         try
+         {
+            byte[] png = ErdExporter.ToPng(XamlEditor.Tables, BuildExportOptions());
+            File.WriteAllBytes(file.Path, png);
+            var log = Ioc.Default.GetRequiredService<ILogService>();
+            log.WriteMessage("Exported PNG: " + file.Path + " (" +
+               png.Length + " bytes).");
+         }
+         catch (Exception ex)
+         {
+            var dialog = new ContentDialog
+            {
+               Title = "Could not export PNG",
+               Content = ex.Message,
+               CloseButtonText = "OK",
+               XamlRoot = RootGrid.XamlRoot
+            };
+            await dialog.ShowAsync();
+         }
+      }
+
+      /// <summary>
+      /// Build the export options from the current view state (backlog 054):
+      /// the same notation, layout, visibility, collapse, theme, and drawing
+      /// surface color the renderers are showing, so an export matches the
+      /// live diagram.
+      /// </summary>
+      private ErdExportOptions BuildExportOptions()
+      {
+         return new ErdExportOptions
+         {
+            Notation = XamlEditor.CurrentNotation,
+            LayoutName = XamlEditor.CurrentLayoutName,
+            Visibility = XamlEditor.CurrentVisibility,
+            Collapse = XamlEditor.CurrentCollapse,
+            Theme = GroupingThemes.FromName(
+               XamlEditor.CurrentThemeName, XamlEditor.Tables),
+            BackgroundColor = ToSkColor(_currentBackgroundColor)
+         };
       }
 
       /// <summary>

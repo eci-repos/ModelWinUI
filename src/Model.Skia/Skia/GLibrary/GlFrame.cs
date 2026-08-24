@@ -1,4 +1,4 @@
-﻿using SkiaSharp;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -50,6 +50,28 @@ namespace ModelConsole.Skia.GLibrary
             //canvas.Scale(1, -1);
             //canvas.Translate(0, -b.Height);
 
+            InitializeDefaults();
+        }
+
+        /// <summary>
+        /// Wrap an existing <see cref="SKCanvas"/> (e.g. a PDF page canvas from
+        /// <c>SKDocument.BeginPage</c>) instead of a surface's canvas. Used by
+        /// the portable export path (backlog 054) so the same drawing code
+        /// renders to a raster surface and a PDF page alike.
+        /// </summary>
+        /// <param name="canvas">the canvas to draw onto</param>
+        /// <param name="backgroundColor">the clear color (default: white)</param>
+        public GlFrame(SKCanvas canvas, SKColor? backgroundColor = null)
+        {
+            this.canvas = canvas;
+            canvas.Clear(backgroundColor ?? SKColors.White);
+            canvas.GetDeviceClipBounds(out SKRectI b);
+
+            InitializeDefaults();
+        }
+
+        private void InitializeDefaults()
+        {
             DefaultForeground = new SKPaint
             {
                 IsAntialias = true,
@@ -101,7 +123,6 @@ namespace ModelConsole.Skia.GLibrary
 
             DefaultFont = new SKFont(
                SKTypeface.FromFamilyName("Arial"), 14);
-
         }
 
         /// <summary>

@@ -44,6 +44,10 @@
                     reopened and edited. -->
                <MenuFlyoutItem Text="Save As Model JSON…" Click="SaveModelJson_Click" />
                <MenuFlyoutSeparator />
+               <!-- Backlog 054: full-diagram visual exports through the shared
+                    Skia composition path (ErdExporter), so PNG and PDF match. -->
+               <MenuFlyoutItem Text="Export PNG…" Click="ExportPng_Click" />
+               <MenuFlyoutSeparator />
                <!-- Backlog 042: the modeless entity-details window, opened in
                     model mode (provenance + model metadata readout). The same
                     window double-clicking a table opens in entity mode. -->
