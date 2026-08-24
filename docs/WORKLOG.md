@@ -12,6 +12,17 @@ Running record of work done and next pending tasks. **Read this first** when sta
 
 ## Done
 
+### 2026-08-23 — Export T-SQL script (backlog item 055)
+
+- **User request:** "work on 055 backlog item, make it current and execute it."
+- **Sprint:** `docs/sprints/CURRENT.md` was started for `055`, completed, and promoted to `docs/sprints/archive/sprint-2026-08-23-export-tsql-script.md`.
+- **Implementation:** added the replaceable `ITsqlEmitter`/`TsqlEmitter` in `Model.Graph` — a pure, deterministic T-SQL DDL exporter: `CREATE SCHEMA`, `CREATE TABLE` (type/size/nullability/identity, inline + composite PK), and `ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY` for every resolved FK (null `ReferencedColumnName` → parent PK via `FkEdgeExtractor`). Registered as a singleton in `App.ConfigureServices()`; hosts substitute their own `ITsqlEmitter`. **Annotated mode** (default) emits strictly regular `-- KEY : value` comment cards before each table (TABLE/KIND/TAGS/DESC/FKs) and each FK (cardinality, child/parent roles); bare mode emits clean DDL. Unknown column types pass through verbatim with a diagnostic; unresolved FKs are reported and skipped — never a crash. `File → Export T-SQL…` writes the script through the interface and logs resolution/type-mapping issues.
+- **Deviation from the backlog draft:** the interface's `EmitCreateScript` returns a `TsqlExportResult` (Script + Issues) instead of a bare `string`, so resolution/type-mapping diagnostics surface through the same call instead of a side channel.
+- **Tests:** `TsqlEmitterTests` (10) — schema/table/column/PK/FK emission, parent-PK resolution, composite PK, identity, unknown-type pass-through, annotated vs bare, determinism, empty model, and a 50-table/74-FK smoke test (one `ALTER TABLE` per resolved FK).
+- **Verified:** `dotnet test tests/ModelConsole.Tests/ModelConsole.Tests.csproj -c Debug` → **338/338 pass** (was 328; +10 new tests); `dotnet build ModelWinUI.sln -c Debug -p:Platform=x64` → **0 errors / 0 warnings**. (Manual pass — open a sample, Export T-SQL, open the `.sql` — needs a human run.)
+- **Promoted:** `055` → `docs/backlog/archive/`; sprint → `docs/sprints/archive/sprint-2026-08-23-export-tsql-script.md`; `docs/sprints/CURRENT.md` reset to the placeholder. The backlog is now empty of planned work.
+- **Standing condition:** backlog `053` (Crow's Foot) work remains **uncommitted** in the working tree from a prior session — still not part of any 054/055 commit; leave it for the user to review/commit.
+
 ### 2026-08-23 — Save model and export diagram files (backlog item 054)
 
 - **User request:** "go" — execute backlog `054` as the current sprint, committing per milestone (Model JSON, then PNG, then PDF).
